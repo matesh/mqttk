@@ -23,8 +23,9 @@ def validate_int(d, i, P, s, S, v, V, W):
     return True
 
 import uuid
-MQTT_VERSION_LIST = ["3.1", "3.1.1", "5.0"]
-SSL_LIST = ["Disabled", "CA signed server certificate", "CA certificate file", "Self-signed certificate"]
+from mqttk.MQTT_manager import PROTOCOL_LOOKUP, SSL_LIST
+
+MQTT_VERSION_LIST = list(PROTOCOL_LOOKUP.keys())
 
 
 class ConfigurationWindow(tk.Toplevel):

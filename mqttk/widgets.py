@@ -9,16 +9,7 @@ try:
 except ImportError:
     import tkinter.ttk as ttk
     py3 = True
-from collections import  namedtuple
 import platform
-
-
-class MQTTMESSAGETEMPLATE:
-    def __init__(self, topic, payload, qos, retained):
-        self.topic = topic
-        self.payload = payload
-        self.qos = qos
-        self.retained = retained
 
 
 class SubscriptionFrame(ttk.Frame):
@@ -66,26 +57,28 @@ class MessageFrame(ttk.Frame):
 
         self.topic_quos_frame = ttk.Frame(self, style="New.TFrame")
         self.topic_quos_frame.bind("<Button-1>", self.on_click)
-        self.topic_label = ttk.Label(self.topic_quos_frame, text=topic, style="New.TLabel", anchor='w')
+        self.topic_label = ttk.Label(self.topic_quos_frame, text=topic, style="New.TLabel", anchor='w', font="TkDefaultFont 14 bold")
         self.topic_label.bind("<Button-1>", self.on_click)
-        self.topic_label.pack(side=tk.LEFT, expand=1, fill="x")
+        self.topic_label.pack(side=tk.LEFT, expand=1, fill="x", padx=4, pady=2)
         self.message_id_label = ttk.Label(self.topic_quos_frame, text="ID: {}".format(message_id), anchor="e", style="New.TLabel")
         self.message_id_label.bind("<Button-1>", self.on_click)
-        self.message_id_label.pack(side=tk.RIGHT, padx=2)
+        self.message_id_label.pack(side=tk.RIGHT, padx=4, pady=2)
         self.retained_label = ttk.Label(self.topic_quos_frame, text="Retained", style="Retained.TLabel", anchor='n')
         self.retained_label.bind("<Button-1>", self.on_click)
         if retained:
-            self.retained_label.pack(side=tk.RIGHT, padx=2)
+            self.retained_label.pack(side=tk.RIGHT, padx=4, pady=2)
         self.topic_quos_frame.pack(fill="x", expand=1, side=tk.TOP)
 
         self.date_qos_frame = ttk.Frame(self, style="New.TFrame")
         self.date_qos_frame.bind("<Button-1>", self.on_click)
-        self.date_label = ttk.Label(self.date_qos_frame, text=timestamp, style="New.TLabel")
+        self.date_label = ttk.Label(self.date_qos_frame,
+                                    text=timestamp,
+                                    style="New.TLabel")
         self.date_label.bind("<Button-1>", self.on_click)
-        self.date_label.pack(side=tk.LEFT, expand=1, fill="x")
+        self.date_label.pack(side=tk.LEFT, expand=1, fill="x", padx=4, pady=2)
         self.qos_label = ttk.Label(self.date_qos_frame, text="QoS {}".format(qos), anchor="e", style="New.TLabel")
         self.qos_label.bind("<Button-1>", self.on_click)
-        self.qos_label.pack(side=tk.RIGHT, padx=3)
+        self.qos_label.pack(side=tk.RIGHT, padx=4, pady=2)
         self.date_qos_frame.pack(fill='x', side=tk.BOTTOM, expand=1)
 
     def on_click(self, event):

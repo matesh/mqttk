@@ -29,7 +29,7 @@ class AboutDialog(tk.Toplevel):
 
         self.about_frame = ttk.Frame(self)
 
-        self.about_label = ttk.Label(self.about_frame, text="About MQTTk", anchor='n')
+        self.about_label = ttk.Label(self.about_frame, text="About MQTTk\nVersion {}".format(version), anchor='n', justify=tk.CENTER)
         self.about_label.pack(side=tk.TOP, fill='x', expand=1)
 
         self.about_content_frame = ttk.Frame(self.about_frame)

@@ -16,7 +16,8 @@ class ConfigHandler:
 
         configuration_dict = {
             "connections": {}
-            "last_used_connection": {}
+            "last_used_connection": connection name,
+            "window_geometry: last used window geometry string
         }
 
         configuration_dict[connections] = {
@@ -124,8 +125,15 @@ class ConfigHandler:
         self.config_file_manager(SAVE)
 
     def add_subscription_history(self, connection, topic):
-        if topic not in self.configuration_dict[connection]["subscriptions"]:
-            self.configuration_dict[connection].append(topic)
+        if topic not in self.configuration_dict["connections"][connection]["subscriptions"]:
+            self.configuration_dict["connections"][connection]["subscriptions"].append(topic)
+        self.config_file_manager(SAVE)
+
+    def get_window_geometry(self):
+        return self.configuration_dict.get("window_geometry", None)
+
+    def save_window_geometry(self, window_geometry):
+        self.configuration_dict["window_geometry"] = window_geometry
         self.config_file_manager(SAVE)
 
     def get_last_used_connection(self):
