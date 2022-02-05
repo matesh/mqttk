@@ -17,7 +17,8 @@ class ConfigHandler:
         configuration_dict = {
             "connections": {}
             "last_used_connection": connection name,
-            "window_geometry: last used window geometry string
+            "window_geometry: last used window geometry string,
+            "autoscroll: true/false
         }
 
         configuration_dict[connections] = {
@@ -141,6 +142,13 @@ class ConfigHandler:
 
     def update_last_used_connection(self, connection):
         self.configuration_dict["last_used_connection"] = connection
+
+    def get_autoscroll(self):
+        return bool(self.configuration_dict.get("autoscroll", False))
+
+    def save_autoscroll(self, value):
+        self.configuration_dict["autoscroll"] = value
+        self.config_file_manager(SAVE)
 
     def add_publish_history(self, topic):
         pass

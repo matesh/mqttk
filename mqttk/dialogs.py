@@ -1,15 +1,6 @@
-from mqttk import __version__ as version
-try:
-    import Tkinter as tk
-except ImportError:
-    import tkinter as tk
-
-try:
-    import ttk
-    py3 = False
-except ImportError:
-    import tkinter.ttk as ttk
-    py3 = True
+from __init__ import __version__ as version
+import tkinter as tk
+import tkinter.ttk as ttk
 
 about_text = "MQTTk is a lightweight MQTT client that intends to replace\nthe popular MQTT.fx tool because it is no longer free, the\nfree version is old and no longer maintained, it doesn't\nwork on M1 macs (crashes all the time) and when it works,\nit eats loads of RAM and consumes half of a CPU core just\nby idling. This software intends to keep the most useful\nfeatures of MQTT.fx and over time, extend it to make it\neven more useful.\nIt ain't pretty, but it's not made for a beauty contest."
 
@@ -29,7 +20,7 @@ class AboutDialog(tk.Toplevel):
 
         self.about_frame = ttk.Frame(self)
 
-        self.about_label = ttk.Label(self.about_frame, text="About MQTTk\nVersion {}".format(version), anchor='n', justify=tk.CENTER)
+        self.about_label = ttk.Label(self.about_frame, text="About MQTTk\n\nVersion {}".format(version), anchor='n', justify=tk.CENTER)
         self.about_label.pack(side=tk.TOP, fill='x', expand=1)
 
         self.about_content_frame = ttk.Frame(self.about_frame)
@@ -48,8 +39,6 @@ class AboutDialog(tk.Toplevel):
         self.ok_button.pack(side=tk.BOTTOM, pady=4)
         self.ok_button["command"] = self.on_destroy
         self.about_frame.pack(fill='both', expand=1)
-
-        print("JEREREREER")
 
     def on_destroy(self, *args, **kwargs):
         self.grab_release()

@@ -1,29 +1,26 @@
 import traceback
 from datetime import datetime
 from functools import partial
-try:
-    import Tkinter as tk
-except ImportError:
-    import tkinter as tk
-    from tkinter.scrolledtext import ScrolledText
+import tkinter as tk
+from tkinter.scrolledtext import ScrolledText
 
-try:
-    import ttk
-    py3 = False
-except ImportError:
-    import tkinter.ttk as ttk
-    py3 = True
+import tkinter.ttk as ttk
 
 import sys
 import time
-from mqttk.widgets import ScrollFrame, SubscriptionFrame, MessageFrame
-from mqttk.dialogs import AboutDialog
-from mqttk.configuration_dialog import ConfigurationWindow
-from mqttk.config_handler import ConfigHandler
-from mqttk.MQTT_manager import MqttManager
+from widgets import ScrollFrame, SubscriptionFrame, MessageFrame
+from dialogs import AboutDialog
+from configuration_dialog import ConfigurationWindow
+from config_handler import ConfigHandler
+from MQTT_manager import MqttManager
 
 CONNECT = "connected"
 DISCONNECT = "disconnected"
+
+COLORS = ['#f14e5e', '#009b0a', '#00aedb', '#f37735', '#ffc425',
+          '#28b463', '#5dade2', '#a569bd', '#fbff12', '#41ead4',
+          '#e8f8c1', '#d6ccf9', '#a8a5ec', '#74a3f4', '#5e999a',
+          '#4b8d6b', '#d5573b', '#885053', '#94c9a9', '#c6ecae', '#aa9fb1']
 
 
 class App:
@@ -40,6 +37,9 @@ class App:
         self.last_used_connection = None
         self.mqtt_manager = None
         self.current_connection_configuration = None
+        self.autoscroll = self.config_handler.get_autoscroll()
+        self.color_carousel = -1
+        self.style_ids = 0
 
         #Holds messages and relevant stuff
         # {
@@ -55,9 +55,7 @@ class App:
         # }
         self.messages = {}
 
-        #setting title
         root.title("MQTTk")
-
         screenwidth = root.winfo_screenwidth()
         screenheight = root.winfo_screenheight()
         saved_geometry = self.config_handler.get_window_geometry()
@@ -95,6 +93,7 @@ class App:
         self.style.configure("Selected.TFrame", background="#96bfff")
         self.style.configure("Selected.TLabel", background="#96bfff")
         self.style.configure("Retained.TLabel", background="#ffeeab")
+        self.style.configure("Pressed.TButton", relief="sunken")
 
         # ==================================== Menu bar ===============================================================
         self.menubar = tk.Menu(root)
@@ -102,7 +101,7 @@ class App:
         self.file_menu = tk.Menu(self.menubar)
         self.about_menu = tk.Menu(self.menubar)
         self.menubar.add_cascade(menu=self.file_menu, label="File")
-        self.menubar.add_cascade(menu=self.about_menu, label="About")
+        self.menubar.add_cascade(menu=self.about_menu, label="Help")
         self.file_menu.add_command(label="Exit", command=self.on_exit)
         self.about_menu.add_command(label="About", command=self.on_about_menu)
 
@@ -141,7 +140,7 @@ class App:
 
         # Subscribe frame
         self.subscribe_bar_frame = ttk.Frame(self.subscribe_frame, height=1)
-        self.subscribe_bar_frame.pack(anchor="nw", side=tk.TOP, fill=tk.Y)
+        self.subscribe_bar_frame.pack(anchor="nw", side=tk.TOP, fill=tk.X)
         # Subscribe selector combobox
         self.subscribe_selector = ttk.Combobox(self.subscribe_bar_frame, width=30)
         self.subscribe_selector.pack(side=tk.LEFT, padx=3, pady=3)
@@ -151,15 +150,30 @@ class App:
         self.subscribe_button.pack(side=tk.LEFT, padx=3, pady=3)
         self.subscribe_button["text"] = "Subscribe"
         self.subscribe_button["command"] = self.add_subscription
+        # Flush messages button
+        self.flush_messages_button = ttk.Button(self.subscribe_bar_frame, text="Clear messages")
+        self.flush_messages_button.pack(side=tk.RIGHT, padx=3)
+        self.flush_messages_button["command"] = self.flush_messages
+        # Autoscroll checkbox
+        self.autoscroll_button = ttk.Checkbutton(self.subscribe_bar_frame, text="Autoscroll")
+        self.autoscroll_button.configure(style="Pressed.TButton" if self.autoscroll else "TButton")
+        self.autoscroll_button["command"] = self.autoscroll_toggle
+        self.autoscroll_button.pack(side=tk.RIGHT, padx=3)
 
         # Subscribe bottom part frame
         self.subscribe_tab_bottom_frame = ttk.Frame(self.subscribe_frame)
         self.subscribe_tab_bottom_frame.pack(fill="both", anchor="w", expand=True, padx=3, pady=3)
-
-        # Subscriptions scrollable frame
-        # self.subscriptions_frame = ScrollableFrame(self.subscribe_tab_bottom_frame)
+        # Subscription list paned window
+        self.subscription_paned_window = tk.PanedWindow(self.subscribe_tab_bottom_frame,
+                                                        orient=tk.HORIZONTAL,
+                                                        sashrelief="groove",
+                                                        sashwidth=6,
+                                                        sashpad=2)
+        self.subscription_paned_window.pack(side=tk.LEFT, fill="both", expand=1)
         self.subscriptions_frame = ScrollFrame(self.subscribe_tab_bottom_frame)
         self.subscriptions_frame.pack(fill="y", side=tk.LEFT)
+        self.subscription_paned_window.add(self.subscriptions_frame)
+
         # Incoming message resizable panel
         self.message_paned_window = tk.PanedWindow(self.subscribe_tab_bottom_frame,
                                                    orient=tk.VERTICAL,
@@ -167,6 +181,7 @@ class App:
                                                    sashwidth=6,
                                                    sashpad=2)
         self.message_paned_window.pack(fill='both', padx=3, pady=3, expand=1)
+        self.subscription_paned_window.add(self.message_paned_window)
         # Incoming messages scrollable frame
         self.incoming_messages = ScrollFrame(self.subscribe_tab_bottom_frame)
         self.incoming_messages.pack()
@@ -184,7 +199,7 @@ class App:
         self.message_topic_label = tk.Text(self.message_topic_and_id_frame, height=1, borderwidth=0, state="disabled")
         self.message_topic_label.pack(side=tk.LEFT, padx=3, pady=3, fill="x", expand=1)
         # Message ID label
-        self.message_id_label = ttk.Label(self.message_topic_and_id_frame, width=5)
+        self.message_id_label = ttk.Label(self.message_topic_and_id_frame, width=10)
         self.message_id_label["text"] = "ID"
         self.message_id_label.pack(side=tk.RIGHT, padx=3, pady=3)
 
@@ -196,7 +211,7 @@ class App:
         self.message_date_label["text"] = "DATE"
         self.message_date_label.pack(side=tk.LEFT, fill="x", padx=3, pady=3)
         # Message QoS label
-        self.message_qos_label = ttk.Label(self.message_date_and_qos_frame, width=5)
+        self.message_qos_label = ttk.Label(self.message_date_and_qos_frame, width=10)
         self.message_qos_label["text"] = "QOS"
         self.message_qos_label.pack(side=tk.RIGHT, padx=3, pady=3)
         # Message Payload
@@ -208,9 +223,6 @@ class App:
 
         self.publish_frame = ttk.Frame(self.tabs)
         self.tabs.add(self.publish_frame, text="Publish")
-
-        self.fos = SubscriptionFrame(self.publish_frame, "Pocs")
-        self.fos.place(x=3, y=3, width=400, height=400)
 
         self.content_interface_toggle(DISCONNECT)
         self.config_interface_toggle(DISCONNECT)
@@ -250,29 +262,39 @@ class App:
 
     def add_subscription(self):
         topic = self.subscribe_selector.get()
-        if topic != "":
-            self.add_subscription_frame(topic, self.on_unsubscribe)
-            print(self.subscribe_selector["values"])
+        if topic != "" and topic not in self.subscription_frames:
+            self.style_ids += 1
+            style_id = "subscription{}.TLabel".format(self.style_ids)
+            try:
+                self.mqtt_manager.add_subscription(topic_pattern=topic,
+                                                   on_message_callback=partial(self.on_mqtt_message,
+                                                                               subscription_pattern=topic,
+                                                                               indicator_style=style_id))
+            except Exception:
+                print("Failed to subscribe")
+                return
+            self.add_subscription_frame(topic, self.on_unsubscribe, style_id)
             if self.subscribe_selector["values"] == "":
                 self.subscribe_selector["values"] = [topic]
             elif topic not in self.subscribe_selector['values']:
                 self.subscribe_selector['values'] += (topic,)
             self.config_handler.add_subscription_history(self.connection_selector.get(), topic)
-            self.mqtt_manager.add_subscription(topic, partial(self.on_mqtt_message, subscription_pattern=topic))
 
-    def add_subscription_frame(self, topic, unsubscribe_callback):
+    def add_subscription_frame(self, topic, unsubscribe_callback, style_id):
         if topic not in self.subscription_frames:
             # SubscriptionFrame(self.subscriptions_frame.scrollable_frame,
+
+            self.style.configure(style_id, background=self.get_color())
             self.subscription_frames[topic] = SubscriptionFrame(self.subscriptions_frame.viewPort,
                                                                 topic,
                                                                 unsubscribe_callback,
+                                                                style_id,
+                                                                self.on_colour_change,
                                                                 height=60,
-                                                                # width=self.subscriptions_frame.winfo_width()-10).pack()
                                                                 )
             self.subscription_frames[topic].pack(fill=tk.X, expand=1, padx=2, pady=1)
 
     def on_message_select(self, message_id):
-        print("Message selected", message_id)
         if message_id != self.currently_selected_message:
             try:
                 self.messages[self.currently_selected_message]["message_list_instance_ref"].on_unselect()
@@ -293,14 +315,15 @@ class App:
 
     def on_unsubscribe(self, topic):
         self.subscription_frames.pop(topic, None)
-        #MQTT handler unsub call
 
-    def add_new_message(self, mqtt_message_object, subscription_pattern):
+
+    def add_new_message(self, mqtt_message_object, indicator_style, subscription_pattern):
         timestamp = time.time()
         # Theoretically there will be no race condition here?
         self.message_id_counter += 1
+        new_message_id = self.message_id_counter
         time_string = "{:.6f} - {}".format(round(timestamp, 6), datetime.fromtimestamp(timestamp).strftime("%Y/%m/%d, %H:%M:%S.%f"))
-        self.messages[self.message_id_counter] = {
+        self.messages[new_message_id] = {
             "topic": mqtt_message_object.topic,
             "payload": mqtt_message_object.payload,
             "qos": mqtt_message_object.qos,
@@ -308,20 +331,25 @@ class App:
             "time_string": time_string,
             "retained": mqtt_message_object.retain
         }
-        self.messages[self.message_id_counter]["message_list_instance_ref"] = MessageFrame(self.incoming_messages.viewPort,
-                                                                                           self.message_id_counter,
-                                                                                           mqtt_message_object.topic,
-                                                                                           time_string,
-                                                                                           subscription_pattern,
-                                                                                           mqtt_message_object.qos,
-                                                                                           mqtt_message_object.retain,
-                                                                                           self.on_message_select,
-                                                                                           height=40,
-                                                                                           takefocus=True)
-        self.messages[self.message_id_counter]["message_list_instance_ref"].pack(fill=tk.X, expand=1, padx=2, pady=1)
+        self.messages[new_message_id]["message_list_instance_ref"] = MessageFrame(container=self.incoming_messages.viewPort,
+                                                                                  message_id=new_message_id,
+                                                                                  topic=mqtt_message_object.topic,
+                                                                                  timestamp=time_string,
+                                                                                  qos=mqtt_message_object.qos,
+                                                                                  retained=mqtt_message_object.retain,
+                                                                                  indicator_style=indicator_style,
+                                                                                  on_select_callback=self.on_message_select,
+                                                                                  height=40,
+                                                                                  takefocus=True)
+        self.messages[new_message_id]["message_list_instance_ref"].pack(fill=tk.X, expand=1, padx=2, pady=1)
+        if self.autoscroll:
+            self.on_message_select(new_message_id)
+            self.incoming_messages.to_bottom()
 
-    def on_mqtt_message(self, client, userdata, msg, subscription_pattern):
-        self.add_new_message(msg, subscription_pattern)
+    def on_mqtt_message(self, client, userdata, msg, subscription_pattern, indicator_style):
+        self.add_new_message(mqtt_message_object=msg,
+                             subscription_pattern=subscription_pattern,
+                             indicator_style=indicator_style)
 
     def on_config_update(self):
         connection_profile_list = sorted(self.config_handler.get_connection_profiles())
@@ -352,6 +380,13 @@ class App:
             self.subscription_frames[topic].destroy()
         self.subscription_frames = {}
 
+    def flush_messages(self):
+        for message_id in list(self.messages.keys()):
+            self.messages[message_id]["message_list_instance_ref"].pack_forget()
+            self.messages[message_id]["message_list_instance_ref"].destroy()
+            self.messages.pop(message_id)
+        self.message_id_counter = 0
+
     def spawn_configuration_window(self):
         configuration_window = ConfigurationWindow(self.root, self.config_handler, self.on_config_update)
         configuration_window.transient(self.root)
@@ -366,13 +401,27 @@ class App:
         about_window.grab_set()
         about_window.wait_window()
 
+    def get_color(self):
+        self.color_carousel += 1
+        if self.color_carousel > len(COLORS):
+            self.color_carousel = 0
+        return COLORS[self.color_carousel]
+
+    def on_colour_change(self, style_id, colour):
+        self.style.configure(style_id, background=colour)
+        pass
+
+    def autoscroll_toggle(self):
+        self.autoscroll = not self.autoscroll
+        self.autoscroll_button.configure(style="Pressed.TButton" if self.autoscroll else "TButton")
+
     def on_exit(self):
         self.config_handler.save_window_geometry(self.root.geometry())
-        exit(0)
+        self.config_handler.save_autoscroll(self.autoscroll)
+        root.destroy()
 
     def on_destroy(self):
-        self.config_handler.save_window_geometry(self.root.geometry())
-        root.destroy()
+        self.on_exit()
 
 if __name__ == "__main__":
     root = tk.Tk()

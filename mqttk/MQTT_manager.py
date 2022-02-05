@@ -16,7 +16,6 @@ class MqttManager:
         self.on_connect_callback = on_connect_callback
         self.on_disconnect_callback = on_disconnect_callback
 
-        print(connection_configuration)
         self.client = Client(connection_configuration["client_id"],
                              clean_session=True,
                              userdata=None,

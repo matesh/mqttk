@@ -1,18 +1,13 @@
-from functools import partial
-try:
-    import Tkinter as tk
-except ImportError:
-    import tkinter as tk
-
-try:
-    import ttk
-    py3 = False
-except ImportError:
-    import tkinter.ttk as ttk
-    py3 = True
+import tkinter as tk
+import tkinter.ttk as ttk
 from tkinter import filedialog
 from pathlib import Path
 from widgets import ScrollFrame, ConnectionFrame
+from MQTT_manager import PROTOCOL_LOOKUP, SSL_LIST
+import uuid
+from functools import  partial
+
+MQTT_VERSION_LIST = list(PROTOCOL_LOOKUP.keys())
 
 
 def validate_int(d, i, P, s, S, v, V, W):
@@ -22,10 +17,16 @@ def validate_int(d, i, P, s, S, v, V, W):
         return False
     return True
 
-import uuid
-from mqttk.MQTT_manager import PROTOCOL_LOOKUP, SSL_LIST
 
-MQTT_VERSION_LIST = list(PROTOCOL_LOOKUP.keys())
+def validate_name(name, name_list):
+    if name not in name_list:
+        return name
+
+    template = name + " {}"
+    index = 1
+    while template.format(index) in name_list:
+        index += 1
+    return template.format(index)
 
 
 class ConfigurationWindow(tk.Toplevel):
@@ -312,13 +313,10 @@ class ConfigurationWindow(tk.Toplevel):
         self.profiles_widgets[connection_profile].pack(fill=tk.X, expand=1, padx=2, pady=2)
 
     def new_connection(self):
-        template = "New connection {}"
-        index = 1
-        while "New connection {}".format(index) in self.profiles_widgets:
-            index += 1
-        self.add_profile_widget(template.format(index))
-        self.profiles_widgets[template.format(index)].on_click(None)
-        self.connection_selected(template.format(index))
+        name = validate_name("New connection", self.profiles_widgets)
+        self.add_profile_widget(name)
+        self.profiles_widgets[name].on_click(None)
+        self.connection_selected(name)
         self.currently_selected_connection_dict = {}
 
     def connection_selected(self, connection_name):

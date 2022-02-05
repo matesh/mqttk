@@ -1,48 +1,59 @@
-try:
-    import Tkinter as tk
-except ImportError:
-    import tkinter as tk
-
-try:
-    import ttk
-    py3 = False
-except ImportError:
-    import tkinter.ttk as ttk
-    py3 = True
+import tkinter as tk
+from tkinter.colorchooser import askcolor
+import tkinter.ttk as ttk
 import platform
+import sys
 
 
 class SubscriptionFrame(ttk.Frame):
-    def __init__(self, container, topic, unsubscribe_callback=None, *args, **kwargs):
+    def __init__(self, container, topic, unsubscribe_callback=None, style_id=None, colour_change_callback=None, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
         #TODO
         # Add unique colour to each message:
         # - Colour picker added here
         # - Callback to main to change colour for this subscription group
         self.container = container
+        self.colour_change_callback = colour_change_callback
         self.topic = topic
         self.unsubscribe_callback = unsubscribe_callback
-        self.unsubscribe_button = ttk.Button(self)
+        self.style_id = style_id
         self["relief"] = "groove"
         self["borderwidth"] = 2
-        # self.unsubscribe_button.place(x=self.winfo_width()-80, y=(self.winfo_height()/2)-12, width=75, height=25)
-        self.unsubscribe_button.place(relx=.5, rely=.5, relwidth=.49, relheight=.49)
-        self.unsubscribe_button["text"] = "Unsubscribe"
-        self.unsubscribe_button["command"] = self.on_unsubscribe
-        self.topic_label = ttk.Label(self)
+
+        self.topic_frame = ttk.Frame(self)
+        self.topic_frame.pack(side=tk.TOP, expand=1, fill='x')
+        self.topic_label = ttk.Label(self.topic_frame)
         self.topic_label["text"] = topic
-        self.topic_label.place(x=3, y=3, relwidth=0.95, height=25)
+        self.topic_label.pack(side=tk.LEFT, fill="x", expand=1, padx=2, pady=2)
+
+        self.options_frame = ttk.Frame(self)
+        self.options_frame.pack(side=tk.BOTTOM, expand=1, fill='x')
+        self.unsubscribe_button = ttk.Button(self.options_frame, text="Unsubscribe")
+        self.unsubscribe_button.pack(side=tk.RIGHT, padx=2, pady=2)
+        self.unsubscribe_button["command"] = self.on_unsubscribe
+
+        self.color_picker = ttk.Label(self.options_frame, width=2, style=self.style_id)
+        self.color_picker.bind("<Button-1>", self.on_colour_change)
+        self.color_picker.pack(side=tk.LEFT)
 
     def on_unsubscribe(self):
-        print("UNSUB", self.topic)
         if self.unsubscribe_callback is not None:
             self.unsubscribe_callback(self.topic)
         self.pack_forget()
         self.destroy()
 
+    def on_colour_change(self, *args, **kwargs):
+        colors = askcolor(title="Pick a colour")
+        if colors is not None:
+            self.colour = colors[1]
+            # self.color_picker.configure(bg=self.colour, fg=self.colour)
+            if self.colour_change_callback is not None:
+                print("Changing colour for", self.style_id, self.colour)
+                self.colour_change_callback(self.style_id, self.colour)
+
 
 class MessageFrame(ttk.Frame):
-    def __init__(self, container, message_id, topic, timestamp, subscription_pattern, qos, retained,
+    def __init__(self, container, message_id, topic, timestamp, qos, retained, indicator_style,
                  on_select_callback=None, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
         #TODO
@@ -55,9 +66,21 @@ class MessageFrame(ttk.Frame):
         self["relief"] = "groove"
         self["borderwidth"] = 1
 
-        self.topic_quos_frame = ttk.Frame(self, style="New.TFrame")
+        self.color_frame = ttk.Frame(self, width=10, style=indicator_style)
+        self.color_frame.pack(side=tk.LEFT, fill='y')
+
+        self.message_data_frame = ttk.Frame(self)
+        self.message_data_frame.pack(expand=1, fill='both', side=tk.RIGHT)
+
+        self.topic_quos_frame = ttk.Frame(self.message_data_frame, style="New.TFrame")
         self.topic_quos_frame.bind("<Button-1>", self.on_click)
-        self.topic_label = ttk.Label(self.topic_quos_frame, text=topic, style="New.TLabel", anchor='w', font="TkDefaultFont 14 bold")
+
+        if sys.platform == "win32":
+            font = "TkDefaultFont 10 bold"
+        if sys.platform == "darwin":
+            font = "TkDefaultFont 12 bold"
+
+        self.topic_label = ttk.Label(self.topic_quos_frame, text=topic, style="New.TLabel", anchor='w', font=font)
         self.topic_label.bind("<Button-1>", self.on_click)
         self.topic_label.pack(side=tk.LEFT, expand=1, fill="x", padx=4, pady=2)
         self.message_id_label = ttk.Label(self.topic_quos_frame, text="ID: {}".format(message_id), anchor="e", style="New.TLabel")
@@ -69,7 +92,7 @@ class MessageFrame(ttk.Frame):
             self.retained_label.pack(side=tk.RIGHT, padx=4, pady=2)
         self.topic_quos_frame.pack(fill="x", expand=1, side=tk.TOP)
 
-        self.date_qos_frame = ttk.Frame(self, style="New.TFrame")
+        self.date_qos_frame = ttk.Frame(self.message_data_frame, style="New.TFrame")
         self.date_qos_frame.bind("<Button-1>", self.on_click)
         self.date_label = ttk.Label(self.date_qos_frame,
                                     text=timestamp,
@@ -128,73 +151,40 @@ class ConnectionFrame(ttk.Frame):
         self.update()
 
 
-class ScrollableFrame(ttk.Frame):
-    def __init__(self, container, *args, **kwargs):
-        super().__init__(container, *args, **kwargs)
-        self.canvas = tk.Canvas(self)
-        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.scrollable_frame = ttk.Frame(self.canvas)
-
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(
-                scrollregion=self.canvas.bbox("all")
-            )
-        )
-
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar.pack(side="left", fill="y")
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
-
-    def _on_mousewheel(self, event):
-        # self.canvas.yview_scroll(-1 * (event.delta / 120), "units")
-        print(event.delta)
-        self.canvas.yview_scroll(-1*event.delta, "units")
-
-
 class ScrollFrame(tk.Frame):
+    """
+    Borrowed from Mark Pointing
+    https://gist.github.com/mp035/9f2027c3ef9172264532fcd6262f3b01
+    https://github.com/mp035
+    """
     def __init__(self, parent):
-        super().__init__(parent)  # create a frame (self)
+        super().__init__(parent)
 
-        self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff")  # place canvas on self
+        self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff")
         self.viewPort = tk.Frame(self.canvas,
-                                 background="#ffffff")  # place a frame on the canvas, this frame will hold the child widgets
-        self.vsb = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)  # place a scrollbar on self
-        self.canvas.configure(yscrollcommand=self.vsb.set)  # attach scrollbar action to scroll of canvas
-
-        self.vsb.pack(side="right", fill="y")  # pack scrollbar to right of self
-        self.canvas.pack(side="left", fill="both", expand=True)  # pack canvas to left of self and expand to fil
+                                 background="#ffffff")
+        self.vsb = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+        self.vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
         self.canvas_window = self.canvas.create_window((4, 4), window=self.viewPort, anchor="nw",
-                                                       # add view port frame to canvas
                                                        tags="self.viewPort")
-
         self.viewPort.bind("<Configure>",
-                           self.onFrameConfigure)  # bind an event whenever the size of the viewPort frame changes.
+                           self.onFrameConfigure)
         self.canvas.bind("<Configure>",
-                         self.onCanvasConfigure)  # bind an event whenever the size of the canvas frame changes.
-
-        self.viewPort.bind('<Enter>', self.onEnter)  # bind wheel events when the cursor enters the control
-        self.viewPort.bind('<Leave>', self.onLeave)  # unbind wheel events when the cursorl leaves the control
-
-        self.onFrameConfigure(
-            None)  # perform an initial stretch on render, otherwise the scroll region has a tiny border until the first resize
+                         self.onCanvasConfigure)
+        self.viewPort.bind('<Enter>', self.onEnter)
+        self.viewPort.bind('<Leave>', self.onLeave)
+        self.onFrameConfigure(None)
 
     def onFrameConfigure(self, event):
-        '''Reset the scroll region to encompass the inner frame'''
-        self.canvas.configure(scrollregion=self.canvas.bbox(
-            "all"))  # whenever the size of the frame changes, alter the scroll region respectively.
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def onCanvasConfigure(self, event):
-        '''Reset the canvas window to encompass inner frame when required'''
         canvas_width = event.width
-        self.canvas.itemconfig(self.canvas_window,
-                               width=canvas_width)  # whenever the size of the canvas changes alter the window region respectively.
+        self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
-    def onMouseWheel(self, event):  # cross platform scroll wheel event
+    def onMouseWheel(self, event):
         if platform.system() == 'Windows':
             self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         elif platform.system() == 'Darwin':
@@ -205,16 +195,19 @@ class ScrollFrame(tk.Frame):
             elif event.num == 5:
                 self.canvas.yview_scroll(1, "units")
 
-    def onEnter(self, event):  # bind wheel events when the cursor enters the control
+    def onEnter(self, event):
         if platform.system() == 'Linux':
             self.canvas.bind_all("<Button-4>", self.onMouseWheel)
             self.canvas.bind_all("<Button-5>", self.onMouseWheel)
         else:
             self.canvas.bind_all("<MouseWheel>", self.onMouseWheel)
 
-    def onLeave(self, event):  # unbind wheel events when the cursorl leaves the control
+    def onLeave(self, event):
         if platform.system() == 'Linux':
             self.canvas.unbind_all("<Button-4>")
             self.canvas.unbind_all("<Button-5>")
         else:
             self.canvas.unbind_all("<MouseWheel>")
+
+    def to_bottom(self):
+        self.canvas.yview_moveto(1.0)
