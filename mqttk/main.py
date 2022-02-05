@@ -83,8 +83,11 @@ class App:
         self.file_menu.add_command(label="Exit", command=self.on_exit)
         self.about_menu.add_command(label="About", command=self.on_about_menu)
 
+        self.main_window_frame = ttk.Frame(root)
+        self.main_window_frame.pack(fill='both', expand=1)
+
         # ==================================== Header frame ===========================================================
-        self.header_frame = ttk.Frame(root, height=35)
+        self.header_frame = ttk.Frame(self.main_window_frame, height=35)
         self.header_frame.pack(anchor="w", side=tk.TOP, fill=tk.Y, padx=3, pady=3)
 
         self.config_selector = ttk.Combobox(self.header_frame, width=30)
@@ -102,7 +105,7 @@ class App:
         self.disconnect_button["state"] = "disabled"
         self.disconnect_button.pack(side=tk.LEFT, expand=False, padx=3, pady=3)
 
-        self.tabs = ttk.Notebook(root)
+        self.tabs = ttk.Notebook(self.main_window_frame)
         self.tabs.pack(anchor="nw", fill="both", expand=True, padx=3, pady=3)
 
         # ==================================== Subscribe tab ==========================================================
@@ -266,7 +269,7 @@ class App:
         self.messages[self.message_id_counter]["message_list_instance_ref"].pack(fill=tk.X, expand=1, padx=2, pady=1)
 
     def on_config_update(self):
-        connection_profile_list = self.config_handler.get_connection_profiles()
+        connection_profile_list = sorted(self.config_handler.get_connection_profiles())
         print("ONCONFIGUPDATE", connection_profile_list)
         self.config_selector.configure(values=connection_profile_list)
         if self.config_handler.get_last_used_connection() in connection_profile_list:
