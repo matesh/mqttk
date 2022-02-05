@@ -14,10 +14,11 @@ import platform
 
 
 class MQTTMESSAGETEMPLATE:
-    def __init__(self, topic, payload, qos):
+    def __init__(self, topic, payload, qos, retained):
         self.topic = topic
         self.payload = payload
         self.qos = qos
+        self.retained = retained
 
 
 class SubscriptionFrame(ttk.Frame):
@@ -50,7 +51,8 @@ class SubscriptionFrame(ttk.Frame):
 
 
 class MessageFrame(ttk.Frame):
-    def __init__(self, container, message_id, topic, timestamp, on_select_callback=None, *args, **kwargs):
+    def __init__(self, container, message_id, topic, timestamp, subscription_pattern, qos, retained,
+                 on_select_callback=None, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
         #TODO
         # Add unique colour to each message:
@@ -58,27 +60,52 @@ class MessageFrame(ttk.Frame):
         # - Get colour in args?
         self.container = container
         self.message_id = message_id
-        self.topic = topic
         self.on_select_callback = on_select_callback
         self["relief"] = "groove"
-        self["borderwidth"] = 2
-        self.topic_label = ttk.Label(self)
-        self.topic_label["text"] = topic
-        self.topic_label.pack(fill=tk.X, expand=1)
-        self.date_label = ttk.Label(self)
-        self.date_label["text"] = timestamp
-        self.date_label.pack(fill=tk.X, expand=1)
-        self.bind("<Button-1>", self.on_click)
+        self["borderwidth"] = 1
+
+        self.topic_quos_frame = ttk.Frame(self, style="New.TFrame")
+        self.topic_quos_frame.bind("<Button-1>", self.on_click)
+        self.topic_label = ttk.Label(self.topic_quos_frame, text=topic, style="New.TLabel", anchor='w')
         self.topic_label.bind("<Button-1>", self.on_click)
+        self.topic_label.pack(side=tk.LEFT, expand=1, fill="x")
+        self.message_id_label = ttk.Label(self.topic_quos_frame, text="ID: {}".format(message_id), anchor="e", style="New.TLabel")
+        self.message_id_label.bind("<Button-1>", self.on_click)
+        self.message_id_label.pack(side=tk.RIGHT, padx=2)
+        self.retained_label = ttk.Label(self.topic_quos_frame, text="Retained", style="Retained.TLabel", anchor='n')
+        self.retained_label.bind("<Button-1>", self.on_click)
+        if retained:
+            self.retained_label.pack(side=tk.RIGHT, padx=2)
+        self.topic_quos_frame.pack(fill="x", expand=1, side=tk.TOP)
+
+        self.date_qos_frame = ttk.Frame(self, style="New.TFrame")
+        self.date_qos_frame.bind("<Button-1>", self.on_click)
+        self.date_label = ttk.Label(self.date_qos_frame, text=timestamp, style="New.TLabel")
         self.date_label.bind("<Button-1>", self.on_click)
+        self.date_label.pack(side=tk.LEFT, expand=1, fill="x")
+        self.qos_label = ttk.Label(self.date_qos_frame, text="QoS {}".format(qos), anchor="e", style="New.TLabel")
+        self.qos_label.bind("<Button-1>", self.on_click)
+        self.qos_label.pack(side=tk.RIGHT, padx=3)
+        self.date_qos_frame.pack(fill='x', side=tk.BOTTOM, expand=1)
 
     def on_click(self, event):
         if self.on_select_callback is not None:
-            self.configure(style="Selected.TFrame")
+            self.topic_quos_frame.configure(style="Selected.TFrame")
+            self.date_qos_frame.configure(style="Selected.TFrame")
+            self.topic_label.configure(style="Selected.TLabel")
+            self.message_id_label.configure(style="Selected.TLabel")
+            self.date_label.configure(style="Selected.TLabel")
+            self.qos_label.configure(style="Selected.TLabel")
             self.on_select_callback(self.message_id)
 
     def on_unselect(self):
-        self.configure(style="Normal.TFrame")
+        self.topic_quos_frame.configure(style="TFrame")
+        self.date_qos_frame.configure(style="TFrame")
+        self.topic_label.configure(style="TLabel")
+        self.message_id_label.configure(style="TLabel")
+        self.date_label.configure(style="TLabel")
+        self.qos_label.configure(style="TLabel")
+        self.configure(style="TFrame")
         self.update()
 
 
@@ -99,10 +126,12 @@ class ConnectionFrame(ttk.Frame):
     def on_click(self, event):
         if self.on_select_callback is not None:
             self.configure(style="Selected.TFrame")
+            self.connection.configure(style="Selected.TLabel")
             self.on_select_callback(self.connection_name)
 
     def on_unselect(self):
-        self.configure(style="Normal.TFrame")
+        self.configure(style="TFrame")
+        self.connection.configure(style="TLabel")
         self.update()
 
 
@@ -196,28 +225,3 @@ class ScrollFrame(tk.Frame):
             self.canvas.unbind_all("<Button-5>")
         else:
             self.canvas.unbind_all("<MouseWheel>")
-
-
-class ScrolledText(tk.Text):
-    def __init__(self, master=None, **kw):
-        self.frame = tk.Frame(master)
-        self.vbar = ttk.Scrollbar(self.frame)
-        self.vbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        kw.update({'yscrollcommand': self.vbar.set})
-        tk.Text.__init__(self, self.frame, **kw)
-        self.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.vbar['command'] = self.yview
-
-        # Copy geometry methods of self.frame without overriding Text
-        # methods -- hack!
-        text_meths = vars(tk.Text).keys()
-        methods = vars(tk.Pack).keys() | vars(tk.Grid).keys() | vars(tk.Place).keys()
-        methods = methods.difference(text_meths)
-
-        for m in methods:
-            if m[0] != '_' and m != 'config' and m != 'configure':
-                setattr(self, m, getattr(self.frame, m))
-
-    def __str__(self):
-        return str(self.frame)

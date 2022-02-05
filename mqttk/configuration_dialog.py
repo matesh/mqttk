@@ -1,5 +1,4 @@
 from functools import partial
-
 try:
     import Tkinter as tk
 except ImportError:
@@ -23,18 +22,23 @@ def validate_int(d, i, P, s, S, v, V, W):
         return False
     return True
 
+
 MQTT_VERSION_LIST = ["3.1", "3.1.1", "5.0"]
 SSL_LIST = ["Disabled", "CA signed server certificate", "CA certificate file", "Self-signed certificate"]
 
 
 class ConfigurationWindow(tk.Toplevel):
-    def __init__(self, master=None, config_handler=None):
+    def __init__(self, master=None, config_handler=None, config_update_callback=None):
         super().__init__(master=master)
         self.master = master
         self.config_handler = config_handler
+        self.currently_selected_connection = None
+        self.currently_selected_connection_dict = {}
+        self.config_update_callback = config_update_callback
+
         self.title("Connection configuration")
-        width = 1026
-        height = 707
+        width = 900
+        height = 600
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
@@ -43,8 +47,6 @@ class ConfigurationWindow(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
         vcmd = (self.register(validate_int),
                 '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
-
-        self.currently_selected_connection = -1
 
         # Connections frame
         self.connections_frame = ttk.Frame(self, relief="sunken")
@@ -80,7 +82,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.broker_label["anchor"] = "e"
         self.broker_label["text"] = "Broker address"
         self.broker_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
-        self.broker_address_input = ttk.Entry(self.broker_address_frame)
+        self.broker_address_input = ttk.Entry(self.broker_address_frame, background="white")
         self.broker_address_input.pack(side=tk.LEFT, padx=2)
 
         # Broker port
@@ -238,20 +240,22 @@ class ConfigurationWindow(tk.Toplevel):
         self.profiles_widgets = {}
 
         connection_profiles = self.config_handler.get_connection_profiles()
-        for connection_profile in connection_profiles:
+        for connection_profile in sorted(connection_profiles):
             self.add_profile_widget(connection_profile)
 
-    def apply(self, event):
+    def apply(self):
         self.save_current_config()
 
-    def ok(self, event):
+    def ok(self):
         self.save_current_config()
-        self.destroy()
+        self.on_destroy()
 
     def cancel(self):
-        self.destroy()
+        self.on_destroy()
 
     def save_current_config(self):
+        if self.currently_selected_connection is None:
+            return
         config_dict = {
             "broker_addr": self.broker_address_input.get(),
             "broker_port": self.broker_port_name_input.get(),
@@ -266,13 +270,18 @@ class ConfigurationWindow(tk.Toplevel):
             "cl_cert": self.cl_cert_file_input.get(),
             "cl_key": self.cl_key_file_input.get()
         }
+
+        self.currently_selected_connection_dict = config_dict
         self.config_handler.save_connection_config(self.profile_name_input.get(), config_dict)
-        #If there was a name change, we update the widget
+
+        # If there was a name change, delete the old from the config file via the config handler and update the widget
         if self.profile_name_input.get() != self.currently_selected_connection:
+            self.config_handler.remove_connection_config(self.currently_selected_connection)
             self.profiles_widgets[self.currently_selected_connection].connection_name = self.profile_name_input.get()
             self.profiles_widgets[self.currently_selected_connection].connection["text"] = self.profile_name_input.get()
+            self.profiles_widgets[self.profile_name_input.get()] = self.profiles_widgets[self.currently_selected_connection]
             self.config_handler.remove_connection_config(self.currently_selected_connection)
-            self.currently_selected_connection = self.profile_name_input.get()
+            self.connection_selected(self.currently_selected_connection)
 
     def browse_file(self, target_entry):
         target_text = filedialog.askopenfilename(initialdir=str(Path.home()),
@@ -295,52 +304,53 @@ class ConfigurationWindow(tk.Toplevel):
         self.add_profile_widget(template.format(index))
         self.profiles_widgets[template.format(index)].on_click(None)
         self.connection_selected(template.format(index))
+        self.currently_selected_connection_dict = {}
 
     def connection_selected(self, connection_name):
         if self.currently_selected_connection != connection_name:
             try:
                 self.profiles_widgets[self.currently_selected_connection].on_unselect()
             except Exception as e:
-                print("Exception deselecting profile widget", e)
+                print("Exception deselecting profile widget", e, self.currently_selected_connection, connection_name)
             try:
                 self.all_config_state_change("normal")
-                connection_config = self.config_handler.get_connection_config_dict(connection_name)
+                self.currently_selected_connection_dict = self.config_handler.get_connection_config_dict(connection_name).get("connection_parameters", {})
                 self.profile_name_input.delete(0, tk.END)
                 self.profile_name_input.insert(0, connection_name)
                 self.broker_address_input.delete(0, tk.END)
-                self.broker_address_input.insert(0, connection_config.get("broker_addr", ""))
+                self.broker_address_input.insert(0, self.currently_selected_connection_dict.get("broker_addr", ""))
                 self.broker_port_name_input.delete(0, tk.END)
-                self.broker_port_name_input.insert(0, connection_config.get("broker_port", ""))
+                self.broker_port_name_input.insert(0, self.currently_selected_connection_dict.get("broker_port", ""))
                 self.client_id_input.delete(0, tk.END)
-                self.client_id_input.insert(0, connection_config.get("client_id", ""))
+                self.client_id_input.insert(0, self.currently_selected_connection_dict.get("client_id", ""))
                 self.username_input.delete(0, tk.END)
-                self.username_input.insert(0, connection_config.get("user", ""))
+                self.username_input.insert(0, self.currently_selected_connection_dict.get("user", ""))
                 self.password_input.delete(0, tk.END)
-                self.password_input.insert(0, connection_config.get("pass", ""))
+                self.password_input.insert(0, self.currently_selected_connection_dict.get("pass", ""))
                 self.timeout_input.delete(0, tk.END)
-                self.timeout_input.insert(0, connection_config.get("timeout", ""))
+                self.timeout_input.insert(0, self.currently_selected_connection_dict.get("timeout", ""))
                 self.keepalive_input.delete(0, tk.END)
-                self.keepalive_input.insert(0, connection_config.get("keepalive", ""))
+                self.keepalive_input.insert(0, self.currently_selected_connection_dict.get("keepalive", ""))
 
-                mqtt_version = connection_config.get("mqtt_version", "")
+                mqtt_version = self.currently_selected_connection_dict.get("mqtt_version", "")
                 if mqtt_version in MQTT_VERSION_LIST:
                     self.version_input.current(MQTT_VERSION_LIST.index(mqtt_version))
                 else:
                     self.version_input.current(1)
 
-                ssl = connection_config.get("ssl", "")
+                ssl = self.currently_selected_connection_dict.get("ssl", "")
                 if ssl in SSL_LIST:
-                    self.version_input.current(SSL_LIST.index(mqtt_version))
+                    self.ssl_state_input.current(SSL_LIST.index(ssl))
                 else:
-                    self.version_input.current(0)
+                    self.ssl_state_input.current(0)
                 self.ssl_state_change(None)
 
                 self.ca_file_input.delete(0, tk.END)
-                self.ca_file_input.insert(0, connection_config.get("ca_file", ""))
+                self.ca_file_input.insert(0, self.currently_selected_connection_dict.get("ca_file", ""))
                 self.cl_cert_file_input.delete(0, tk.END)
-                self.cl_cert_file_input.insert(0, connection_config.get("cl_cert", ""))
+                self.cl_cert_file_input.insert(0, self.currently_selected_connection_dict.get("cl_cert", ""))
                 self.cl_key_file_input.delete(0, tk.END)
-                self.cl_key_file_input.insert(0, connection_config.get("cl_key", ""))
+                self.cl_key_file_input.insert(0, self.currently_selected_connection_dict.get("cl_key", ""))
             except Exception as e:
                 self.all_config_state_change("disabled")
                 print("Failed to load connection!", e)
@@ -377,4 +387,6 @@ class ConfigurationWindow(tk.Toplevel):
 
     def on_destroy(self, *args, **kwargs):
         self.grab_release()
+        if self.config_update_callback is not None:
+            self.config_update_callback()
         self.destroy()

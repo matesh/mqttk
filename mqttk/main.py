@@ -2,6 +2,7 @@ try:
     import Tkinter as tk
 except ImportError:
     import tkinter as tk
+    from tkinter.scrolledtext import ScrolledText
 
 try:
     import ttk
@@ -9,10 +10,12 @@ try:
 except ImportError:
     import tkinter.ttk as ttk
     py3 = True
+
 import sys
 import time
-from widgets import ScrollFrame, SubscriptionFrame, MessageFrame, MQTTMESSAGETEMPLATE, ScrolledText
-from configuration_window import ConfigurationWindow
+from widgets import ScrollFrame, SubscriptionFrame, MessageFrame, MQTTMESSAGETEMPLATE
+from dialogs import AboutDialog
+from configuration_dialog import ConfigurationWindow
 from config_handler import ConfigHandler
 
 
@@ -52,8 +55,11 @@ class App:
         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
         root.geometry(alignstr)
         root.resizable(width=True, height=True)
-
+        self.icon_small = tk.PhotoImage(file="mqttk_small.png")
+        self.icon = tk.PhotoImage(file="mqttk.png")
         self.root = root
+        self.root.iconphoto(False, self.icon)
+        self.root.option_add('*tearOff', tk.FALSE)
 
         self.style = ttk.Style()
         if sys.platform == "win32":
@@ -61,8 +67,21 @@ class App:
         if sys.platform == "darwin":
             self.style.theme_use("default") # aqua, clam, alt, default, classic
 
-        self.style.configure("Selected.TFrame", background="red")
-        self.style.configure("Normal.TFrame", background="white")
+        self.style.configure("New.TFrame", background="#b3ffb5")
+        self.style.configure("New.TLabel", background="#b3ffb5")
+        self.style.configure("Selected.TFrame", background="#96bfff")
+        self.style.configure("Selected.TLabel", background="#96bfff")
+        self.style.configure("Retained.TLabel", background="#ffeeab")
+
+        # ==================================== Menu bar ===============================================================
+        self.menubar = tk.Menu(root)
+        self.root.config(menu=self.menubar)
+        self.file_menu = tk.Menu(self.menubar)
+        self.about_menu = tk.Menu(self.menubar)
+        self.menubar.add_cascade(menu=self.file_menu, label="File")
+        self.menubar.add_cascade(menu=self.about_menu, label="About")
+        self.file_menu.add_command(label="Exit", command=self.on_exit)
+        self.about_menu.add_command(label="About", command=self.on_about_menu)
 
         # ==================================== Header frame ===========================================================
         self.header_frame = ttk.Frame(root, height=35)
@@ -70,8 +89,9 @@ class App:
 
         self.config_selector = ttk.Combobox(self.header_frame, width=30)
         self.config_selector.pack(side=tk.LEFT, padx=3, pady=3)
+        self.on_config_update()
         self.config_window_button = ttk.Button(self.header_frame, width=10)
-        self.config_window_button["text"] = "Connections"
+        self.config_window_button["text"] = "Configure"
         self.config_window_button.pack(side=tk.LEFT, expand=False, padx=3, pady=3)
         self.config_window_button["command"] = self.spawn_configuration_window
         self.connect_button = ttk.Button(self.header_frame, width=10)
@@ -102,9 +122,6 @@ class App:
         self.subscribe_button.pack(side=tk.LEFT, padx=3, pady=3)
         self.subscribe_button["text"] = "Subscribe"
         self.subscribe_button["command"] = self.add_subscription
-
-        teststyle = ttk.Style()
-        teststyle.configure("Frame1.TFrame", background="red")
 
         # Subscribe bottom part frame
         self.subscribe_tab_bottom_frame = ttk.Frame(self.subscribe_frame)
@@ -173,17 +190,20 @@ class App:
         for i in range(1, 10):
             topic = "TESTTOPIC_{}".format(i)
             content = "testcontent{}".format(i)
-            self.add_new_message(MQTTMESSAGETEMPLATE(topic, content, i), "whateverpattern")
+            retained = True if i % 2 == 0 else False
+            self.add_new_message(MQTTMESSAGETEMPLATE(topic, content, i, retained), "whateverpattern")
 
     def add_subscription(self):
-        if (topic := self.subscribe_selector.get()) != "":
-            #add mosquitto subscription and whatnot
+        topic = self.subscribe_selector.get()
+        if topic != "":
+            # add mosquitto subscription and whatnot
             self.add_subscription_frame(topic, self.on_unsubscribe)
             print(self.subscribe_selector["values"])
             if self.subscribe_selector["values"] == "":
                 self.subscribe_selector["values"] = [topic]
             elif topic not in self.subscribe_selector['values']:
                 self.subscribe_selector['values'] += (topic,)
+            self.config_handler.add_subscription_history(self.config_selector.get(), topic)
 
     def add_subscription_frame(self, topic, unsubscribe_callback):
         if topic not in self.subscription_frames:
@@ -231,30 +251,43 @@ class App:
             "qos": mqtt_message_object.qos,
             "subscription_pattern": subscription_pattern,
             "timestamp": timestamp,
+            "retained": mqtt_message_object.retained
         }
         self.messages[self.message_id_counter]["message_list_instance_ref"] = MessageFrame(self.incoming_messages.viewPort,
                                                                                            self.message_id_counter,
                                                                                            mqtt_message_object.topic,
                                                                                            timestamp,
+                                                                                           subscription_pattern,
+                                                                                           mqtt_message_object.qos,
+                                                                                           mqtt_message_object.retained,
                                                                                            self.on_message_select,
                                                                                            height=40,
                                                                                            takefocus=True)
         self.messages[self.message_id_counter]["message_list_instance_ref"].pack(fill=tk.X, expand=1, padx=2, pady=1)
-        #TODO
-        # Add "Autoscroll" feature where the new message is automatically selected and the scroll stuff is scrolled
-        # to the bottom when a new message arrives
+
+    def on_config_update(self):
+        connection_profile_list = self.config_handler.get_connection_profiles()
+        print("ONCONFIGUPDATE", connection_profile_list)
+        self.config_selector.configure(values=connection_profile_list)
+        if self.config_handler.get_last_used_connection() in connection_profile_list:
+            self.config_selector.current(connection_profile_list.index(self.config_handler.get_last_used_connection()))
 
     def spawn_configuration_window(self):
-        configuration_window = ConfigurationWindow(self.root, self.config_handler)
+        configuration_window = ConfigurationWindow(self.root, self.config_handler, self.on_config_update)
         configuration_window.transient(self.root)
+        configuration_window.wait_visibility()
         configuration_window.grab_set()
+        configuration_window.wait_window()
 
+    def on_about_menu(self):
+        about_window = AboutDialog(self.root, self.icon_small)
+        about_window.transient(self.root)
+        about_window.wait_visibility()
+        about_window.grab_set()
+        about_window.wait_window()
 
-def add_shit():
-    app.add_subscription_frame("fosomfaszom", None)
-    app.add_subscription_frame("fosomfaszom2", None)
-    app.add_subscription_frame("fosomfaszom3", None)
-
+    def on_exit(self):
+        exit(0)
 
 if __name__ == "__main__":
     root = tk.Tk()
