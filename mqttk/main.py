@@ -315,7 +315,7 @@ class App:
 
     def on_unsubscribe(self, topic):
         self.subscription_frames.pop(topic, None)
-
+        self.mqtt_manager.unsubscribe(topic)
 
     def add_new_message(self, mqtt_message_object, indicator_style, subscription_pattern):
         timestamp = time.time()

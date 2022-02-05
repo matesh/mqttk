@@ -11,6 +11,7 @@ PROTOCOL_LOOKUP = {
 
 SSL_LIST = ["Disabled", "CA signed server certificate", "CA certificate file", "Self-signed certificate"]
 
+
 class MqttManager:
     def __init__(self, connection_configuration, on_connect_callback, on_disconnect_callback):
         self.on_connect_callback = on_connect_callback
@@ -75,3 +76,7 @@ class MqttManager:
     def add_subscription(self, topic_pattern, on_message_callback):
         self.client.subscribe(topic_pattern)
         self.client.message_callback_add(topic_pattern, on_message_callback)
+
+    def unsubscribe(self, topic_filter):
+        self.client.unsubscribe(topic_filter)
+        self.client.message_callback_remove(topic_filter)
