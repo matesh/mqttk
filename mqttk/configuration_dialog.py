@@ -162,7 +162,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.version_label["anchor"] = "e"
         self.version_label["text"] = "MQTT version"
         self.version_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
-        self.version_input = ttk.Combobox(self.version_frame)
+        self.version_input = ttk.Combobox(self.version_frame, exportselection=False)
         self.version_input.pack(side=tk.LEFT, padx=2)
         self.version_input["values"] = MQTT_VERSION_LIST
         self.version_input.current(1)
@@ -175,7 +175,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.ssl_state_label["anchor"] = "e"
         self.ssl_state_label["text"] = "SSL"
         self.ssl_state_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
-        self.ssl_state_input = ttk.Combobox(self.ssl_state_frame)
+        self.ssl_state_input = ttk.Combobox(self.ssl_state_frame, exportselection=False)
         self.ssl_state_input.pack(side=tk.LEFT, padx=2)
         self.ssl_state_input["values"] = SSL_LIST
 

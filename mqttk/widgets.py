@@ -6,17 +6,13 @@ import sys
 
 
 class SubscriptionFrame(ttk.Frame):
-    def __init__(self, container, topic, unsubscribe_callback=None, style_id=None, colour_change_callback=None, *args, **kwargs):
+    def __init__(self, container, topic, unsubscribe_callback, colour, on_colour_change, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
-        #TODO
-        # Add unique colour to each message:
-        # - Colour picker added here
-        # - Callback to main to change colour for this subscription group
         self.container = container
-        self.colour_change_callback = colour_change_callback
         self.topic = topic
+        self.colour = colour
         self.unsubscribe_callback = unsubscribe_callback
-        self.style_id = style_id
+        self.on_colour_change_callback = on_colour_change
         self["relief"] = "groove"
         self["borderwidth"] = 2
 
@@ -32,9 +28,9 @@ class SubscriptionFrame(ttk.Frame):
         self.unsubscribe_button.pack(side=tk.RIGHT, padx=2, pady=2)
         self.unsubscribe_button["command"] = self.on_unsubscribe
 
-        self.color_picker = ttk.Label(self.options_frame, width=2, style=self.style_id)
-        self.color_picker.bind("<Button-1>", self.on_colour_change)
-        self.color_picker.pack(side=tk.LEFT)
+        self.colour_picker = ttk.Label(self.options_frame, width=2, background=colour)
+        self.colour_picker.bind("<Button-1>", self.on_colour_change)
+        self.colour_picker.pack(side=tk.LEFT)
 
     def on_unsubscribe(self):
         if self.unsubscribe_callback is not None:
@@ -46,64 +42,8 @@ class SubscriptionFrame(ttk.Frame):
         colors = askcolor(title="Pick a colour")
         if colors is not None:
             self.colour = colors[1]
-            # self.color_picker.configure(bg=self.colour, fg=self.colour)
-            if self.colour_change_callback is not None:
-                print("Changing colour for", self.style_id, self.colour)
-                self.colour_change_callback(self.style_id, self.colour)
-
-
-class MessageFrame(ttk.Frame):
-    def __init__(self, container, message_id, topic, timestamp, qos, retained, indicator_style,
-                 on_select_callback=None, *args, **kwargs):
-        super().__init__(container, *args, **kwargs)
-        self.container = container
-        self.message_id = message_id
-        self.on_select_callback = on_select_callback
-        self["relief"] = "groove"
-        self["borderwidth"] = 1
-        self.configure(style="New.TFrame")
-        self.bind("<Button-1>", self.on_click)
-
-        # self.color_frame = ttk.Frame(self, width=10, style=indicator_style)
-        # self.color_frame.pack(side=tk.LEFT, fill='y')
-
-        self.id_qos_label = ttk.Label(self, style=indicator_style, justify=tk.RIGHT)
-        self.id_qos_label["text"] = "{}    ID: {} \nQoS: {}".format("RETAINED" if retained else "",
-                                                                    message_id,
-                                                                    qos)
-        self.id_qos_label.pack(side=tk.RIGHT, pady=2, padx=2, fill='y')
-
-        if sys.platform == "win32":
-            font = "TkDefaultFont 10 bold"
-        elif sys.platform == "darwin":
-            font = "TkDefaultFont 12 bold"
-        else:
-            font = "TkDefaultFont"
-
-        self.topic_label = ttk.Label(self, text=topic, style="New.TLabel", anchor='w', font=font)
-        self.topic_label.bind("<Button-1>", self.on_click)
-        self.topic_label.pack(side=tk.TOP, expand=1, fill="x", padx=4, pady=2)
-        self.date_label = ttk.Label(self,
-                                    text=timestamp,
-                                    style="New.TLabel")
-        self.date_label.bind("<Button-1>", self.on_click)
-        self.date_label.pack(side=tk.BOTTOM, expand=1, fill="x", padx=4, pady=2)
-
-    def on_click(self, event):
-        if self.on_select_callback is not None:
-            self.topic_label.configure(style="Selected.TLabel")
-            self.date_label.configure(style="Selected.TLabel")
-            # self.id_qos_label.configure(style="Selected.TLabel")
-            self.on_select_callback(self.message_id)
-            self.configure(style="Selected.TFrame")
-
-    def on_unselect(self):
-        self.configure(style="TLabel")
-        self.topic_label.configure(style="TLabel")
-        self.date_label.configure(style="TLabel")
-        # self.id_qos_label.configure(style="TLabel")
-        self.configure(style="TFrame")
-        self.update()
+            self.colour_picker.configure(background=self.colour)
+            self.on_colour_change_callback()
 
 
 class ConnectionFrame(ttk.Frame):

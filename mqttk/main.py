@@ -8,7 +8,7 @@ import tkinter.ttk as ttk
 
 import sys
 import time
-from widgets import ScrollFrame, SubscriptionFrame, MessageFrame
+from widgets import ScrollFrame, SubscriptionFrame
 from dialogs import AboutDialog
 from configuration_dialog import ConfigurationWindow
 from config_handler import ConfigHandler
@@ -112,7 +112,7 @@ class App:
         self.header_frame = ttk.Frame(self.main_window_frame, height=35)
         self.header_frame.pack(anchor="w", side=tk.TOP, fill=tk.Y, padx=3, pady=3)
 
-        self.connection_selector = ttk.Combobox(self.header_frame, width=30)
+        self.connection_selector = ttk.Combobox(self.header_frame, width=30, exportselection=False)
         self.connection_selector.pack(side=tk.LEFT, padx=3, pady=3)
         self.connection_selector.configure(state="readonly")
         self.on_config_update()
@@ -142,7 +142,7 @@ class App:
         self.subscribe_bar_frame = ttk.Frame(self.subscribe_frame, height=1)
         self.subscribe_bar_frame.pack(anchor="nw", side=tk.TOP, fill=tk.X)
         # Subscribe selector combobox
-        self.subscribe_selector = ttk.Combobox(self.subscribe_bar_frame, width=30)
+        self.subscribe_selector = ttk.Combobox(self.subscribe_bar_frame, width=30, exportselection=False)
         self.subscribe_selector.pack(side=tk.LEFT, padx=3, pady=3)
         self.subscribe_selector["values"] = []
         # Subscribe button
@@ -182,10 +182,25 @@ class App:
                                                    sashpad=2)
         self.message_paned_window.pack(fill='both', padx=3, pady=3, expand=1)
         self.subscription_paned_window.add(self.message_paned_window)
+
+        # Incoming messages listbox
+        self.incoming_messages_frame = tk.Frame(self.subscribe_tab_bottom_frame)
+        self.incoming_messages_frame.pack(expand=1, fill='both')
+        self.incoming_messages_list = tk.Listbox(self.incoming_messages_frame, selectmode="browse",
+                                                 font="Courier 13") #TkFixedFont
+        self.incoming_messages_list.pack(side=tk.LEFT, fill='both', expand=1)
+        self.incoming_messages_list.bind("<<ListboxSelect>>", self.on_listbox_select)
+        self.incoming_messages_scrollbar = ttk.Scrollbar(self.incoming_messages_frame,
+                                                         orient='vertical',
+                                                         command=self.incoming_messages_list.yview)
+        self.incoming_messages_list['yscrollcommand'] = self.incoming_messages_scrollbar.set
+        self.incoming_messages_scrollbar.pack(side=tk.RIGHT, fill='y')
+        self.message_paned_window.add(self.incoming_messages_frame)
+
         # Incoming messages scrollable frame
-        self.incoming_messages = ScrollFrame(self.subscribe_tab_bottom_frame)
-        self.incoming_messages.pack()
-        self.message_paned_window.add(self.incoming_messages)
+        # self.incoming_messages = ScrollFrame(self.subscribe_tab_bottom_frame)
+        # self.incoming_messages.pack()
+        # self.message_paned_window.add(self.incoming_messages)
 
         # Message content frame
         self.message_content_frame = ttk.Frame(self.subscribe_tab_bottom_frame)
@@ -227,13 +242,6 @@ class App:
         self.content_interface_toggle(DISCONNECT)
         self.config_interface_toggle(DISCONNECT)
 
-        # TEST MESSAGE GENERATION
-        # for i in range(1, 10):
-        #     topic = "TESTTOPIC_{}".format(i)
-        #     content = "testcontent{}".format(i)
-        #     retained = True if i % 2 == 0 else False
-        #     self.add_new_message(MQTTMESSAGETEMPLATE(topic, content, i, retained), "whateverpattern")
-
     def on_client_disconnect(self):
         self.cleanup_subscriptions()
         self.content_interface_toggle(DISCONNECT)
@@ -268,8 +276,7 @@ class App:
             try:
                 self.mqtt_manager.add_subscription(topic_pattern=topic,
                                                    on_message_callback=partial(self.on_mqtt_message,
-                                                                               subscription_pattern=topic,
-                                                                               indicator_style=style_id))
+                                                                               subscription_pattern=topic))
             except Exception:
                 print("Failed to subscribe")
                 return
@@ -282,47 +289,45 @@ class App:
 
     def add_subscription_frame(self, topic, unsubscribe_callback, style_id):
         if topic not in self.subscription_frames:
-            # SubscriptionFrame(self.subscriptions_frame.scrollable_frame,
 
-            self.style.configure(style_id, background=self.get_color())
             self.subscription_frames[topic] = SubscriptionFrame(self.subscriptions_frame.viewPort,
                                                                 topic,
                                                                 unsubscribe_callback,
-                                                                style_id,
+                                                                self.get_color(),
                                                                 self.on_colour_change,
-                                                                height=60,
-                                                                )
+                                                                height=60)
             self.subscription_frames[topic].pack(fill=tk.X, expand=1, padx=2, pady=1)
 
-    def on_message_select(self, message_id):
-        if message_id != self.currently_selected_message:
-            try:
-                self.messages[self.currently_selected_message]["message_list_instance_ref"].on_unselect()
-            except Exception as e:
-                print("Exception deselecting message", e)
-            self.currently_selected_message = message_id
-            self.message_topic_label["state"] = "normal"
-            self.message_topic_label.delete(1.0, tk.END)
-            self.message_topic_label.insert(1.0, self.messages[message_id]["topic"])
-            self.message_topic_label["state"] = "disabled"
-            self.message_date_label["text"] = self.messages[message_id]["time_string"]
-            self.message_qos_label["text"] = "QoS: {}".format(self.messages[message_id]["qos"])
-            self.message_id_label["text"] = "ID: {}".format(message_id)
-            self.message_payload_box.configure(state="normal")
-            self.message_payload_box.delete(1.0, tk.END)
-            self.message_payload_box.insert(1.0, self.messages[message_id]["payload"])
-            self.message_payload_box.configure(state="disabled")
+    def on_listbox_select(self, event):
+        message_list_id = self.incoming_messages_list.curselection()
+        message_label = self.incoming_messages_list.get(message_list_id)
+        message_id = int(message_label[-5:])
+        if message_id != message_list_id:
+            print("message ID doesn't match list id", message_id, message_list_id)
+        self.currently_selected_message = message_id
+        self.message_topic_label["state"] = "normal"
+        self.message_topic_label.delete(1.0, tk.END)
+        self.message_topic_label.insert(1.0, self.messages[message_id]["topic"])
+        self.message_topic_label["state"] = "disabled"
+        self.message_date_label["text"] = self.messages[message_id]["time_string"]
+        self.message_qos_label["text"] = "QoS: {}".format(self.messages[message_id]["qos"])
+        self.message_id_label["text"] = "ID: {}".format(message_id)
+        self.message_payload_box.configure(state="normal")
+        self.message_payload_box.delete(1.0, tk.END)
+        self.message_payload_box.insert(1.0, self.messages[message_id]["payload"])
+        self.message_payload_box.configure(state="disabled")
 
     def on_unsubscribe(self, topic):
         self.subscription_frames.pop(topic, None)
         self.mqtt_manager.unsubscribe(topic)
 
-    def add_new_message(self, mqtt_message_object, indicator_style, subscription_pattern):
+    def add_new_message(self, mqtt_message_object, subscription_pattern):
         timestamp = time.time()
         # Theoretically there will be no race condition here?
-        self.message_id_counter += 1
         new_message_id = self.message_id_counter
+        self.message_id_counter += 1
         time_string = "{:.6f} - {}".format(round(timestamp, 6), datetime.fromtimestamp(timestamp).strftime("%Y/%m/%d, %H:%M:%S.%f"))
+        simple_time_string = datetime.fromtimestamp(timestamp).strftime("%H:%M:%S.%f")
         self.messages[new_message_id] = {
             "topic": mqtt_message_object.topic,
             "payload": mqtt_message_object.payload,
@@ -331,25 +336,25 @@ class App:
             "time_string": time_string,
             "retained": mqtt_message_object.retain
         }
-        self.messages[new_message_id]["message_list_instance_ref"] = MessageFrame(container=self.incoming_messages.viewPort,
-                                                                                  message_id=new_message_id,
-                                                                                  topic=mqtt_message_object.topic,
-                                                                                  timestamp=time_string,
-                                                                                  qos=mqtt_message_object.qos,
-                                                                                  retained=mqtt_message_object.retain,
-                                                                                  indicator_style=indicator_style,
-                                                                                  on_select_callback=self.on_message_select,
-                                                                                  height=40,
-                                                                                  takefocus=True)
-        self.messages[new_message_id]["message_list_instance_ref"].pack(fill=tk.X, expand=1, padx=2, pady=1)
-        if self.autoscroll:
-            self.on_message_select(new_message_id)
-            self.incoming_messages.to_bottom()
+        message_title = "{}  -  {:70} {:8} QoS: {} #{:05d}".format(simple_time_string,
+                                                                   mqtt_message_object.topic,
+                                                                   "RETAINED" if mqtt_message_object.retain else "",
+                                                                   mqtt_message_object.qos,
+                                                                   new_message_id)
 
-    def on_mqtt_message(self, client, userdata, msg, subscription_pattern, indicator_style):
+        self.incoming_messages_list.insert(tk.END, message_title)
+        color = self.subscription_frames[subscription_pattern].colour
+        self.incoming_messages_list.itemconfig(tk.END, bg=color)
+        if self.autoscroll:
+            self.incoming_messages_list.selection_clear(0, tk.END)
+            self.incoming_messages_list.activate(tk.END)
+            self.incoming_messages_list.see("end")
+            self.incoming_messages_list.selection_set("end", "end")
+            self.on_listbox_select(None)
+
+    def on_mqtt_message(self, client, userdata, msg, subscription_pattern):
         self.add_new_message(mqtt_message_object=msg,
-                             subscription_pattern=subscription_pattern,
-                             indicator_style=indicator_style)
+                             subscription_pattern=subscription_pattern)
 
     def on_config_update(self):
         connection_profile_list = sorted(self.config_handler.get_connection_profiles())
@@ -407,9 +412,10 @@ class App:
             self.color_carousel = 0
         return COLORS[self.color_carousel]
 
-    def on_colour_change(self, style_id, colour):
-        self.style.configure(style_id, background=colour)
-        pass
+    def on_colour_change(self):
+        for message_id, message_content in self.messages.items():
+            colour = self.subscription_frames[message_content["subscription_pattern"]].colour
+            self.incoming_messages_list.itemconfig(message_id, bg=colour)
 
     def autoscroll_toggle(self):
         self.autoscroll = not self.autoscroll
