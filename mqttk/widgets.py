@@ -331,7 +331,6 @@ class SubscribeTab(ttk.Frame):
         self.message_payload_box.configure(state="disabled")
         # Message decoder
 
-
     def interface_toggle(self, connection_state):
         # Subscribe tab items
         self.subscribe_button.configure(state="normal" if connection_state is CONNECT else "disabled")

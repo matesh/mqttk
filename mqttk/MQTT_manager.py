@@ -70,7 +70,7 @@ class MqttManager:
         self.client.loop_start()
         self.log.info("Paho MQTT client manager initialised")
 
-    def on_connect(self, client, userdata, flags, rc):
+    def on_connect(self, _, __, ___, rc):
         if rc == 0:
             self.log.info("Paho MQTT Client successfully connected")
             self.client.loop_start()
@@ -79,10 +79,11 @@ class MqttManager:
             self.log.error("Bad connection, returned code: {}".format(rc))
             self.on_disconnect_callback(notify="Failed to connect: {}".format(ERROR_CODES.get(rc, "Unknown error {}".format(rc))))
 
-    def on_disconnect(self, client, userdata, rc):
+    def on_disconnect(self, _, __, rc):
         self.log.info("Paho MQTT client disconnected")
         self.client.loop_stop(),
-        self.on_disconnect_callback()
+        if rc != 0:
+            self.on_disconnect_callback(notify="Disconnected, return code: {}".format(rc))
 
     def disconnect(self):
         self.log.info("Paho MQTT client manager instructed to disconnect")

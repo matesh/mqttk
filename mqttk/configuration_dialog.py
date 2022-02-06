@@ -296,7 +296,8 @@ class ConfigurationWindow(tk.Toplevel):
             self.config_handler.remove_connection_config(self.currently_selected_connection)
             self.profiles_widgets[self.currently_selected_connection].connection_name = self.profile_name_input.get()
             self.profiles_widgets[self.currently_selected_connection].connection["text"] = self.profile_name_input.get()
-            self.profiles_widgets[self.profile_name_input.get()] = self.profiles_widgets[self.currently_selected_connection]
+            self.profiles_widgets[self.profile_name_input.get()] = self.profiles_widgets[
+                self.currently_selected_connection]
             self.config_handler.remove_connection_config(self.currently_selected_connection)
             self.connection_selected(self.currently_selected_connection)
 
@@ -324,16 +325,20 @@ class ConfigurationWindow(tk.Toplevel):
             try:
                 self.profiles_widgets[self.currently_selected_connection].on_unselect()
             except Exception as e:
-                self.log.error("Exception deselecting profile widget", e, self.currently_selected_connection, connection_name)
+                self.log.error("Exception deselecting profile widget", e,
+                               self.currently_selected_connection, connection_name)
             try:
                 self.all_config_state_change("normal")
-                self.currently_selected_connection_dict = self.config_handler.get_connection_config_dict(connection_name).get("connection_parameters", {})
+                self.currently_selected_connection_dict = self.config_handler.get_connection_config_dict(
+                    connection_name).get("connection_parameters", {})
                 self.profile_name_input.delete(0, tk.END)
                 self.profile_name_input.insert(0, connection_name)
                 self.broker_address_input.delete(0, tk.END)
-                self.broker_address_input.insert(0, self.currently_selected_connection_dict.get("broker_addr", "mqtt.example.com"))
+                self.broker_address_input.insert(0, self.currently_selected_connection_dict.get("broker_addr",
+                                                                                                "mqtt.example.com"))
                 self.broker_port_name_input.delete(0, tk.END)
-                self.broker_port_name_input.insert(0, self.currently_selected_connection_dict.get("broker_port", "1883"))
+                self.broker_port_name_input.insert(0, self.currently_selected_connection_dict.get("broker_port",
+                                                                                                  "1883"))
                 self.client_id_input.delete(0, tk.END)
                 self.client_id_input.insert(0, self.currently_selected_connection_dict.get("client_id", "MQTTk_Client"))
                 self.username_input.delete(0, tk.END)
@@ -390,7 +395,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.cl_key_file_input.configure(state=clk)
         self.cl_key_browser_button.configure(state=clk)
 
-    def ssl_state_change(self, event):
+    def ssl_state_change(self, _):
         if self.ssl_state_input.get() == "Disabled" or self.ssl_state_input.get() == "CA signed server certificate":
             self.cert_state_change("disabled", "disabled", "disabled")
         elif self.ssl_state_input.get() == "CA certificate file":

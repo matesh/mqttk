@@ -11,7 +11,7 @@ from dialogs import AboutDialog, SplashScreen
 from configuration_dialog import ConfigurationWindow
 from config_handler import ConfigHandler
 from MQTT_manager import MqttManager
-from paho.mqtt.client import MQTT_LOG_ERR, MQTT_LOG_INFO, MQTT_LOG_NOTICE, MQTT_LOG_WARNING, MQTT_LOG_DEBUG
+from paho.mqtt.client import MQTT_LOG_ERR, MQTT_LOG_INFO, MQTT_LOG_NOTICE, MQTT_LOG_WARNING
 
 
 COLOURS = ['#00aedb', '#28b463', '#a569bd', '#41ead4', '#e8f8c1', '#d6ccf9', '#74a3f4',
@@ -52,7 +52,7 @@ class PotatoLog:
         message_level = "[i]"
         self.add_message(message_level, *args)
 
-    def on_paho_log(self, client, userdata, level, buf):
+    def on_paho_log(self, _, __, level, buf):
         if level == MQTT_LOG_INFO:
             self.info("[M] " + buf)
         elif level == MQTT_LOG_NOTICE:
@@ -61,8 +61,6 @@ class PotatoLog:
             self.warning("[M] " + buf)
         elif level == MQTT_LOG_ERR:
             self.error("[M] " + buf)
-        else:
-            self.info("[M] " + buf)
 
 
 class App:
@@ -76,10 +74,9 @@ class App:
         self.mqtt_manager = None
         self.current_connection_configuration = None
         self.color_carousel = -1
-        self.style_ids = 0
         self.mute_patterns = []
 
-        #Holds messages and relevant stuff
+        # Holds messages and relevant stuff
         # {
         #     "id": {
         #         "topic": "message topic",
@@ -132,7 +129,7 @@ class App:
         if sys.platform == "win32":
             self.style.theme_use('winnative')
         if sys.platform == "darwin":
-            self.style.theme_use("default") # aqua, clam, alt, default, classic
+            self.style.theme_use("default")  # aqua, clam, alt, default, classic
         self.style.configure("New.TFrame", background="#b3ffb5")
         self.style.configure("New.TLabel", background="#b3ffb5")
         self.style.configure("Selected.TFrame", background="#96bfff")
@@ -218,8 +215,10 @@ class App:
             self.header_frame.interface_toggle(DISCONNECT)
             self.publish_frame.interface_toggle(DISCONNECT)
 
-        self.subscribe_frame.subscribe_selector.configure(values=self.current_connection_configuration.get("subscriptions", []))
-        self.subscribe_frame.subscribe_selector.set(self.config_handler.get_last_subscribe_used(self.header_frame.connection_selector.get()))
+        self.subscribe_frame.subscribe_selector.configure(values=self.current_connection_configuration.get(
+            "subscriptions", []))
+        self.subscribe_frame.subscribe_selector.set(self.config_handler.get_last_subscribe_used(
+            self.header_frame.connection_selector.get()))
 
     def on_publish(self, topic, payload, qos, retained):
         if self.mqtt_manager is not None:
@@ -238,8 +237,6 @@ class App:
     def add_subscription(self):
         topic = self.subscribe_frame.subscribe_selector.get()
         if topic != "" and topic not in self.subscription_frames:
-            self.style_ids += 1
-            style_id = "subscription{}.TLabel".format(self.style_ids)
             try:
                 self.mqtt_manager.add_subscription(topic_pattern=topic,
                                                    on_message_callback=partial(self.on_mqtt_message,
@@ -247,14 +244,14 @@ class App:
             except Exception as e:
                 self.log.exception("Failed to subscribe!", e)
                 return
-            self.add_subscription_frame(topic, self.on_unsubscribe, style_id)
+            self.add_subscription_frame(topic, self.on_unsubscribe)
             if self.subscribe_frame.subscribe_selector["values"] == "":
                 self.subscribe_frame.subscribe_selector["values"] = [topic]
             elif topic not in self.subscribe_frame.subscribe_selector['values']:
                 self.subscribe_frame.subscribe_selector['values'] += (topic,)
             self.config_handler.add_subscription_history(self.header_frame.connection_selector.get(), topic)
 
-    def add_subscription_frame(self, topic, unsubscribe_callback, style_id):
+    def add_subscription_frame(self, topic, unsubscribe_callback):
         if topic not in self.subscription_frames:
 
             self.subscription_frames[topic] = SubscriptionFrame(self.subscribe_frame.subscriptions_frame.viewPort,
@@ -278,7 +275,8 @@ class App:
         # Theoretically there will be no race condition here?
         new_message_id = self.message_id_counter
         self.message_id_counter += 1
-        time_string = "{:.6f} - {}".format(round(timestamp, 6), datetime.fromtimestamp(timestamp).strftime("%Y/%m/%d, %H:%M:%S.%f"))
+        time_string = "{:.6f} - {}".format(round(timestamp, 6),
+                                           datetime.fromtimestamp(timestamp).strftime("%Y/%m/%d, %H:%M:%S.%f"))
         simple_time_string = datetime.fromtimestamp(timestamp).strftime("%H:%M:%S.%f")
         self.messages[new_message_id] = {
             "topic": mqtt_message_object.topic,
@@ -297,7 +295,7 @@ class App:
         colour = self.subscription_frames[subscription_pattern].colour
         self.subscribe_frame.add_message(message_title, colour)
 
-    def on_mqtt_message(self, client, userdata, msg, subscription_pattern):
+    def on_mqtt_message(self, _, __, msg, subscription_pattern):
         if subscription_pattern in self.mute_patterns:
             return
         self.add_new_message(mqtt_message_object=msg,
@@ -308,7 +306,8 @@ class App:
         if len(connection_profile_list) != 0:
             self.header_frame.connection_selector.configure(values=connection_profile_list)
             if self.config_handler.get_last_used_connection() in connection_profile_list:
-                self.header_frame.connection_selector.current(connection_profile_list.index(self.config_handler.get_last_used_connection()))
+                self.header_frame.connection_selector.current(
+                    connection_profile_list.index(self.config_handler.get_last_used_connection()))
             else:
                 self.header_frame.connection_selector.current(0)
 
@@ -347,7 +346,8 @@ class App:
     def on_colour_change(self):
         for message_id in list(self.messages.keys()):
             try:
-                subscription_frame = self.subscription_frames.get(self.messages[message_id]["subscription_pattern"], None)
+                subscription_frame = self.subscription_frames.get(
+                    self.messages[message_id]["subscription_pattern"], None)
                 if subscription_frame is not None:
                     self.subscribe_frame.incoming_messages_list.itemconfig(message_id, bg=subscription_frame.colour)
             except Exception as e:
@@ -368,4 +368,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)
     root.mainloop()
-
