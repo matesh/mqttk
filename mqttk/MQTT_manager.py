@@ -13,9 +13,10 @@ SSL_LIST = ["Disabled", "CA signed server certificate", "CA certificate file", "
 
 
 class MqttManager:
-    def __init__(self, connection_configuration, on_connect_callback, on_disconnect_callback):
+    def __init__(self, connection_configuration, on_connect_callback, on_disconnect_callback, logger):
         self.on_connect_callback = on_connect_callback
         self.on_disconnect_callback = on_disconnect_callback
+        self.log = logger
 
         self.client = Client(connection_configuration["client_id"],
                              clean_session=True,
@@ -57,29 +58,32 @@ class MqttManager:
                             port=int(connection_configuration.get("broker_port", "")),
                             keepalive=int(connection_configuration.get("keepalive", 60)))
         self.client.loop_start()
-
-        print("MQTT MANAGER INITIALISED")
+        self.log.info("Paho MQTT client manager initialised")
 
     def on_connect(self, client, userdata, flags, rc):
-        print("CLIENT CONNECTED")
+        self.log.info("Paho MQTT Client successfully connected")
         self.client.loop_start()
         self.on_connect_callback()
 
     def on_disconnect(self, client, userdata, rc):
-        print("CLIENT DISCONNECTED")
+        self.log.info("Paho MQTT client disconnected")
         self.client.loop_stop(),
         self.on_disconnect_callback()
 
     def disconnect(self):
+        self.log.info("Paho MQTT client manager instructed to disconnect")
         self.client.disconnect()
 
     def add_subscription(self, topic_pattern, on_message_callback):
+        self.log.info("MQTT client manager adding subscription", topic_pattern)
         self.client.subscribe(topic_pattern)
         self.client.message_callback_add(topic_pattern, on_message_callback)
 
     def unsubscribe(self, topic_filter):
+        self.log.info("MQTT client manager unsubscribing", topic_filter)
         self.client.unsubscribe(topic_filter)
         self.client.message_callback_remove(topic_filter)
 
     def publish(self, topic, payload, qos, retained):
+        self.log.info("Publish", topic)
         self.client.publish(topic, payload, qos, retained)

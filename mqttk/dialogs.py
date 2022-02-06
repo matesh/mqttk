@@ -87,3 +87,6 @@ class PublishNameDialog(tk.Toplevel):
     def on_destroy(self, *args, **kwargs):
         self.grab_release()
         self.destroy()
+
+
+#TODO splash screen

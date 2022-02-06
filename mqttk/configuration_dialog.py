@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+import traceback
 from tkinter import filedialog
 from pathlib import Path
 from widgets import ScrollFrame, ConnectionFrame
@@ -30,13 +31,14 @@ def validate_name(name, name_list):
 
 
 class ConfigurationWindow(tk.Toplevel):
-    def __init__(self, master=None, config_handler=None, config_update_callback=None):
+    def __init__(self, master=None, config_handler=None, config_update_callback=None, logger=None):
         super().__init__(master=master)
         self.master = master
         self.config_handler = config_handler
         self.currently_selected_connection = None
         self.currently_selected_connection_dict = {}
         self.config_update_callback = config_update_callback
+        self.log = logger
 
         self.title("Connection configuration")
         width = 1000
@@ -302,7 +304,6 @@ class ConfigurationWindow(tk.Toplevel):
     def browse_file(self, target_entry):
         target_text = filedialog.askopenfilename(initialdir=str(Path.home()),
                                                  title="Select CA file")
-        print(target_text)
         target_entry.delete(0, tk.END)
         target_entry.insert(0, target_text)
 
@@ -324,7 +325,7 @@ class ConfigurationWindow(tk.Toplevel):
             try:
                 self.profiles_widgets[self.currently_selected_connection].on_unselect()
             except Exception as e:
-                print("Exception deselecting profile widget", e, self.currently_selected_connection, connection_name)
+                self.log.error("Exception deselecting profile widget", e, self.currently_selected_connection, connection_name)
             try:
                 self.all_config_state_change("normal")
                 self.currently_selected_connection_dict = self.config_handler.get_connection_config_dict(connection_name).get("connection_parameters", {})
@@ -366,7 +367,7 @@ class ConfigurationWindow(tk.Toplevel):
                 self.cl_key_file_input.insert(0, self.currently_selected_connection_dict.get("cl_key", ""))
             except Exception as e:
                 self.all_config_state_change("disabled")
-                print("Failed to load connection!", e)
+                self.log.exception("Failed to load connection!", e, traceback.print_exc())
             else:
                 self.currently_selected_connection = connection_name
                 self.all_config_state_change("normal")

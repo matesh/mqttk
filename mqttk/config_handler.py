@@ -9,7 +9,7 @@ SAVE = "save"
 
 
 class ConfigHandler:
-    def __init__(self):
+    def __init__(self, logger):
         """
         Config handler.
 
@@ -56,28 +56,44 @@ class ConfigHandler:
         """
         self.configuration_dict = {}
         self.wont_save = False
-        self.config_file_manager(LOAD)
         self.first_start = True
+        self.log = logger
+        self.config_file_manager(LOAD)
+        print("Confighandlerinint")
 
     def config_file_manager(self, action):
+        if self.wont_save:
+            return
         if sys.platform.startswith("win"):
+            if self.first_start:
+                self.log.info("Windoze platform detected")
             appdata_dir = os.getenv('LOCALAPPDATA')
             config_dir = os.path.join(appdata_dir, "MQTTk")
             config_file = os.path.join(appdata_dir, "MQTTk", "MQTTk-config.json")
 
         elif sys.platform.startswith("linux"):
+            if self.first_start:
+                self.log.info("Linux platform detected")
             self.configuration_dict = {}
             home_dir = str(Path.home())
             config_dir = os.path.join(home_dir, ".config", "MQTTk")
             config_file = os.path.join(home_dir, ".config", "MQTTk", "MQTTk-config.json")
 
         elif sys.platform.startswith("darwin"):
+            if self.first_start:
+                print("Firststart")
+                self.log.info("MacOS platform detected")
             home_dir = str(Path.home())
             config_dir = os.path.join(home_dir, "Library", "ApplicationSupport", "MQTTk")
             config_file = os.path.join(home_dir, "Library", "ApplicationSupport", "MQTTk", "MQTTk-config.json")
         else:
+            self.log.warning("Unsupported platform detected. Configuration file won't be saved! Use this thing at your own risk :(")
             self.wont_save = True
-            raise AssertionError
+
+        self.first_start = False
+
+        if self.wont_save:
+            return
 
         if not os.path.isfile(config_file):
             self.first_start = True
@@ -93,13 +109,13 @@ class ConfigHandler:
                 try:
                     self.configuration_dict = json.loads(configuration)
                 except Exception as e:
-                    print("Failed to load config", e)
+                    self.log.error("Failed to load config", e)
             else:
                 with open(config_file, "w") as config_file:
                     try:
                         config_string = json.dumps(self.configuration_dict, indent=2)
                     except Exception as e:
-                        print("Failed to save configuration", e)
+                        self.log.error("Failed to save configuration", e)
                     else:
                         config_file.write(config_string)
 
@@ -156,7 +172,7 @@ class ConfigHandler:
         try:
             self.configuration_dict["connections"][connection]["stored_publishes"].pop(name, None)
         except Exception as e:
-            print("Failed to remove history publish item", e, connection, name)
+            self.log.warning("Failed to remove history publish item", e, connection, name)
 
     def get_publish_history(self, connection):
         return self.configuration_dict["connections"].get(connection, {}).get("stored_publishes", {})
@@ -171,7 +187,7 @@ class ConfigHandler:
                 self.configuration_dict["connections"][connection]["stored_publishes"][name] = config
             self.config_file_manager(SAVE)
         except Exception as e:
-            print("Exception saving publish history config", e)
+            self.log.warning("Exception saving publish history config", e)
 
     def get_publish_topic_history(self, connection):
         return self.configuration_dict["connections"].get(connection, {}).get("publish_topics", [])
@@ -190,7 +206,7 @@ class ConfigHandler:
             self.config_file_manager(SAVE)
             return new
         except Exception as e:
-            print("Error saving publish topic history item", e)
+            self.log.error("Error saving publish topic history item", e)
         self.config_file_manager(SAVE)
 
     def get_last_publish_topic(self, connection):

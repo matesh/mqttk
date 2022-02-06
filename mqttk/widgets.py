@@ -13,14 +13,25 @@ QOS_NAMES = {
     "QoS 2": 2
 }
 
+
 class SubscriptionFrame(ttk.Frame):
-    def __init__(self, container, topic, unsubscribe_callback, colour, on_colour_change, *args, **kwargs):
+    def __init__(self,
+                 container,
+                 topic,
+                 unsubscribe_callback,
+                 colour,
+                 on_colour_change,
+                 mute_callback,
+                 *args, **kwargs):
         super().__init__(container, *args, **kwargs)
         self.container = container
         self.topic = topic
         self.colour = colour
         self.unsubscribe_callback = unsubscribe_callback
         self.on_colour_change_callback = on_colour_change
+        self.mute_callback = mute_callback
+        self.mute_state = False
+
         self["relief"] = "groove"
         self["borderwidth"] = 2
 
@@ -36,9 +47,18 @@ class SubscriptionFrame(ttk.Frame):
         self.unsubscribe_button.pack(side=tk.RIGHT, padx=2, pady=2)
         self.unsubscribe_button["command"] = self.on_unsubscribe
 
+        self.mute_button = ttk.Button(self.options_frame, text="Mute")
+        self.mute_button.pack(side=tk.RIGHT, padx=4, pady=4)
+        self.mute_button['command'] = self.on_mute
+
         self.colour_picker = ttk.Label(self.options_frame, width=2, background=colour)
         self.colour_picker.bind("<Button-1>", self.on_colour_change)
         self.colour_picker.pack(side=tk.LEFT)
+
+    def on_mute(self):
+        self.mute_state = not self.mute_state
+        self.mute_callback(self.topic, self.mute_state)
+        self.mute_button.configure(style="Pressed.TButton" if self.mute_state else "TButton")
 
     def on_unsubscribe(self):
         if self.unsubscribe_callback is not None:
@@ -163,18 +183,26 @@ class HeaderFrame(ttk.Frame):
         self.disconnect_button["command"] = app.on_disconnect_button
         self.disconnect_button.pack(side=tk.LEFT, expand=False, padx=3, pady=3)
 
+        self.connection_indicator = tk.Label(self, text="DISCONNECTED", bg="red")
+        self.connection_indicator.pack(side=tk.RIGHT, padx=5, pady=5)
+
     def interface_toggle(self, connection_state):
         self.connection_selector.configure(state="disabled" if connection_state is CONNECT else "readonly")
         self.config_window_button.configure(state="disabled" if connection_state is CONNECT else "normal")
         self.connect_button.configure(state="disabled" if connection_state is CONNECT else "normal")
         self.disconnect_button.configure(state="normal" if connection_state is CONNECT else "disabled")
 
+    def connection_indicator_toggle(self, connection_state):
+        self.connection_indicator.configure(text='CONNECTED' if connection_state == CONNECT else "DISCONNECTED",
+                                            bg="green" if connection_state == CONNECT else "red")
+
 
 class SubscribeTab(ttk.Frame):
-    def __init__(self, master, app, *args, **kwargs):
+    def __init__(self, master, app, log, *args, **kwargs):
         super().__init__(master=master, *args, **kwargs)
 
         self.get_message_data = app.get_message_details
+        self.log = log
 
         # Subscribe frame
         self.subscribe_bar_frame = ttk.Frame(self, height=1)
@@ -292,7 +320,7 @@ class SubscribeTab(ttk.Frame):
         try:
             message_label = self.incoming_messages_list.get(message_list_id)
         except Exception as e:
-            print("Failed to get message from incoming message list (maybe empty?)", message_list_id)
+            self.log.warning("Failed to get message from incoming message list (maybe empty?)", message_list_id)
             message_label = None
         if message_label is None:
             message_id = 0
@@ -385,7 +413,7 @@ class PublishHistoryFrame(ttk.Frame):
 
 
 class PublishTab(ttk.Frame):
-    def __init__(self, master, app, *args, **kwargs):
+    def __init__(self, master, app, log, *args, **kwargs):
         super().__init__(master=master, *args, **kwargs)
 
         self.app_root = app.root
@@ -394,6 +422,7 @@ class PublishTab(ttk.Frame):
         self.retained_state = False
         self.current_connection = None
         self.topic_history = []
+        self.log = log
 
         self.current_publish_history_selected = None  # Reference to the selected PublishHistoryFrame
         self.publish_history_frames = {}  # publish history name to object reference
@@ -462,7 +491,7 @@ class PublishTab(ttk.Frame):
         try:
             self.publish(topic, payload, qos, retained)
         except Exception as e:
-            print("Failed to publish!", e, topic, payload, qos, retained)
+            self.log.exception("Failed to publish!", e, topic, payload, qos, retained)
 
     def on_publish_button(self, *args, **kwargs):
         if self.publish_topic_selector.get() != "":
@@ -515,7 +544,6 @@ class PublishTab(ttk.Frame):
             "payload": self.payload_editor.get(1.0, tk.END)
         }
         self.config_handler.save_publish_history_item(self.current_connection, new_name, new_config)
-        print(new_name, self.current_publish_history_selected)
         if self.current_publish_history_selected is None or self.current_publish_history_selected.name != new_name:
             self.add_new_publish_history_item(new_name, new_config)
             self.publish_history_frames[new_name].on_select()
@@ -546,7 +574,7 @@ class PublishTab(ttk.Frame):
             try:
                 self.selected_history_unselect_callback()
             except Exception as e:
-                print("Failed to deselect item, maybe no longer present?", e)
+                self.log.warning("Failed to deselect item, maybe no longer present?", e)
         self.selected_history_unselect_callback = history_item.on_unselect
         self.publish_topic_selector.set(history_item.configuration["topic"])
         self.qos_selector.current(int(history_item.configuration["qos"]))
@@ -571,3 +599,14 @@ class PublishTab(ttk.Frame):
         self.retained_button.configure(state="normal" if connection_state is CONNECT else "disabled")
         self.qos_selector.configure(state="readonly" if connection_state is CONNECT else "disabled")
         self.publish_topic_selector.configure(state="normal" if connection_state is CONNECT else "disabled")
+
+
+class LogTab(ttk.Frame):
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master=master, *args, **kwargs)
+
+        self.log_output = ScrolledText(self, font="Courier 14")
+        self.log_output.pack(fill='both', expand=1, padx=3, pady=3)
+
+    def add_message(self, message):
+        self.log_output.insert(tk.END, message)
