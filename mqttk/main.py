@@ -17,10 +17,8 @@ from MQTT_manager import MqttManager
 CONNECT = "connected"
 DISCONNECT = "disconnected"
 
-COLORS = ['#00aedb', '#f37735', '#ffc425', '#f14e5e', '#009b0a',
-          '#28b463', '#5dade2', '#a569bd', '#fbff12', '#41ead4',
-          '#e8f8c1', '#d6ccf9', '#a8a5ec', '#74a3f4', '#5e999a',
-          '#4b8d6b', '#d5573b', '#885053', '#94c9a9', '#c6ecae', '#aa9fb1']
+COLORS = ['#00aedb', '#28b463', '#a569bd', '#41ead4', '#e8f8c1', '#d6ccf9', '#74a3f4',
+          '#5e999a', '#885053', '#009b0a']
 
 
 class App:
@@ -66,8 +64,8 @@ class App:
 
         #setting window size
         if out_of_bounds:
-            width = 1026
-            height = 707
+            width = 1300
+            height = 900
             alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
             root.geometry(alignstr)
         else:
@@ -252,8 +250,11 @@ class App:
         #TODO connection indicator
 
     def on_connect_button(self):
+        self.current_connection_configuration = self.config_handler.get_connection_config_dict(
+            self.connection_selector.get())
+        if not self.current_connection_configuration:
+            return
         self.config_interface_toggle(CONNECT)
-        self.current_connection_configuration = self.config_handler.get_connection_config_dict(self.connection_selector.get())
         try:
             self.mqtt_manager = MqttManager(self.current_connection_configuration["connection_parameters"],
                                             self.on_client_connect,
@@ -413,9 +414,13 @@ class App:
         return COLORS[self.color_carousel]
 
     def on_colour_change(self):
-        for message_id, message_content in self.messages.items():
-            colour = self.subscription_frames[message_content["subscription_pattern"]].colour
-            self.incoming_messages_list.itemconfig(message_id, bg=colour)
+        for message_id in list(self.messages.keys()):
+            try:
+                subscription_frame = self.subscription_frames.get(self.messages[message_id]["subscription_pattern"], None)
+                if subscription_frame is not None:
+                    self.incoming_messages_list.itemconfig(message_id, bg=subscription_frame.colour)
+            except Exception as e:
+                print("Failed to chanage message colour", e)
 
     def autoscroll_toggle(self):
         self.autoscroll = not self.autoscroll
