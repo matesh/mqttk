@@ -43,3 +43,47 @@ class AboutDialog(tk.Toplevel):
     def on_destroy(self, *args, **kwargs):
         self.grab_release()
         self.destroy()
+
+
+class PublishNameDialog(tk.Toplevel):
+    def __init__(self, master, current_value, name_callback):
+        super().__init__(master=master)
+        self.master = master
+        self.title("Please enter publish template name")
+        self.name_callback = name_callback
+        width = 250
+        height = 140
+        screenwidth = self.winfo_screenwidth()
+        screenheight = self.winfo_screenheight()
+        alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+        self.resizable(False, False)
+        self.geometry(alignstr)
+        self.protocol("WM_DELETE_WINDOW", self.on_destroy)
+
+        self.dialog_frame = ttk.Frame(self)
+        self.dialog_frame.pack(fill='both', expand=1)
+
+        self.instruction_text = ttk.Label(self.dialog_frame, text="Please enter publish template name".format(version), anchor='n', justify=tk.CENTER)
+        self.instruction_text.pack(side=tk.TOP, fill='x', padx=10, pady=10)
+
+        self.name_input = ttk.Entry(self.dialog_frame)
+        self.name_input.insert(0, current_value)
+        self.name_input.pack(expand=1, fill='x', side=tk.TOP, padx=10, pady=10)
+
+        self.buttons_frame = ttk.Frame(self.dialog_frame)
+        self.buttons_frame.pack(side=tk.TOP, fill='x', expand=1)
+        self.ok_button = ttk.Button(self.dialog_frame, text="OK")
+        self.ok_button.pack(side=tk.RIGHT, pady=10, padx=20)
+        self.ok_button["command"] = self.on_save
+        self.cancel_button = ttk.Button(self.dialog_frame, text="Cancel")
+        self.cancel_button.pack(side=tk.LEFT, pady=10, padx=20)
+        self.cancel_button["command"] = self.on_destroy
+
+    def on_save(self, ):
+        if self.name_input.get() != "":
+            self.name_callback(self.name_input.get())
+        self.on_destroy()
+
+    def on_destroy(self, *args, **kwargs):
+        self.grab_release()
+        self.destroy()

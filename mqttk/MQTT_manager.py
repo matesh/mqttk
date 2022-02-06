@@ -80,3 +80,6 @@ class MqttManager:
     def unsubscribe(self, topic_filter):
         self.client.unsubscribe(topic_filter)
         self.client.message_callback_remove(topic_filter)
+
+    def publish(self, topic, payload, qos, retained):
+        self.client.publish(topic, payload, qos, retained)

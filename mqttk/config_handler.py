@@ -4,7 +4,6 @@ from pathlib import Path
 import json
 
 
-
 LOAD = "load"
 SAVE = "save"
 
@@ -27,14 +26,16 @@ class ConfigHandler:
                     "connection_parameter: value
                 },
                 "subscriptions": [] list of previous subscriptions
-                "publishes": [] list of previous publishes
-                "stored_publishes": [
-                    {
+                "publish_topics": [] list of previous publishes
+                "stored_publishes": {
+                    "name": {
                         "topic": topic,
                         "qos": qos,
                         "payload": payload,
                         "retained": retained
-                ]
+                },
+                "last_publish_used": last publish,
+                "last_subscribe_used: last subscribe
             }
         }
 
@@ -119,8 +120,8 @@ class ConfigHandler:
             self.configuration_dict["connections"][connection_name] = {
                 "connection_parameters": {},
                 "subscriptions": [],
-                "publishes": [],
-                "stored_publishes": []
+                "publish_topics": [],
+                "stored_publishes": {}
             }
             self.configuration_dict["connections"][connection_name]["connection_parameters"] = connection_config
         self.config_file_manager(SAVE)
@@ -128,6 +129,7 @@ class ConfigHandler:
     def add_subscription_history(self, connection, topic):
         if topic not in self.configuration_dict["connections"][connection]["subscriptions"]:
             self.configuration_dict["connections"][connection]["subscriptions"].append(topic)
+        self.configuration_dict["connections"][connection]["last_subscribe_used"] = topic
         self.config_file_manager(SAVE)
 
     def get_window_geometry(self):
@@ -150,17 +152,49 @@ class ConfigHandler:
         self.configuration_dict["autoscroll"] = value
         self.config_file_manager(SAVE)
 
-    def add_publish_history(self, topic):
-        pass
+    def delete_publish_history_item(self, connection, name):
+        try:
+            self.configuration_dict["connections"][connection]["stored_publishes"].pop(name, None)
+        except Exception as e:
+            print("Failed to remove history publish item", e, connection, name)
 
-    def add_publish_template(self, publish_template):
-        pass
+    def get_publish_history(self, connection):
+        return self.configuration_dict["connections"].get(connection, {}).get("stored_publishes", {})
 
-    def get_subscription_history(self):
-        pass
+    def save_publish_history_item(self, connection, name, config):
+        try:
+            if "stored_publishes" not in self.configuration_dict["connections"][connection]:
+                self.configuration_dict["connections"][connection]["stored_publishes"] = {
+                    name: config
+                }
+            else:
+                self.configuration_dict["connections"][connection]["stored_publishes"][name] = config
+            self.config_file_manager(SAVE)
+        except Exception as e:
+            print("Exception saving publish history config", e)
 
-    def get_publish_history(self):
-        pass
+    def get_publish_topic_history(self, connection):
+        return self.configuration_dict["connections"].get(connection, {}).get("publish_topics", [])
 
-    def get_publish_templates(self):
-        pass
+    def save_publish_topic_history_item(self, connection, topic):
+        try:
+            new = True
+            if "publish_topics" not in self.configuration_dict["connections"][connection]:
+                self.configuration_dict["connections"][connection]["publish_topics"] = [topic]
+            else:
+                if topic not in self.configuration_dict["connections"][connection]["publish_topics"]:
+                    self.configuration_dict["connections"][connection]["publish_topics"].append(topic)
+                else:
+                    new = False
+            self.configuration_dict["connections"][connection]["last_publish_used"] = topic
+            self.config_file_manager(SAVE)
+            return new
+        except Exception as e:
+            print("Error saving publish topic history item", e)
+        self.config_file_manager(SAVE)
+
+    def get_last_publish_topic(self, connection):
+        return self.configuration_dict.get("connections", {}).get(connection, {}).get("last_publish_used", "")
+
+    def get_last_subscribe_used(self, connection):
+        return self.configuration_dict.get("connections", {}).get(connection, {}).get("last_subscribe_used", "")
