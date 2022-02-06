@@ -197,6 +197,8 @@ class HeaderFrame(ttk.Frame):
 
         self.connection_indicator = tk.Label(self, text="DISCONNECTED", bg="red")
         self.connection_indicator.pack(side=tk.RIGHT, padx=5, pady=5)
+        self.connection_error_notification = ttk.Label(self, foreground='red')
+        self.connection_error_notification.pack(side=tk.RIGHT, expand=1, fill='x')
 
     def interface_toggle(self, connection_state):
         self.connection_selector.configure(state="disabled" if connection_state is CONNECT else "readonly")

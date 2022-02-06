@@ -11,6 +11,7 @@ from dialogs import AboutDialog, SplashScreen
 from configuration_dialog import ConfigurationWindow
 from config_handler import ConfigHandler
 from MQTT_manager import MqttManager
+from paho.mqtt.client import MQTT_LOG_ERR, MQTT_LOG_INFO, MQTT_LOG_NOTICE, MQTT_LOG_WARNING, MQTT_LOG_DEBUG
 
 
 COLOURS = ['#00aedb', '#28b463', '#a569bd', '#41ead4', '#e8f8c1', '#d6ccf9', '#74a3f4',
@@ -50,6 +51,18 @@ class PotatoLog:
     def info(self, *args):
         message_level = "[i]"
         self.add_message(message_level, *args)
+
+    def on_paho_log(self, client, userdata, level, buf):
+        if level == MQTT_LOG_INFO:
+            self.info("[M] " + buf)
+        elif level == MQTT_LOG_NOTICE:
+            self.info("[M] " + buf)
+        elif level == MQTT_LOG_WARNING:
+            self.warning("[M] " + buf)
+        elif level == MQTT_LOG_ERR:
+            self.error("[M] " + buf)
+        else:
+            self.info("[M] " + buf)
 
 
 class App:
@@ -117,7 +130,6 @@ class App:
         # Some minimal styling stuff
         self.style = ttk.Style()
         if sys.platform == "win32":
-            print(self.style.theme_names())
             self.style.theme_use('winnative')
         if sys.platform == "darwin":
             self.style.theme_use("default") # aqua, clam, alt, default, classic
@@ -171,7 +183,9 @@ class App:
         self.header_frame.interface_toggle(DISCONNECT)
         self.publish_frame.interface_toggle(DISCONNECT)
 
-    def on_client_disconnect(self):
+    def on_client_disconnect(self, notify=None):
+        if notify is not None:
+            self.header_frame.connection_error_notification["text"] = notify
         self.cleanup_subscriptions()
         try:
             self.subscribe_frame.interface_toggle(DISCONNECT)
@@ -187,11 +201,13 @@ class App:
         self.header_frame.connection_indicator_toggle(CONNECT)
 
     def on_connect_button(self):
+        self.header_frame.connection_error_notification["text"] = ""
         self.current_connection_configuration = self.config_handler.get_connection_config_dict(
             self.header_frame.connection_selector.get())
         if not self.current_connection_configuration:
             return
         self.header_frame.interface_toggle(CONNECT)
+        self.config_handler.update_last_used_connection(self.header_frame.connection_selector.get())
         try:
             self.mqtt_manager = MqttManager(self.current_connection_configuration["connection_parameters"],
                                             self.on_client_connect,
@@ -308,6 +324,7 @@ class App:
         self.subscribe_frame.flush_messages()
 
     def spawn_configuration_window(self):
+        self.header_frame.connection_error_notification["text"] = ""
         configuration_window = ConfigurationWindow(self.root, self.config_handler, self.on_config_update, self.log)
         configuration_window.transient(self.root)
         configuration_window.wait_visibility()

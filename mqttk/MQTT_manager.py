@@ -11,6 +11,14 @@ PROTOCOL_LOOKUP = {
 
 SSL_LIST = ["Disabled", "CA signed server certificate", "CA certificate file", "Self-signed certificate"]
 
+ERROR_CODES = {
+    1: "Incorrect protocol version",
+    2: "Invalid client identifier",
+    3: "Server unavailable",
+    4: "Bad username or password",
+    5: "Not authorised"
+}
+
 
 class MqttManager:
     def __init__(self, connection_configuration, on_connect_callback, on_disconnect_callback, logger):
@@ -23,6 +31,8 @@ class MqttManager:
                              userdata=None,
                              protocol=PROTOCOL_LOOKUP.get(connection_configuration["mqtt_version"], MQTTv311),
                              transport="tcp")
+
+        self.client.on_log = self.log.on_paho_log
 
         if connection_configuration.get("user", "") != "":
             self.client.username_pw_set(username=connection_configuration["user"],
@@ -61,9 +71,13 @@ class MqttManager:
         self.log.info("Paho MQTT client manager initialised")
 
     def on_connect(self, client, userdata, flags, rc):
-        self.log.info("Paho MQTT Client successfully connected")
-        self.client.loop_start()
-        self.on_connect_callback()
+        if rc == 0:
+            self.log.info("Paho MQTT Client successfully connected")
+            self.client.loop_start()
+            self.on_connect_callback()
+        else:
+            self.log.error("Bad connection, returned code: {}".format(rc))
+            self.on_disconnect_callback(notify="Failed to connect: {}".format(ERROR_CODES.get(rc, "Unknown error {}".format(rc))))
 
     def on_disconnect(self, client, userdata, rc):
         self.log.info("Paho MQTT client disconnected")

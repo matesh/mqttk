@@ -138,7 +138,7 @@ class ConfigHandler:
                 "publish_topics": [],
                 "stored_publishes": {}
             }
-            self.configuration_dict["connections"][connection_name]["connection_parameters"] = connection_config
+        self.configuration_dict["connections"][connection_name]["connection_parameters"] = connection_config
         self.config_file_manager(SAVE)
 
     def add_subscription_history(self, connection, topic):

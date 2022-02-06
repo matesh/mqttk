@@ -288,7 +288,6 @@ class ConfigurationWindow(tk.Toplevel):
             "cl_cert": self.cl_cert_file_input.get(),
             "cl_key": self.cl_key_file_input.get()
         }
-
         self.currently_selected_connection_dict = config_dict
         self.config_handler.save_connection_config(self.profile_name_input.get(), config_dict)
 
