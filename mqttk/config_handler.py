@@ -60,7 +60,6 @@ class ConfigHandler:
         self.first_start = True
         self.log = logger
         self.config_file_manager(LOAD)
-        print("Confighandlerinint")
 
     def config_file_manager(self, action):
         if self.wont_save:
@@ -82,7 +81,6 @@ class ConfigHandler:
 
         elif sys.platform.startswith("darwin"):
             if self.first_start:
-                print("Firststart")
                 self.log.info("MacOS platform detected")
             home_dir = str(Path.home())
             config_dir = os.path.join(home_dir, "Library", "ApplicationSupport", "MQTTk")
@@ -166,7 +164,7 @@ class ConfigHandler:
         return bool(self.configuration_dict.get("autoscroll", False))
 
     def save_autoscroll(self, value):
-        self.configuration_dict["autoscroll"] = value
+        self.configuration_dict["autoscroll"] = bool(value)
         self.config_file_manager(SAVE)
 
     def delete_publish_history_item(self, connection, name):

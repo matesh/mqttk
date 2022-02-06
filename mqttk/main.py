@@ -62,7 +62,6 @@ class App:
         self.last_used_connection = None
         self.mqtt_manager = None
         self.current_connection_configuration = None
-        self.autoscroll = self.config_handler.get_autoscroll()
         self.color_carousel = -1
         self.style_ids = 0
         self.mute_patterns = []
@@ -118,6 +117,7 @@ class App:
         # Some minimal styling stuff
         self.style = ttk.Style()
         if sys.platform == "win32":
+            print(self.style.theme_names())
             self.style.theme_use('winnative')
         if sys.platform == "darwin":
             self.style.theme_use("default") # aqua, clam, alt, default, classic
@@ -126,7 +126,6 @@ class App:
         self.style.configure("Selected.TFrame", background="#96bfff")
         self.style.configure("Selected.TLabel", background="#96bfff")
         self.style.configure("Retained.TLabel", background="#ffeeab")
-        self.style.configure("Pressed.TButton", relief="sunken")
 
         # ==================================== Menu bar ===============================================================
         self.menubar = tk.Menu(root)
@@ -154,6 +153,7 @@ class App:
 
         self.subscribe_frame = SubscribeTab(self.tabs, self, self.log)
         self.tabs.add(self.subscribe_frame, text="Subscribe")
+        self.subscribe_frame.autoscroll_state.set(int(self.config_handler.get_autoscroll()))
 
         # ====================================== Publish tab =========================================================
 
@@ -279,7 +279,7 @@ class App:
                                                                    new_message_id)
 
         colour = self.subscription_frames[subscription_pattern].colour
-        self.subscribe_frame.add_message(message_title, colour, self.autoscroll)
+        self.subscribe_frame.add_message(message_title, colour)
 
     def on_mqtt_message(self, client, userdata, msg, subscription_pattern):
         if subscription_pattern in self.mute_patterns:
@@ -336,14 +336,10 @@ class App:
             except Exception as e:
                 self.log.warning("Failed to change message colour!", e)
 
-    def autoscroll_toggle(self):
-        self.autoscroll = not self.autoscroll
-        self.subscribe_frame.autoscroll_button.configure(style="Pressed.TButton" if self.autoscroll else "TButton")
-
     def on_exit(self):
         self.on_disconnect_button()
         self.config_handler.save_window_geometry(self.root.geometry())
-        self.config_handler.save_autoscroll(self.autoscroll)
+        self.config_handler.save_autoscroll(self.subscribe_frame.autoscroll_state.get())
         root.after(100, root.destroy())
         # root.destroy()
 

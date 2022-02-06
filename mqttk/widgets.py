@@ -22,6 +22,7 @@ DECODER_OPTIONS = [
     "Hex formatter"
 ]
 
+
 class SubscriptionFrame(ttk.Frame):
     def __init__(self,
                  container,
@@ -55,7 +56,12 @@ class SubscriptionFrame(ttk.Frame):
         self.unsubscribe_button.pack(side=tk.RIGHT, padx=2, pady=2)
         self.unsubscribe_button["command"] = self.on_unsubscribe
 
-        self.mute_button = ttk.Button(self.options_frame, text="Mute")
+        self.mute_state_checkbutton = tk.IntVar()
+        self.mute_button = ttk.Checkbutton(self.options_frame,
+                                           text="Mute",
+                                           variable=self.mute_state_checkbutton,
+                                           onvalue=1,
+                                           offvalue=0)
         self.mute_button.pack(side=tk.RIGHT, padx=4, pady=4)
         self.mute_button['command'] = self.on_mute
 
@@ -64,9 +70,7 @@ class SubscriptionFrame(ttk.Frame):
         self.colour_picker.pack(side=tk.LEFT)
 
     def on_mute(self):
-        self.mute_state = not self.mute_state
-        self.mute_callback(self.topic, self.mute_state)
-        self.mute_button.configure(style="Pressed.TButton" if self.mute_state else "TButton")
+        self.mute_callback(self.topic, int(self.mute_state_checkbutton.get()))
 
     def on_unsubscribe(self):
         if self.unsubscribe_callback is not None:
@@ -229,10 +233,13 @@ class SubscribeTab(ttk.Frame):
         self.flush_messages_button.pack(side=tk.RIGHT, padx=3)
         self.flush_messages_button["command"] = app.flush_messages
         # Autoscroll checkbox
-        self.autoscroll_button = ttk.Checkbutton(self.subscribe_bar_frame, text="Autoscroll")
-        self.autoscroll_button.configure(style="Pressed.TButton" if app.autoscroll else "TButton")
-        self.autoscroll_button["command"] = app.autoscroll_toggle
-        self.autoscroll_button.pack(side=tk.RIGHT, padx=3)
+        self.autoscroll_state = tk.IntVar()
+        self.autoscroll_checkbox = ttk.Checkbutton(self.subscribe_bar_frame,
+                                                   text="Autoscroll",
+                                                   variable=self.autoscroll_state,
+                                                   offvalue=0,
+                                                   onvalue=1)
+        self.autoscroll_checkbox.pack(side=tk.RIGHT, padx=3)
 
         # Subscribe bottom part frame
         self.subscribe_tab_bottom_frame = ttk.Frame(self)
@@ -298,29 +305,30 @@ class SubscribeTab(ttk.Frame):
         # Message date label
         self.message_date_label = ttk.Label(self.message_date_and_qos_frame)
         self.message_date_label["text"] = "DATE"
-        self.message_date_label.pack(side=tk.LEFT, fill="x", padx=3, pady=3)
+        self.message_date_label.pack(side=tk.LEFT, padx=3, pady=3)
         # Message QoS label
         self.message_qos_label = ttk.Label(self.message_date_and_qos_frame, width=10)
         self.message_qos_label["text"] = "QOS"
         self.message_qos_label.pack(side=tk.RIGHT, padx=3, pady=3)
-        # Message Payload
-        self.message_payload_box = ScrolledText(self.message_content_frame, exportselection=False)
-        self.message_payload_box.pack(fill="both", expand=True)
-        self.message_payload_box.configure(state="disabled")
-        # Message decoder
-        self.decoder_selector_frame = ttk.Frame(self.message_content_frame)
-        self.decoder_selector_frame.pack(fill='x')
-        self.message_decoder_selector = ttk.Combobox(self.decoder_selector_frame,
+        # Decoder selector
+        self.message_decoder_selector = ttk.Combobox(self.message_date_and_qos_frame,
                                                      width=40,
                                                      state='readonly',
                                                      values=DECODER_OPTIONS,
                                                      exportselection=False)
         self.message_decoder_selector.bind()
         self.message_decoder_selector.pack(side=tk.RIGHT, padx=3, pady=3)
-        self.message_decoder_selector_label = ttk.Label(self.decoder_selector_frame, text="Message decoder")
+        self.message_decoder_selector_label = ttk.Label(self.message_date_and_qos_frame, text="Message decoder")
         self.message_decoder_selector_label.pack(side=tk.RIGHT, padx=3, pady=3)
         self.message_decoder_selector.current(0)
         self.message_decoder_selector.bind("<<ComboboxSelected>>", self.on_decoder_select)
+
+        # Message Payload
+        self.message_payload_box = ScrolledText(self.message_content_frame, exportselection=False)
+        self.message_payload_box.pack(fill="both", expand=True)
+        self.message_payload_box.configure(state="disabled")
+        # Message decoder
+
 
     def interface_toggle(self, connection_state):
         # Subscribe tab items
@@ -331,10 +339,10 @@ class SubscribeTab(ttk.Frame):
         self.on_message_select()
         pass
 
-    def add_message(self, message_title, colour, autoscroll):
+    def add_message(self, message_title, colour):
         self.incoming_messages_list.insert(tk.END, message_title)
         self.incoming_messages_list.itemconfig(tk.END, bg=colour)
-        if autoscroll:
+        if bool(self.autoscroll_state.get()):
             self.incoming_messages_list.selection_clear(0, tk.END)
             self.incoming_messages_list.activate(tk.END)
             self.incoming_messages_list.see("end")
@@ -411,12 +419,12 @@ class PublishHistoryFrame(ttk.Frame):
         self["borderwidth"] = 2
         self.bind("<Button-1>", self.on_select)
 
-        self.name_label = ttk.Label(self, text=name, justify=tk.LEFT)
-        self.name_label.pack(expand=1, fill="y", side=tk.TOP, padx=3, pady=3)
+        self.name_label = ttk.Label(self, text=name, justify="left")
+        self.name_label.pack(expand=1, fill="x", side=tk.TOP, padx=3, pady=3)
         self.name_label.bind("<Button-1>", self.on_select)
 
         self.publish_history_actions = ttk.Frame(self)
-        self.publish_history_actions.pack(side=tk.BOTTOM, fill='y', padx=3, pady=3)
+        self.publish_history_actions.pack(side=tk.TOP, fill='y', padx=3, pady=3)
         self.publish_history_actions.bind("<Button-1>", self.on_select)
 
         self.publish_button = ttk.Button(self.publish_history_actions, text="Publish")
@@ -463,7 +471,6 @@ class PublishTab(ttk.Frame):
         self.app_root = app.root
         self.config_handler = app.config_handler
         self.publish = app.on_publish
-        self.retained_state = False
         self.current_connection = None
         self.topic_history = []
         self.log = log
@@ -498,13 +505,17 @@ class PublishTab(ttk.Frame):
         self.save_publish_button.pack(side=tk.LEFT, padx=4, pady=4)
         self.save_publish_button["command"] = self.on_publish_save
 
-        self.retained_button = ttk.Button(self.publish_interface_actions, text="Retained")
-        self.retained_button.pack(side=tk.RIGHT, pady=4, padx=2)
-        self.retained_button['command'] = self.on_retained_button
+        self.retained_state_var = tk.IntVar()
+        self.retained_checkbox = ttk.Checkbutton(self.publish_interface_actions,
+                                                 text="Retained",
+                                                 onvalue=1,
+                                                 offvalue=0,
+                                                 variable=self.retained_state_var)
+        self.retained_checkbox.pack(side=tk.RIGHT, pady=4, padx=2)
 
         self.qos_selector = ttk.Combobox(self.publish_interface_actions,
                                          exportselection=False,
-                                         width=5,
+                                         width=7,
                                          values=list(QOS_NAMES.keys()))
         self.qos_selector.current(0)
         self.qos_selector.pack(side=tk.RIGHT, pady=4, padx=2)
@@ -513,21 +524,10 @@ class PublishTab(ttk.Frame):
         self.payload_editor.pack(fill="both", expand=1, side=tk.BOTTOM)
         self.publish_paned_window.add(self.publish_interface)
 
-    def update_retained_button(self):
-        if self.retained_state:
-            self.retained_button.configure(style="Pressed.TButton")
-        else:
-            self.retained_button.configure(style="TButton")
-
-    def on_retained_button(self):
-        self.retained_state = not self.retained_state
-        self.update_retained_button()
-
     def on_publish_history_delete(self, name):
         self.publish_history_frames[name].pack_forget()
         self.publish_history_frames[name].destroy()
         self.config_handler.delete_publish_history_item(self.current_connection, name)
-
 
     def publish_message(self, topic, payload, qos, retained):
         if topic not in self.topic_history:
@@ -542,8 +542,9 @@ class PublishTab(ttk.Frame):
             self.publish(self.publish_topic_selector.get(),
                          self.payload_editor.get(1.0, tk.END),
                          QOS_NAMES.get(self.qos_selector.get(), 0),
-                         bool(self.retained_state))
-            new = self.config_handler.save_publish_topic_history_item(self.current_connection, self.publish_topic_selector.get())
+                         bool(self.retained_state_var.get()))
+            new = self.config_handler.save_publish_topic_history_item(self.current_connection,
+                                                                      self.publish_topic_selector.get())
             if new:
                 self.publish_topic_selector['values'] += (self.publish_topic_selector.get(),)
 
@@ -584,7 +585,7 @@ class PublishTab(ttk.Frame):
         new_config = {
             "topic": self.publish_topic_selector.get(),
             "qos": QOS_NAMES.get(self.qos_selector.get(), 0),
-            "retained": self.retained_state,
+            "retained": bool(self.retained_state_var.get()),
             "payload": self.payload_editor.get(1.0, tk.END)
         }
         self.config_handler.save_publish_history_item(self.current_connection, new_name, new_config)
@@ -622,8 +623,7 @@ class PublishTab(ttk.Frame):
         self.selected_history_unselect_callback = history_item.on_unselect
         self.publish_topic_selector.set(history_item.configuration["topic"])
         self.qos_selector.current(int(history_item.configuration["qos"]))
-        self.retained_state = bool(history_item.configuration["retained"])
-        self.update_retained_button()
+        self.retained_state_var.set(history_item.configuration["retained"])
         self.payload_editor.delete(1.0, tk.END)
         self.payload_editor.insert(1.0, history_item.configuration["payload"])
         self.current_publish_history_selected = history_item
@@ -642,7 +642,7 @@ class PublishTab(ttk.Frame):
 
         self.publish_button.configure(state="normal" if connection_state is CONNECT else "disabled")
         self.save_publish_button.configure(state="normal" if connection_state is CONNECT else "disabled")
-        self.retained_button.configure(state="normal" if connection_state is CONNECT else "disabled")
+        self.retained_checkbox.configure(state="normal" if connection_state is CONNECT else "disabled")
         self.qos_selector.configure(state="readonly" if connection_state is CONNECT else "disabled")
         self.publish_topic_selector.configure(state="normal" if connection_state is CONNECT else "disabled")
 
@@ -650,9 +650,11 @@ class PublishTab(ttk.Frame):
 class LogTab(ttk.Frame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master=master, *args, **kwargs)
-
-        self.log_output = ScrolledText(self, font="Courier 14")
+        self.log_output = ScrolledText(self, font="Courier 14", exportselection=False, state='disabled')
         self.log_output.pack(fill='both', expand=1, padx=3, pady=3)
 
     def add_message(self, message):
+        self.log_output.configure(state="normal")
         self.log_output.insert(tk.END, message)
+        self.log_output.configure(state="disabled")
+
