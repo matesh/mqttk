@@ -56,71 +56,52 @@ class MessageFrame(ttk.Frame):
     def __init__(self, container, message_id, topic, timestamp, qos, retained, indicator_style,
                  on_select_callback=None, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
-        #TODO
-        # Add unique colour to each message:
-        # - Add frame here (tk.frame prolly for simplicity)
-        # - Get colour in args?
         self.container = container
         self.message_id = message_id
         self.on_select_callback = on_select_callback
         self["relief"] = "groove"
         self["borderwidth"] = 1
+        self.configure(style="New.TFrame")
+        self.bind("<Button-1>", self.on_click)
 
-        self.color_frame = ttk.Frame(self, width=10, style=indicator_style)
-        self.color_frame.pack(side=tk.LEFT, fill='y')
+        # self.color_frame = ttk.Frame(self, width=10, style=indicator_style)
+        # self.color_frame.pack(side=tk.LEFT, fill='y')
 
-        self.message_data_frame = ttk.Frame(self)
-        self.message_data_frame.pack(expand=1, fill='both', side=tk.RIGHT)
-
-        self.topic_quos_frame = ttk.Frame(self.message_data_frame, style="New.TFrame")
-        self.topic_quos_frame.bind("<Button-1>", self.on_click)
+        self.id_qos_label = ttk.Label(self, style=indicator_style, justify=tk.RIGHT)
+        self.id_qos_label["text"] = "{}    ID: {} \nQoS: {}".format("RETAINED" if retained else "",
+                                                                    message_id,
+                                                                    qos)
+        self.id_qos_label.pack(side=tk.RIGHT, pady=2, padx=2, fill='y')
 
         if sys.platform == "win32":
             font = "TkDefaultFont 10 bold"
-        if sys.platform == "darwin":
+        elif sys.platform == "darwin":
             font = "TkDefaultFont 12 bold"
+        else:
+            font = "TkDefaultFont"
 
-        self.topic_label = ttk.Label(self.topic_quos_frame, text=topic, style="New.TLabel", anchor='w', font=font)
+        self.topic_label = ttk.Label(self, text=topic, style="New.TLabel", anchor='w', font=font)
         self.topic_label.bind("<Button-1>", self.on_click)
-        self.topic_label.pack(side=tk.LEFT, expand=1, fill="x", padx=4, pady=2)
-        self.message_id_label = ttk.Label(self.topic_quos_frame, text="ID: {}".format(message_id), anchor="e", style="New.TLabel")
-        self.message_id_label.bind("<Button-1>", self.on_click)
-        self.message_id_label.pack(side=tk.RIGHT, padx=4, pady=2)
-        self.retained_label = ttk.Label(self.topic_quos_frame, text="Retained", style="Retained.TLabel", anchor='n')
-        self.retained_label.bind("<Button-1>", self.on_click)
-        if retained:
-            self.retained_label.pack(side=tk.RIGHT, padx=4, pady=2)
-        self.topic_quos_frame.pack(fill="x", expand=1, side=tk.TOP)
-
-        self.date_qos_frame = ttk.Frame(self.message_data_frame, style="New.TFrame")
-        self.date_qos_frame.bind("<Button-1>", self.on_click)
-        self.date_label = ttk.Label(self.date_qos_frame,
+        self.topic_label.pack(side=tk.TOP, expand=1, fill="x", padx=4, pady=2)
+        self.date_label = ttk.Label(self,
                                     text=timestamp,
                                     style="New.TLabel")
         self.date_label.bind("<Button-1>", self.on_click)
-        self.date_label.pack(side=tk.LEFT, expand=1, fill="x", padx=4, pady=2)
-        self.qos_label = ttk.Label(self.date_qos_frame, text="QoS {}".format(qos), anchor="e", style="New.TLabel")
-        self.qos_label.bind("<Button-1>", self.on_click)
-        self.qos_label.pack(side=tk.RIGHT, padx=4, pady=2)
-        self.date_qos_frame.pack(fill='x', side=tk.BOTTOM, expand=1)
+        self.date_label.pack(side=tk.BOTTOM, expand=1, fill="x", padx=4, pady=2)
 
     def on_click(self, event):
         if self.on_select_callback is not None:
-            self.topic_quos_frame.configure(style="Selected.TFrame")
-            self.date_qos_frame.configure(style="Selected.TFrame")
             self.topic_label.configure(style="Selected.TLabel")
-            self.message_id_label.configure(style="Selected.TLabel")
             self.date_label.configure(style="Selected.TLabel")
-            self.qos_label.configure(style="Selected.TLabel")
+            # self.id_qos_label.configure(style="Selected.TLabel")
             self.on_select_callback(self.message_id)
+            self.configure(style="Selected.TFrame")
 
     def on_unselect(self):
-        self.topic_quos_frame.configure(style="TFrame")
-        self.date_qos_frame.configure(style="TFrame")
+        self.configure(style="TLabel")
         self.topic_label.configure(style="TLabel")
-        self.message_id_label.configure(style="TLabel")
         self.date_label.configure(style="TLabel")
-        self.qos_label.configure(style="TLabel")
+        # self.id_qos_label.configure(style="TLabel")
         self.configure(style="TFrame")
         self.update()
 

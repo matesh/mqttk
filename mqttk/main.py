@@ -17,7 +17,7 @@ from MQTT_manager import MqttManager
 CONNECT = "connected"
 DISCONNECT = "disconnected"
 
-COLORS = ['#f14e5e', '#009b0a', '#00aedb', '#f37735', '#ffc425',
+COLORS = ['#00aedb', '#f37735', '#ffc425', '#f14e5e', '#009b0a',
           '#28b463', '#5dade2', '#a569bd', '#fbff12', '#41ead4',
           '#e8f8c1', '#d6ccf9', '#a8a5ec', '#74a3f4', '#5e999a',
           '#4b8d6b', '#d5573b', '#885053', '#94c9a9', '#c6ecae', '#aa9fb1']
