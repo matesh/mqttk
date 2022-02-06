@@ -89,4 +89,17 @@ class PublishNameDialog(tk.Toplevel):
         self.destroy()
 
 
-#TODO splash screen
+class SplashScreen(tk.Toplevel):
+    def __init__(self, master, splash_icon):
+        super().__init__(master=master)
+        screenwidth = master.winfo_screenwidth()
+        screenheight = master.winfo_screenheight()
+        self.overrideredirect(True)
+        width = 350
+        height = 300
+        alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+        self.geometry(alignstr)
+        self.title("Splash")
+        splash_label = ttk.Label(self, image=splash_icon)
+        splash_label.pack()
+        self.update()

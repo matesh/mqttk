@@ -17,7 +17,8 @@ class ConfigHandler:
             "connections": {}
             "last_used_connection": connection name,
             "window_geometry: last used window geometry string,
-            "autoscroll: true/false
+            "autoscroll: true/false,
+            "last_used_decoder" = last used message decoder
         }
 
         configuration_dict[connections] = {
@@ -214,3 +215,10 @@ class ConfigHandler:
 
     def get_last_subscribe_used(self, connection):
         return self.configuration_dict.get("connections", {}).get(connection, {}).get("last_subscribe_used", "")
+
+    def get_last_used_decoder(self):
+        return self.configuration_dict.get("last_used_decoder", "None")
+
+    def save_last_used_decoder(self, decoder):
+        self.configuration_dict["last_used_decoder"] = decoder
+        self.config_file_manager(SAVE)

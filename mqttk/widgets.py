@@ -1,9 +1,13 @@
 import tkinter as tk
+import traceback
 from tkinter.colorchooser import askcolor
 import tkinter.ttk as ttk
 import platform
 from tkinter.scrolledtext import ScrolledText
 from dialogs import PublishNameDialog
+from hex_printer import hex_viewer
+import json
+from os import linesep
 
 CONNECT = "connected"
 DISCONNECT = "disconnected"
@@ -12,7 +16,11 @@ QOS_NAMES = {
     "QoS 1": 1,
     "QoS 2": 2
 }
-
+DECODER_OPTIONS = [
+    "Plain data",
+    "JSON pretty formatter",
+    "Hex formatter"
+]
 
 class SubscriptionFrame(ttk.Frame):
     def __init__(self,
@@ -296,14 +304,32 @@ class SubscribeTab(ttk.Frame):
         self.message_qos_label["text"] = "QOS"
         self.message_qos_label.pack(side=tk.RIGHT, padx=3, pady=3)
         # Message Payload
-        self.message_payload_box = ScrolledText(self.message_content_frame)
+        self.message_payload_box = ScrolledText(self.message_content_frame, exportselection=False)
         self.message_payload_box.pack(fill="both", expand=True)
         self.message_payload_box.configure(state="disabled")
+        # Message decoder
+        self.decoder_selector_frame = ttk.Frame(self.message_content_frame)
+        self.decoder_selector_frame.pack(fill='x')
+        self.message_decoder_selector = ttk.Combobox(self.decoder_selector_frame,
+                                                     width=40,
+                                                     state='readonly',
+                                                     values=DECODER_OPTIONS,
+                                                     exportselection=False)
+        self.message_decoder_selector.bind()
+        self.message_decoder_selector.pack(side=tk.RIGHT, padx=3, pady=3)
+        self.message_decoder_selector_label = ttk.Label(self.decoder_selector_frame, text="Message decoder")
+        self.message_decoder_selector_label.pack(side=tk.RIGHT, padx=3, pady=3)
+        self.message_decoder_selector.current(0)
+        self.message_decoder_selector.bind("<<ComboboxSelected>>", self.on_decoder_select)
 
     def interface_toggle(self, connection_state):
         # Subscribe tab items
         self.subscribe_button.configure(state="normal" if connection_state is CONNECT else "disabled")
         self.subscribe_selector.configure(state="normal" if connection_state is CONNECT else "disabled")
+
+    def on_decoder_select(self, *args, **kwargs):
+        self.on_message_select()
+        pass
 
     def add_message(self, message_title, colour, autoscroll):
         self.incoming_messages_list.insert(tk.END, message_title)
@@ -336,7 +362,25 @@ class SubscribeTab(ttk.Frame):
         self.message_id_label["text"] = "ID: {}".format(message_id)
         self.message_payload_box.configure(state="normal")
         self.message_payload_box.delete(1.0, tk.END)
-        self.message_payload_box.insert(1.0, message_data.get("payload", ""))
+        decoder = self.message_decoder_selector.get()
+        if decoder == "JSON pretty formatter":
+            try:
+                new_message_structure = json.loads(message_data.get("payload", ""))
+            except Exception as e:
+                new_message = "        *** FAILED TO LOAD JSON ***{}{}{}{}".format(linesep+linesep,
+                                                                                   e,
+                                                                                   linesep+linesep,
+                                                                                   traceback.format_exc())
+            else:
+                new_message = json.dumps(new_message_structure, indent=2)
+            self.message_payload_box.insert(1.0, new_message)
+
+        elif decoder == "Hex formatter":
+            for line in hex_viewer(message_data.get("payload", "")):
+                self.message_payload_box.insert(tk.END, line+linesep)
+
+        else:
+            self.message_payload_box.insert(1.0, message_data.get("payload", ""))
         self.message_payload_box.configure(state="disabled")
 
     def flush_messages(self):
@@ -592,7 +636,9 @@ class PublishTab(ttk.Frame):
                 publish_history_element.pack_forget()
                 publish_history_element.destroy()
             self.publish_history_frames = {}
+            self.payload_editor.delete(1.0, tk.END)
             self.publish_topic_selector.configure(values=[])
+            self.publish_topic_selector.set("")
 
         self.publish_button.configure(state="normal" if connection_state is CONNECT else "disabled")
         self.save_publish_button.configure(state="normal" if connection_state is CONNECT else "disabled")

@@ -7,7 +7,7 @@ import tkinter.ttk as ttk
 import sys
 import time
 from widgets import SubscriptionFrame, HeaderFrame, SubscribeTab, PublishTab, CONNECT, DISCONNECT, LogTab
-from dialogs import AboutDialog
+from dialogs import AboutDialog, SplashScreen
 from configuration_dialog import ConfigurationWindow
 from config_handler import ConfigHandler
 from MQTT_manager import MqttManager
@@ -105,6 +105,12 @@ class App:
         # App icon stuff
         self.icon_small = tk.PhotoImage(file="mqttk_small.png")
         self.icon = tk.PhotoImage(file="mqttk.png")
+        self.splash_icon = tk.PhotoImage(file="mqttk_splash.png")
+        root.withdraw()
+        splash_screen = SplashScreen(root, self.splash_icon)
+        time.sleep(2)
+        splash_screen.destroy()
+        root.deiconify()
         self.root = root
         self.root.iconphoto(False, self.icon)
         self.root.option_add('*tearOff', tk.FALSE)
