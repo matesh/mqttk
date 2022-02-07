@@ -81,9 +81,13 @@ class MqttManager:
 
     def on_disconnect(self, _, __, rc):
         self.log.info("Paho MQTT client disconnected")
-        self.client.loop_stop(),
+        self.client.loop_stop()
         if rc != 0:
-            self.on_disconnect_callback(notify="Disconnected, return code: {}".format(rc))
+            try:
+                self.on_disconnect_callback(notify="Disconnected, return code: {}".format(rc))
+            except Exception as e:
+                self.log.exception("Failed to reconfigure interface for disconnect: {}".format(e))
+        self.on_disconnect_callback()
 
     def disconnect(self):
         self.log.info("Paho MQTT client manager instructed to disconnect")
