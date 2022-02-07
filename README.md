@@ -1,5 +1,4 @@
-
-[MQTTk](/mqttk/mqttk_splash.png)
+![MQTTk](/mqttk/mqttk_splash.png)
 
 # Introduction
 MQTTk is a lightweight MQTT GUI client that looks dated and retarded, but it worksm or at least I think. 
