@@ -17,6 +17,8 @@ from paho.mqtt.client import MQTT_LOG_ERR, MQTT_LOG_INFO, MQTT_LOG_NOTICE, MQTT_
 COLOURS = ['#00aedb', '#28b463', '#a569bd', '#41ead4', '#e8f8c1', '#d6ccf9', '#74a3f4',
            '#5e999a', '#885053', '#009b0a']
 
+root = tk.Tk()
+
 
 class PotatoLog:
     def __init__(self):
@@ -324,7 +326,11 @@ class App:
 
     def spawn_configuration_window(self):
         self.header_frame.connection_error_notification["text"] = ""
-        configuration_window = ConfigurationWindow(self.root, self.config_handler, self.on_config_update, self.log)
+        configuration_window = ConfigurationWindow(self.root,
+                                                   self.config_handler,
+                                                   self.on_config_update,
+                                                   self.log,
+                                                   self.icon)
         configuration_window.transient(self.root)
         configuration_window.wait_visibility()
         configuration_window.grab_set()
@@ -364,7 +370,11 @@ class App:
         self.on_exit()
 
 
-if __name__ == "__main__":
-    root = tk.Tk()
+def main():
     app = App(root)
     root.mainloop()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

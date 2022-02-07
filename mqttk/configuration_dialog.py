@@ -31,7 +31,7 @@ def validate_name(name, name_list):
 
 
 class ConfigurationWindow(tk.Toplevel):
-    def __init__(self, master=None, config_handler=None, config_update_callback=None, logger=None):
+    def __init__(self, master=None, config_handler=None, config_update_callback=None, logger=None, icon=None):
         super().__init__(master=master)
         self.master = master
         self.config_handler = config_handler
@@ -51,6 +51,8 @@ class ConfigurationWindow(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
         vcmd = (self.register(validate_int),
                 '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+
+        self.iconphoto(False, icon)
 
         # Connections frame
         self.connections_frame = ttk.Frame(self, relief="sunken")

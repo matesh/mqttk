@@ -17,6 +17,7 @@ class AboutDialog(tk.Toplevel):
         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
         self.resizable(False, False)
         self.geometry(alignstr)
+        self.iconphoto(False, icon)
 
         self.about_frame = ttk.Frame(self)
 
