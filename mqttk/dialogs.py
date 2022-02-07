@@ -97,7 +97,7 @@ class SplashScreen(tk.Toplevel):
         screenheight = master.winfo_screenheight()
         self.overrideredirect(True)
         width = 350
-        height = 300
+        height = 350
         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
         self.geometry(alignstr)
         self.title("Splash")

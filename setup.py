@@ -4,7 +4,22 @@ from mqttk import __version__
 url = "https://github.com/matesh/mqttk"
 readme = open('README.md').read()
 
+APP = ['mqttk_entry.py']
+DATA_FILES = [('', ['mqttk'])]
+OPTIONS = {'iconfile':'mqttk.icns',
+           'plist': {
+                'CFBundleDevelopmentRegion': 'English',
+                'CFBundleIdentifier': "com.mateszabo.mqttk",
+                'CFBundleVersion': "0.1.0",
+                'NSHumanReadableCopyright': u"Mate Szabo"
+                }
+           }
+
 setup(
+    app=APP,
+    data_files=DATA_FILES,
+    options={'py2app': OPTIONS},
+    setup_requires=['py2app'],
     name="mqttk",
     packages=["mqttk"],
     version=__version__,
