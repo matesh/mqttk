@@ -4,7 +4,7 @@ from mqttk import __version__
 url = "https://github.com/matesh/mqttk"
 readme = open('README.md').read()
 
-APP = ['mqttk_entry.py']
+APP = ['mqttk.py']
 DATA_FILES = [('', ['mqttk'])]
 OPTIONS = {'iconfile':'mqttk.icns',
            'plist': {
