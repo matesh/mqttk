@@ -74,7 +74,6 @@ class ConfigHandler:
         elif sys.platform.startswith("linux"):
             if self.first_start:
                 self.log.info("Linux platform detected")
-            self.configuration_dict = {}
             home_dir = str(Path.home())
             config_dir = os.path.join(home_dir, ".config", "MQTTk")
             config_file = os.path.join(home_dir, ".config", "MQTTk", "MQTTk-config.json")

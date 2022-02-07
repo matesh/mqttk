@@ -3,10 +3,10 @@ import tkinter.ttk as ttk
 import traceback
 from tkinter import filedialog
 from pathlib import Path
-from widgets import ScrollFrame, ConnectionFrame
-from MQTT_manager import PROTOCOL_LOOKUP, SSL_LIST
+from mqttk.widgets import ScrollFrame, ConnectionFrame
+from mqttk.MQTT_manager import PROTOCOL_LOOKUP, SSL_LIST
 import uuid
-from functools import  partial
+from functools import partial
 
 MQTT_VERSION_LIST = list(PROTOCOL_LOOKUP.keys())
 
@@ -54,8 +54,11 @@ class ConfigurationWindow(tk.Toplevel):
 
         self.iconphoto(False, icon)
 
+        self.background_frame = ttk.Frame(self)
+        self.background_frame.pack(fill='both', expand=1)
+
         # Connections frame
-        self.connections_frame = ttk.Frame(self, relief="sunken")
+        self.connections_frame = ttk.Frame(self.background_frame, relief="sunken")
         self.connections_frame.pack(side=tk.LEFT, anchor="w", fill="y", padx=3, pady=3)
         self.connections_listbox = ScrollFrame(self.connections_frame)
         self.connections_listbox.pack(fill='both', padx=3, pady=3, expand=1)
@@ -69,7 +72,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.remove_connection_button.pack(padx=3, pady=3, side="right")
 
         # Connection configuration frame
-        self.connection_configuration_frame = ttk.Frame(self, relief="groove", borderwidth=2)
+        self.connection_configuration_frame = ttk.Frame(self.background_frame, relief="groove", borderwidth=2)
         self.connection_configuration_frame.pack(side=tk.RIGHT, fill="both", pady=3, padx=3, expand=1)
 
         # Profile name

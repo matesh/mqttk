@@ -6,11 +6,11 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import sys
 import time
-from widgets import SubscriptionFrame, HeaderFrame, SubscribeTab, PublishTab, CONNECT, DISCONNECT, LogTab
-from dialogs import AboutDialog, SplashScreen
-from configuration_dialog import ConfigurationWindow
-from config_handler import ConfigHandler
-from MQTT_manager import MqttManager
+from mqttk.widgets import SubscriptionFrame, HeaderFrame, SubscribeTab, PublishTab, CONNECT, DISCONNECT, LogTab
+from mqttk.dialogs import AboutDialog, SplashScreen
+from mqttk.configuration_dialog import ConfigurationWindow
+from mqttk.config_handler import ConfigHandler
+from mqttk.MQTT_manager import MqttManager
 from paho.mqtt.client import MQTT_LOG_ERR, MQTT_LOG_INFO, MQTT_LOG_NOTICE, MQTT_LOG_WARNING
 
 
@@ -114,9 +114,10 @@ class App:
         root.resizable(width=True, height=True)
 
         # App icon stuff
-        self.icon_small = tk.PhotoImage(file="mqttk_small.png")
-        self.icon = tk.PhotoImage(file="mqttk.png")
-        self.splash_icon = tk.PhotoImage(file="mqttk_splash.png")
+        current_dir = os.path.join(os.path.dirname(__file__))
+        self.icon_small = tk.PhotoImage(file=os.path.join(current_dir, "mqttk_small.png"))
+        self.icon = tk.PhotoImage(file=os.path.join(current_dir, "mqttk.png"))
+        self.splash_icon = tk.PhotoImage(file=os.path.join(current_dir, "mqttk_splash.png"))
         root.withdraw()
         splash_screen = SplashScreen(root, self.splash_icon)
         time.sleep(2)
@@ -139,9 +140,11 @@ class App:
         self.style.configure("Retained.TLabel", background="#ffeeab")
 
         # ==================================== Menu bar ===============================================================
-        self.menubar = tk.Menu(root)
+        self.menubar = tk.Menu(root, background=self.style.lookup("TLabel", "background"),
+                               foreground=self.style.lookup("TLabel", "foreground"))
         self.root.config(menu=self.menubar)
-        self.file_menu = tk.Menu(self.menubar)
+        self.file_menu = tk.Menu(self.menubar, background=self.style.lookup("TLabel", "background"),
+                                 foreground=self.style.lookup("TLabel", "foreground"))
         self.about_menu = tk.Menu(self.menubar)
         self.menubar.add_cascade(menu=self.file_menu, label="File")
         self.menubar.add_cascade(menu=self.about_menu, label="Help")
@@ -162,13 +165,13 @@ class App:
 
         # ==================================== Subscribe tab ==========================================================
 
-        self.subscribe_frame = SubscribeTab(self.tabs, self, self.log)
+        self.subscribe_frame = SubscribeTab(self.tabs, self, self.log, self.style)
         self.tabs.add(self.subscribe_frame, text="Subscribe")
         self.subscribe_frame.autoscroll_state.set(int(self.config_handler.get_autoscroll()))
 
         # ====================================== Publish tab =========================================================
 
-        self.publish_frame = PublishTab(self.tabs, self, self.log)
+        self.publish_frame = PublishTab(self.tabs, self, self.log, self.style)
         self.tabs.add(self.publish_frame, text="Publish")
 
         # ====================================== Log tab =========================================================
@@ -240,9 +243,10 @@ class App:
         topic = self.subscribe_frame.subscribe_selector.get()
         if topic != "" and topic not in self.subscription_frames:
             try:
+                callback = partial(self.on_mqtt_message, subscription_pattern=topic)
+                callback.__name__ = "MyCallback"  # This is to fix some weird behaviour of the paho client on linux
                 self.mqtt_manager.add_subscription(topic_pattern=topic,
-                                                   on_message_callback=partial(self.on_mqtt_message,
-                                                                               subscription_pattern=topic))
+                                                   on_message_callback=callback)
             except Exception as e:
                 self.log.exception("Failed to subscribe!", e)
                 return
@@ -255,7 +259,6 @@ class App:
 
     def add_subscription_frame(self, topic, unsubscribe_callback):
         if topic not in self.subscription_frames:
-
             self.subscription_frames[topic] = SubscriptionFrame(self.subscribe_frame.subscriptions_frame.viewPort,
                                                                 topic,
                                                                 unsubscribe_callback,
@@ -293,9 +296,12 @@ class App:
                                                                    "RETAINED" if mqtt_message_object.retain else "",
                                                                    mqtt_message_object.qos,
                                                                    new_message_id)
-
-        colour = self.subscription_frames[subscription_pattern].colour
-        self.subscribe_frame.add_message(message_title, colour)
+        try:
+            colour = self.subscription_frames[subscription_pattern].colour
+        except Exception as e:
+            print("Failed to add stuff")
+        else:
+            self.subscribe_frame.add_message(message_title, colour)
 
     def on_mqtt_message(self, _, __, msg, subscription_pattern):
         if subscription_pattern in self.mute_patterns:

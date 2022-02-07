@@ -3,9 +3,8 @@ import traceback
 from tkinter.colorchooser import askcolor
 import tkinter.ttk as ttk
 import platform
-from tkinter.scrolledtext import ScrolledText
-from dialogs import PublishNameDialog
-from hex_printer import hex_viewer
+from mqttk.dialogs import PublishNameDialog
+from mqttk.hex_printer import hex_viewer
 import json
 from os import linesep
 
@@ -212,11 +211,14 @@ class HeaderFrame(ttk.Frame):
 
 
 class SubscribeTab(ttk.Frame):
-    def __init__(self, master, app, log, *args, **kwargs):
+    def __init__(self, master, app, log, root_style, *args, **kwargs):
         super().__init__(master=master, *args, **kwargs)
 
         self.get_message_data = app.get_message_details
         self.log = log
+
+        background_colour = root_style.lookup("TLabel", "background")
+        foreground_colour = root_style.lookup("TLabel", "foreground")
 
         # Subscribe frame
         self.subscribe_bar_frame = ttk.Frame(self, height=1)
@@ -251,7 +253,8 @@ class SubscribeTab(ttk.Frame):
                                                         orient=tk.HORIZONTAL,
                                                         sashrelief="groove",
                                                         sashwidth=6,
-                                                        sashpad=2)
+                                                        sashpad=2,
+                                                        background=background_colour)
         self.subscription_paned_window.pack(side=tk.LEFT, fill="both", expand=1)
         self.subscriptions_frame = ScrollFrame(self.subscribe_tab_bottom_frame)
         self.subscriptions_frame.pack(fill="y", side=tk.LEFT)
@@ -262,15 +265,16 @@ class SubscribeTab(ttk.Frame):
                                                    orient=tk.VERTICAL,
                                                    sashrelief="groove",
                                                    sashwidth=6,
-                                                   sashpad=2)
+                                                   sashpad=2,
+                                                   background=background_colour)
         self.message_paned_window.pack(fill='both', padx=3, pady=3, expand=1)
         self.subscription_paned_window.add(self.message_paned_window)
 
         # Incoming messages listbox
-        self.incoming_messages_frame = tk.Frame(self.subscribe_tab_bottom_frame)
+        self.incoming_messages_frame = ttk.Frame(self.subscribe_tab_bottom_frame)
         self.incoming_messages_frame.pack(expand=1, fill='both')
         self.incoming_messages_list = tk.Listbox(self.incoming_messages_frame, selectmode="browse",
-                                                 font="Courier 13")  # TkFixedFont
+                                                 font="Courier 13", background=background_colour)  # TkFixedFont, "Courier 13"
         self.incoming_messages_list.pack(side=tk.LEFT, fill='both', expand=1)
         self.incoming_messages_list.bind("<<ListboxSelect>>", self.on_message_select)
         self.incoming_messages_scrollbar = ttk.Scrollbar(self.incoming_messages_frame,
@@ -294,7 +298,9 @@ class SubscribeTab(ttk.Frame):
         self.message_topic_and_id_frame = ttk.Frame(self.message_content_frame)
         self.message_topic_and_id_frame.pack(fill="x")
         # Message topic label
-        self.message_topic_label = tk.Text(self.message_topic_and_id_frame, height=1, borderwidth=0, state="disabled")
+        self.message_topic_label = tk.Text(self.message_topic_and_id_frame, height=1, borderwidth=0,
+                                           state="disabled", background="white", foreground="black",
+                                           exportselection=False)
         self.message_topic_label.pack(side=tk.LEFT, padx=3, pady=3, fill="x", expand=1)
         # Message ID label
         self.message_id_label = ttk.Label(self.message_topic_and_id_frame, width=10)
@@ -326,7 +332,10 @@ class SubscribeTab(ttk.Frame):
         self.message_decoder_selector.bind("<<ComboboxSelected>>", self.on_decoder_select)
 
         # Message Payload
-        self.message_payload_box = ScrolledText(self.message_content_frame, exportselection=False)
+        self.message_payload_box = CustomScrolledText(self.message_content_frame,
+                                                      exportselection=False,
+                                                      background="white",
+                                                      foreground="black")
         self.message_payload_box.pack(fill="both", expand=True)
         self.message_payload_box.configure(state="disabled")
         # Message decoder
@@ -421,11 +430,11 @@ class PublishHistoryFrame(ttk.Frame):
         self.bind("<Button-1>", self.on_select)
 
         self.name_label = ttk.Label(self, text=name, justify="left")
-        self.name_label.pack(expand=1, fill="x", side=tk.TOP, padx=3, pady=3)
+        self.name_label.pack(expand=1, fill="x", side=tk.TOP, padx=3, pady=6)
         self.name_label.bind("<Button-1>", self.on_select)
 
         self.publish_history_actions = ttk.Frame(self)
-        self.publish_history_actions.pack(side=tk.TOP, fill='y', padx=3, pady=3)
+        self.publish_history_actions.pack(side=tk.TOP, fill='x', padx=3, pady=3)
         self.publish_history_actions.bind("<Button-1>", self.on_select)
 
         self.publish_button = ttk.Button(self.publish_history_actions, text="Publish")
@@ -434,7 +443,7 @@ class PublishHistoryFrame(ttk.Frame):
 
         self.edit_button = ttk.Button(self.publish_history_actions, text="Rename")
         self.edit_button["command"] = self.on_edit_button
-        self.edit_button.pack(side=tk.RIGHT, padx=3, pady=3)
+        self.edit_button.pack(side=tk.LEFT, padx=3, pady=3)
 
         self.delete_button = ttk.Button(self.publish_history_actions, text="Delete")
         self.delete_button["command"] = self.on_delete_button
@@ -466,8 +475,10 @@ class PublishHistoryFrame(ttk.Frame):
 
 
 class PublishTab(ttk.Frame):
-    def __init__(self, master, app, log, *args, **kwargs):
+    def __init__(self, master, app, log, root_style, *args, **kwargs):
         super().__init__(master=master, *args, **kwargs)
+
+        background_colour = root_style.lookup("TLabel", "background")
 
         self.app_root = app.root
         self.config_handler = app.config_handler
@@ -484,11 +495,12 @@ class PublishTab(ttk.Frame):
                                                    orient=tk.HORIZONTAL,
                                                    sashrelief="groove",
                                                    sashwidth=6,
-                                                   sashpad=2)
+                                                   sashpad=2,
+                                                   background=background_colour)
         self.publish_paned_window.pack(fill='both', expand=1, side=tk.LEFT)
         self.saved_publishes = ScrollFrame(self)
         self.saved_publishes.pack(fill="y", expand=1, side=tk.LEFT)
-        self.publish_paned_window.add(self.saved_publishes)
+        self.publish_paned_window.add(self.saved_publishes, width=350)
 
         self.publish_interface = ttk.Frame(self)
         self.publish_interface.pack(fill='both', expand=1)
@@ -521,7 +533,10 @@ class PublishTab(ttk.Frame):
         self.qos_selector.current(0)
         self.qos_selector.pack(side=tk.RIGHT, pady=4, padx=2)
 
-        self.payload_editor = ScrolledText(self.publish_interface, font="Courier 13")
+        self.payload_editor = CustomScrolledText(self.publish_interface,
+                                                 font="Courier 13",
+                                                 background="white",
+                                                 foreground="black")
         self.payload_editor.pack(fill="both", expand=1, side=tk.BOTTOM)
         self.publish_paned_window.add(self.publish_interface)
 
@@ -547,7 +562,10 @@ class PublishTab(ttk.Frame):
             new = self.config_handler.save_publish_topic_history_item(self.current_connection,
                                                                       self.publish_topic_selector.get())
             if new:
-                self.publish_topic_selector['values'] += (self.publish_topic_selector.get(),)
+                if len(self.config_handler.get_publish_topic_history(self.current_connection)) > 1:
+                    self.publish_topic_selector['values'] += (self.publish_topic_selector.get(),)
+                else:
+                    self.publish_topic_selector['values'] = (self.publish_topic_selector.get(),)
 
     def on_publish_save(self, *args, **kwargs):
         if self.publish_topic_selector.get() == "":
@@ -651,7 +669,9 @@ class PublishTab(ttk.Frame):
 class LogTab(ttk.Frame):
     def __init__(self, master, *args, **kwargs):
         super().__init__(master=master, *args, **kwargs)
-        self.log_output = ScrolledText(self, font="Courier 14", exportselection=False, state='disabled')
+
+        self.log_output = CustomScrolledText(self, font="Courier 14", exportselection=False, state='disabled',
+                                             background="white", foreground="black")
         self.log_output.pack(fill='both', expand=1, padx=3, pady=3)
 
     def add_message(self, message):
@@ -659,3 +679,27 @@ class LogTab(ttk.Frame):
         self.log_output.insert(tk.END, message)
         self.log_output.configure(state="disabled")
 
+
+class CustomScrolledText(tk.Text):
+    def __init__(self, master=None, **kw):
+        self.frame = ttk.Frame(master)
+        self.vbar = ttk.Scrollbar(self.frame)
+        self.vbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        kw.update({'yscrollcommand': self.vbar.set})
+        tk.Text.__init__(self, self.frame, **kw)
+        self.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.vbar['command'] = self.yview
+
+        # Copy geometry methods of self.frame without overriding Text
+        # methods -- hack!
+        text_meths = vars(tk.Text).keys()
+        methods = vars(tk.Pack).keys() | vars(tk.Grid).keys() | vars(tk.Place).keys()
+        methods = methods.difference(text_meths)
+
+        for m in methods:
+            if m[0] != '_' and m != 'config' and m != 'configure':
+                setattr(self, m, getattr(self.frame, m))
+
+    def __str__(self):
+        return str(self.frame)

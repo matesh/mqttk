@@ -20,9 +20,13 @@ setup(
     install_requires=[
         "paho-mqtt",
     ],
+    package_data={
+        'mqttk': ['*.png']
+    },
     entry_points={
         'gui_scripts': ['mqttk=mqttk.__main__:main'],
+        'console_scripts': ['mqttk-console=mqttk.__main__:main']
     },
     download_url="{}/tarball/{}".format(url, __version__),
-    license="MIT"
+    license="GPLv3"
 )

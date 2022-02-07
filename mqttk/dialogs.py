@@ -1,4 +1,4 @@
-from __init__ import __version__ as version
+from mqttk import __version__ as version
 import tkinter as tk
 import tkinter.ttk as ttk
 
