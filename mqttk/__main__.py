@@ -240,6 +240,8 @@ class App:
             self.mute_patterns.remove(topic)
 
     def add_subscription(self):
+        #TODO On new messages, add the message subscription frame in advance in case new messages arrive while some
+        # stuff is still ongoing. In case the subscription fails, the operation is to be reverted of course
         topic = self.subscribe_frame.subscribe_selector.get()
         if topic != "" and topic not in self.subscription_frames:
             try:
@@ -361,7 +363,7 @@ class App:
                 subscription_frame = self.subscription_frames.get(
                     self.messages[message_id]["subscription_pattern"], None)
                 if subscription_frame is not None:
-                    self.subscribe_frame.incoming_messages_list.itemconfig(message_id, bg=subscription_frame.colour)
+                    self.subscribe_frame.incoming_messages_list.itemconfig(message_id, fg=subscription_frame.colour)
             except Exception as e:
                 self.log.warning("Failed to change message colour!", e)
 

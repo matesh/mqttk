@@ -351,7 +351,7 @@ class SubscribeTab(ttk.Frame):
 
     def add_message(self, message_title, colour):
         self.incoming_messages_list.insert(tk.END, message_title)
-        self.incoming_messages_list.itemconfig(tk.END, bg=colour)
+        self.incoming_messages_list.itemconfig(tk.END, fg=colour)
         if bool(self.autoscroll_state.get()):
             self.incoming_messages_list.selection_clear(0, tk.END)
             self.incoming_messages_list.activate(tk.END)
@@ -664,6 +664,7 @@ class PublishTab(ttk.Frame):
         self.retained_checkbox.configure(state="normal" if connection_state is CONNECT else "disabled")
         self.qos_selector.configure(state="readonly" if connection_state is CONNECT else "disabled")
         self.publish_topic_selector.configure(state="normal" if connection_state is CONNECT else "disabled")
+        self.payload_editor.configure(state="normal" if connection_state is CONNECT else "disabled")
 
 
 class LogTab(ttk.Frame):
