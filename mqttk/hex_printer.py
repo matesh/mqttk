@@ -22,8 +22,8 @@ def hex_viewer(message_data, chunk_size=16):
     yield 'ADDRESS        {:<53}       ASCII'.format(header)
     yield ''
     template = '{:0>8x}       {:<53}       {}'
-    for chunk_count in itertools.count(1):
-        start = (chunk_size+1)*(chunk_count-1)
+    for chunk_count in itertools.count(0):
+        start = (chunk_size+1)*(chunk_count)
         finish = start + chunk_size
         if len(message_data) < finish:
             finish = len(message_data)
