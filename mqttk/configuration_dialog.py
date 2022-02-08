@@ -31,7 +31,7 @@ def validate_name(name, name_list):
 
 
 class ConfigurationWindow(tk.Toplevel):
-    def __init__(self, master=None, config_handler=None, config_update_callback=None, logger=None, icon=None):
+    def __init__(self, master, config_handler, config_update_callback, logger, icon):
         super().__init__(master=master)
         self.master = master
         self.config_handler = config_handler

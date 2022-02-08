@@ -240,10 +240,9 @@ class App:
             self.mute_patterns.remove(topic)
 
     def add_subscription(self):
-        #TODO On new messages, add the message subscription frame in advance in case new messages arrive while some
-        # stuff is still ongoing. In case the subscription fails, the operation is to be reverted of course
         topic = self.subscribe_frame.subscribe_selector.get()
         if topic != "" and topic not in self.subscription_frames:
+            self.add_subscription_frame(topic, self.on_unsubscribe)  #!
             try:
                 callback = partial(self.on_mqtt_message, subscription_pattern=topic)
                 callback.__name__ = "MyCallback"  # This is to fix some weird behaviour of the paho client on linux
@@ -251,8 +250,9 @@ class App:
                                                    on_message_callback=callback)
             except Exception as e:
                 self.log.exception("Failed to subscribe!", e)
+                self.subscription_frames[topic].on_unsubscribe()
                 return
-            self.add_subscription_frame(topic, self.on_unsubscribe)
+            # self.add_subscription_frame(topic, self.on_unsubscribe)
             if self.subscribe_frame.subscribe_selector["values"] == "":
                 self.subscribe_frame.subscribe_selector["values"] = [topic]
             elif topic not in self.subscribe_frame.subscribe_selector['values']:
@@ -275,7 +275,10 @@ class App:
 
     def on_unsubscribe(self, topic):
         self.subscription_frames.pop(topic, None)
-        self.mqtt_manager.unsubscribe(topic)
+        try:
+            self.mqtt_manager.unsubscribe(topic)
+        except Exception as e:
+            self.log.warning("Failed to unsubscribe", topic, "maybe a failed subscription?")
 
     def add_new_message(self, mqtt_message_object, subscription_pattern):
         timestamp = time.time()
@@ -341,7 +344,7 @@ class App:
                                                    self.icon)
         configuration_window.transient(self.root)
         configuration_window.wait_visibility()
-        configuration_window.grab_set()
+        configuration_window.grab_set_global()
         configuration_window.wait_window()
 
     def on_about_menu(self):
