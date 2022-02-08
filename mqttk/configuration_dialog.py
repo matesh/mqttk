@@ -361,12 +361,13 @@ class ConfigurationWindow(tk.Toplevel):
                 else:
                     self.version_input.current(1)
 
+                self.ssl_state_input.current(SSL_LIST.index("Self-signed certificate"))
+                self.ssl_state_change(None)
                 ssl = self.currently_selected_connection_dict.get("ssl", "")
                 if ssl in SSL_LIST:
                     self.ssl_state_input.current(SSL_LIST.index(ssl))
                 else:
                     self.ssl_state_input.current(0)
-                self.ssl_state_change(None)
 
                 self.ca_file_input.delete(0, tk.END)
                 self.ca_file_input.insert(0, self.currently_selected_connection_dict.get("ca_file", ""))
@@ -374,6 +375,7 @@ class ConfigurationWindow(tk.Toplevel):
                 self.cl_cert_file_input.insert(0, self.currently_selected_connection_dict.get("cl_cert", ""))
                 self.cl_key_file_input.delete(0, tk.END)
                 self.cl_key_file_input.insert(0, self.currently_selected_connection_dict.get("cl_key", ""))
+                self.ssl_state_change(None)
             except Exception as e:
                 self.all_config_state_change("disabled")
                 self.log.exception("Failed to load connection!", e, traceback.print_exc())

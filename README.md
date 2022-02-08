@@ -1,7 +1,7 @@
 ![MQTTk](/mqttk/mqttk_splash.png)
 
 # Introduction
-MQTTk is a lightweight MQTT GUI client that looks dated and retarded, but it worksm or at least I think. 
+MQTTk is a lightweight MQTT GUI client that looks dated and retarded, but it works, or at least so I believe. 
 It intends to replicate most features and functionality of MQTT.fx which is no longer free 
 and the free version is no longer maintained. Since upgrading my computer, it was crashing 
 every 2 minutes, practically becoming useless. I always found it more useful than other 
@@ -9,8 +9,8 @@ MQTT GUI clients, which mostly update the values of topics as they come in, in m
 being able to track message exchange over time is equally as important as the content of 
 the messages themselves.
 
-Since there is no other similar tool out there I decided to make my own and share it with
-whoever is interested. The project is written in tk/ttk, I don't have time to learn some
+Since there is no other similar tool out there, I decided to make my own and share it with
+whoever is interested. The project is written in tk/ttk. I don't have time to learn some
 fancy-pancy GUI environment, it was quick and easy to knock out, and it should run on anything
 including the kitchen sink.
 
@@ -23,7 +23,7 @@ in the app packages (windows/mac/linux). That't it, nothing fancy.
 ## On MacOS as an app
 Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
 and install like any other apps. MacOS might complain about being unable to identify the
-developer, but [here](https://mateszabo.com) I am, so you can instead. In such case, just
+developer, but [here](https://mateszabo.com) I am, so you can do so instead. In such case, just
 Ctrl+click on the file and then "Open" in the appearing window.
 
 ## On MacOS from pypi
