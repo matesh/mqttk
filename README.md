@@ -133,15 +133,17 @@ $ xcode-select —install
 
 Just like when running the app, you need python3, pip and python3-tk. Install these as explained above.
 
-In addition, you need the py2app package. Install it using pip:
+In addition, you need the pyinstaller package. Install it using pip:
 ```shell
-$pip install py2app
+$pip install pyinstaller
 ```
 
 ### Building the app
-Navigate to the project root directory and issue
+I was not able to build a universal app image for MACs that worked on both Intel and M1 architectures,
+so I only build the Intel package, the software runs just fine through rosetta.
+Navigate to the project root and issue
 ```shell
-$  python3 setup.py py2app
+$  pyinstaller mqttk.spec
 ```
 
 ### Windows executable
@@ -153,5 +155,5 @@ In addition, you need the pyinstaller package:
 
 Navigate to the project root and issue the following command:
 ```shell
-> pyinstaller mqttk_entry.py -F --collect-all mqttk --noconsole --icon=mqttk.ico
+> pyinstaller mqttk.spec
 ```

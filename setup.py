@@ -1,25 +1,34 @@
 from setuptools import setup
 from mqttk import __version__
+import sys
 
 url = "https://github.com/matesh/mqttk"
 readme = open('README.md').read()
+#
+# if sys.platform == "darwin" and "py2app" in sys.argv:
+#     extra_options = dict(
+#         app=['mqttk_entry.py'],
+#         data_files=[('', ['mqttk'])],
+#         setup_requires=['py2app'],
+#         options=dict(
+#             py2app={
+#                     'iconfile':'mqttk.icns',
+#                     'plist': {
+#                                 'CFBundleDevelopmentRegion': 'English',
+#                                 'CFBundleIdentifier': "com.mateszabo.mqttk",
+#                                 'CFBundleVersion': __version__,
+#                                 'NSHumanReadableCopyright': u"Mate Szabo"
+#                     }
+#             }
+#         )
+#     )
+# else:
+#     extra_options = dict(
+#
+#     )
 
-APP = ['mqttk.py']
-DATA_FILES = [('', ['mqttk'])]
-OPTIONS = {'iconfile':'mqttk.icns',
-           'plist': {
-                'CFBundleDevelopmentRegion': 'English',
-                'CFBundleIdentifier': "com.mateszabo.mqttk",
-                'CFBundleVersion': "0.1.0",
-                'NSHumanReadableCopyright': u"Mate Szabo"
-                }
-           }
 
 setup(
-    app=APP,
-    data_files=DATA_FILES,
-    options={'py2app': OPTIONS},
-    setup_requires=['py2app'],
     name="mqttk",
     packages=["mqttk"],
     version=__version__,
@@ -30,18 +39,19 @@ setup(
     author_email="mate@mateszabo.com",
     maintainer='Mate Szabo',
     maintainer_email='mate@mateszabo.com',
-    description="An MQTT client GUI written in pure python, resembles MQTT.fx",
+    description="A lightweight MQTT client GUI written in pure python",
     url=url,
     install_requires=[
         "paho-mqtt",
     ],
-    package_data={
-        'mqttk': ['*.png']
-    },
     entry_points={
         'gui_scripts': ['mqttk=mqttk.__main__:main'],
         'console_scripts': ['mqttk-console=mqttk.__main__:main']
     },
+    package_data={
+        'mqttk': ['*.png']
+    },
     download_url="{}/tarball/{}".format(url, __version__),
-    license="GPLv3"
+    license="LGPLv3"#,
+    # **extra_options
 )
