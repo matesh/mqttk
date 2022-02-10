@@ -19,14 +19,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import os
 import traceback
 from datetime import datetime
-from functools import partial
 import sys
 import time
 try:
     import tkinter as tk
     import tkinter.ttk as ttk
 except ImportError:
-    print("Couldn't find a valid installation of tkinter/ttk. Please make sure you installed the necessary requirements!")
+    print("Couldn't find a valid installation of tkinter/ttk. "
+          "Please make sure you installed the necessary requirements!")
     if sys.platform == "darwin":
         print("Install the python-tk package via homebrew")
     elif sys.platform == "linux":
@@ -34,16 +34,17 @@ except ImportError:
     exit(0)
 
 
-from mqttk.widgets import SubscriptionFrame, HeaderFrame, SubscribeTab, PublishTab, CONNECT, DISCONNECT, LogTab
+from mqttk.widgets.subscribe_tab import SubscribeTab
+from mqttk.widgets.header_frame import HeaderFrame
+from mqttk.widgets.publish_tab import PublishTab
+from mqttk.constants import CONNECT, DISCONNECT
+from mqttk.widgets.log_tab import LogTab
 from mqttk.dialogs import AboutDialog, SplashScreen
-from mqttk.configuration_dialog import ConfigurationWindow
+from mqttk.widgets.configuration_dialog import ConfigurationWindow
 from mqttk.config_handler import ConfigHandler
 from mqttk.MQTT_manager import MqttManager
 from paho.mqtt.client import MQTT_LOG_ERR, MQTT_LOG_INFO, MQTT_LOG_NOTICE, MQTT_LOG_WARNING
 
-
-COLOURS = ['#00aedb', '#28b463', '#a569bd', '#41ead4', '#e8f8c1', '#d6ccf9', '#74a3f4',
-           '#5e999a', '#885053', '#009b0a']
 
 root = tk.Tk()
 
@@ -98,27 +99,8 @@ class App:
         self.log = PotatoLog()
         self.config_handler = ConfigHandler(self.log)
 
-        self.subscription_frames = {}
-        self.message_id_counter = 0
-        self.last_used_connection = None
         self.mqtt_manager = None
         self.current_connection_configuration = None
-        self.color_carousel = -1
-        self.mute_patterns = []
-
-        # Holds messages and relevant stuff
-        # {
-        #     "id": {
-        #         "topic": "message topic",
-        #         "subscription_pattern": "subscription pattern",
-        #         "timestamp": "date of reception timestamp or date string whatever",
-        #         "qos": "message qos",
-        #         "payload": "message content",
-        #         "message_list_instance_ref": message list object reference
-        #     }
-        #
-        # }
-        self.messages = {}
 
         root.title("MQTTk")
 
@@ -193,7 +175,7 @@ class App:
 
         # ==================================== Subscribe tab ==========================================================
 
-        self.subscribe_frame = SubscribeTab(self.tabs, self, self.log, self.style)
+        self.subscribe_frame = SubscribeTab(self.tabs, self.config_handler, self.log, self.style)
         self.tabs.add(self.subscribe_frame, text="Subscribe")
         self.subscribe_frame.autoscroll_state.set(int(self.config_handler.get_autoscroll()))
 
@@ -209,16 +191,16 @@ class App:
         self.log.add_message_callback = self.log_tab.add_message
         self.log.info("Logger output live")
 
-        self.subscribe_frame.interface_toggle(DISCONNECT)
+        self.subscribe_frame.interface_toggle(DISCONNECT, None, None)
         self.header_frame.interface_toggle(DISCONNECT)
         self.publish_frame.interface_toggle(DISCONNECT)
 
     def on_client_disconnect(self, notify=None):
         if notify is not None:
             self.header_frame.connection_error_notification["text"] = notify
-        self.cleanup_subscriptions()
+        self.subscribe_frame.cleanup_subscriptions()
         try:
-            self.subscribe_frame.interface_toggle(DISCONNECT)
+            self.subscribe_frame.interface_toggle(DISCONNECT, None, None)
             self.header_frame.interface_toggle(DISCONNECT)
             self.publish_frame.interface_toggle(DISCONNECT)
             self.header_frame.connection_indicator_toggle(DISCONNECT)
@@ -226,20 +208,17 @@ class App:
             self.log.exception("Failed to toggle user interface element!", e)
 
     def on_client_connect(self):
-        self.subscribe_frame.interface_toggle(CONNECT)
-        self.publish_frame.interface_toggle(CONNECT, self.header_frame.connection_selector.get())
+        self.subscribe_frame.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
+        self.publish_frame.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
         self.header_frame.connection_indicator_toggle(CONNECT)
+        self.subscribe_frame.load_subscription_history()
 
     def on_connect_button(self):
         self.header_frame.connection_error_notification["text"] = ""
-        self.current_connection_configuration = self.config_handler.get_connection_config_dict(
-            self.header_frame.connection_selector.get())
-        if not self.current_connection_configuration:
-            return
         self.header_frame.interface_toggle(CONNECT)
         self.config_handler.update_last_used_connection(self.header_frame.connection_selector.get())
         try:
-            self.mqtt_manager = MqttManager(self.current_connection_configuration["connection_parameters"],
+            self.mqtt_manager = MqttManager(self.config_handler.get_connection_broker_parameters(self.header_frame.connection_selector.get()),
                                             self.on_client_connect,
                                             self.on_client_disconnect,
                                             self.log)
@@ -248,99 +227,9 @@ class App:
             self.header_frame.interface_toggle(DISCONNECT)
             self.publish_frame.interface_toggle(DISCONNECT)
 
-        self.subscribe_frame.subscribe_selector.configure(values=self.current_connection_configuration.get(
-            "subscriptions", []))
-        self.subscribe_frame.subscribe_selector.set(self.config_handler.get_last_subscribe_used(
-            self.header_frame.connection_selector.get()))
-
-    def on_publish(self, topic, payload, qos, retained):
-        if self.mqtt_manager is not None:
-            self.mqtt_manager.publish(topic, payload, qos, retained)
-
     def on_disconnect_button(self):
         if self.mqtt_manager is not None:
             self.mqtt_manager.disconnect()
-
-    def topic_mute_callback(self, topic, mute_state):
-        if mute_state and topic not in self.mute_patterns:
-            self.mute_patterns.append(topic)
-        if not mute_state and topic in self.mute_patterns:
-            self.mute_patterns.remove(topic)
-
-    def add_subscription(self):
-        topic = self.subscribe_frame.subscribe_selector.get()
-        if topic != "" and topic not in self.subscription_frames:
-            self.add_subscription_frame(topic, self.on_unsubscribe)  #!
-            try:
-                callback = partial(self.on_mqtt_message, subscription_pattern=topic)
-                callback.__name__ = "MyCallback"  # This is to fix some weird behaviour of the paho client on linux
-                self.mqtt_manager.add_subscription(topic_pattern=topic,
-                                                   on_message_callback=callback)
-            except Exception as e:
-                self.log.exception("Failed to subscribe!", e)
-                self.subscription_frames[topic].on_unsubscribe()
-                return
-            # self.add_subscription_frame(topic, self.on_unsubscribe)
-            if self.subscribe_frame.subscribe_selector["values"] == "":
-                self.subscribe_frame.subscribe_selector["values"] = [topic]
-            elif topic not in self.subscribe_frame.subscribe_selector['values']:
-                self.subscribe_frame.subscribe_selector['values'] += (topic,)
-            self.config_handler.add_subscription_history(self.header_frame.connection_selector.get(), topic)
-
-    def add_subscription_frame(self, topic, unsubscribe_callback):
-        if topic not in self.subscription_frames:
-            self.subscription_frames[topic] = SubscriptionFrame(self.subscribe_frame.subscriptions_frame.viewPort,
-                                                                topic,
-                                                                unsubscribe_callback,
-                                                                self.get_color(),
-                                                                self.on_colour_change,
-                                                                self.topic_mute_callback,
-                                                                height=60)
-            self.subscription_frames[topic].pack(fill=tk.X, expand=1, padx=2, pady=1)
-
-    def get_message_details(self, message_id):
-        return self.messages.get(message_id, {})
-
-    def on_unsubscribe(self, topic):
-        self.subscription_frames.pop(topic, None)
-        try:
-            self.mqtt_manager.unsubscribe(topic)
-        except Exception as e:
-            self.log.warning("Failed to unsubscribe", topic, "maybe a failed subscription?")
-
-    def add_new_message(self, mqtt_message_object, subscription_pattern):
-        timestamp = time.time()
-        # Theoretically there will be no race condition here?
-        new_message_id = self.message_id_counter
-        self.message_id_counter += 1
-        time_string = "{:.6f} - {}".format(round(timestamp, 6),
-                                           datetime.fromtimestamp(timestamp).strftime("%Y/%m/%d, %H:%M:%S.%f"))
-        simple_time_string = datetime.fromtimestamp(timestamp).strftime("%H:%M:%S.%f")
-        self.messages[new_message_id] = {
-            "topic": mqtt_message_object.topic,
-            "payload": mqtt_message_object.payload,
-            "qos": mqtt_message_object.qos,
-            "subscription_pattern": subscription_pattern,
-            "time_string": time_string,
-            "retained": mqtt_message_object.retain
-        }
-        message_title = "{}  -  {:70} {:8} QoS: {} #{:05d}".format(simple_time_string,
-                                                                   mqtt_message_object.topic,
-                                                                   "RETAINED" if mqtt_message_object.retain else "",
-                                                                   mqtt_message_object.qos,
-                                                                   new_message_id)
-        try:
-            colour = self.subscription_frames[subscription_pattern].colour
-        except Exception as e:
-            print("Failed to add stuff")
-        else:
-            self.subscribe_frame.add_message(message_title, colour)
-
-    def on_mqtt_message(self, _, __, msg, subscription_pattern):
-        if subscription_pattern in self.mute_patterns:
-            return
-        self.add_new_message(mqtt_message_object=msg,
-                             subscription_pattern=subscription_pattern)
 
     def on_config_update(self):
         connection_profile_list = sorted(self.config_handler.get_connection_profiles())
@@ -351,17 +240,6 @@ class App:
                     connection_profile_list.index(self.config_handler.get_last_used_connection()))
             else:
                 self.header_frame.connection_selector.current(0)
-
-    def cleanup_subscriptions(self):
-        for topic in list(self.subscription_frames.keys()):
-            self.subscription_frames[topic].pack_forget()
-            self.subscription_frames[topic].destroy()
-        self.subscription_frames = {}
-
-    def flush_messages(self):
-        self.message_id_counter = 0
-        self.messages = {}
-        self.subscribe_frame.flush_messages()
 
     def spawn_configuration_window(self):
         self.header_frame.connection_error_notification["text"] = ""
@@ -381,22 +259,6 @@ class App:
         about_window.wait_visibility()
         about_window.grab_set_global()
         about_window.wait_window()
-
-    def get_color(self):
-        self.color_carousel += 1
-        if self.color_carousel > len(COLOURS):
-            self.color_carousel = 0
-        return COLOURS[self.color_carousel]
-
-    def on_colour_change(self):
-        for message_id in list(self.messages.keys()):
-            try:
-                subscription_frame = self.subscription_frames.get(
-                    self.messages[message_id]["subscription_pattern"], None)
-                if subscription_frame is not None:
-                    self.subscribe_frame.incoming_messages_list.itemconfig(message_id, fg=subscription_frame.colour)
-            except Exception as e:
-                self.log.warning("Failed to change message colour!", e)
 
     def on_exit(self):
         self.on_disconnect_button()

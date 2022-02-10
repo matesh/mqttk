@@ -127,24 +127,42 @@ class ConfigHandler:
         self.configuration_dict.get("connections", {}).pop(connection_name, None)
         self.config_file_manager(SAVE)
 
+    def get_connection_broker_parameters(self, connection):
+        return self.configuration_dict["connections"].get(connection, {}).get("connection_parameters", {})
+
     def save_connection_config(self, connection_name, connection_config):
         if "connections" not in self.configuration_dict:
             self.configuration_dict["connections"] = {}
         if connection_name not in self.configuration_dict["connections"]:
             self.configuration_dict["connections"][connection_name] = {
                 "connection_parameters": {},
-                "subscriptions": [],
+                "subscriptions": {},
                 "publish_topics": [],
                 "stored_publishes": {}
             }
         self.configuration_dict["connections"][connection_name]["connection_parameters"] = connection_config
         self.config_file_manager(SAVE)
 
-    def add_subscription_history(self, connection, topic):
-        if topic not in self.configuration_dict["connections"][connection]["subscriptions"]:
-            self.configuration_dict["connections"][connection]["subscriptions"].append(topic)
+    def add_subscription_history(self, connection, topic, colour):
+        self.configuration_dict["connections"][connection]["subscriptions"][topic] = {
+                "colour": colour
+            }
         self.configuration_dict["connections"][connection]["last_subscribe_used"] = topic
         self.config_file_manager(SAVE)
+
+    def get_subscription_history_list(self, connection):
+        try:
+            return list(self.configuration_dict.get("connections", {}).get(connection, {}).get("subscriptions", {}).keys())
+        except AttributeError:
+            try:
+                self.configuration_dict["connections"][connection]["subscriptions"] = {}
+            except Exception:
+                self.log.error("Fatal subscription history incompatibility in the config")
+            return None
+
+    def get_subscription_colour(self, connection, topic):
+        return self.configuration_dict.get("connections", {}).get(
+            connection, {}).get("subscriptions", {}).get(topic, {}).get("colour", None)
 
     def get_window_geometry(self):
         return self.configuration_dict.get("window_geometry", None)

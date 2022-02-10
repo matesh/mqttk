@@ -2,26 +2,13 @@ import ssl
 
 from paho.mqtt.client import Client
 from paho.mqtt.client import MQTTv5, MQTTv31, MQTTv311
-
-PROTOCOL_LOOKUP = {
-    "3.1": MQTTv31,
-    "3.1.1": MQTTv311,
-    "5.0": MQTTv5
-}
-
-SSL_LIST = ["Disabled", "CA signed server certificate", "CA certificate file", "Self-signed certificate"]
-
-ERROR_CODES = {
-    1: "Incorrect protocol version",
-    2: "Invalid client identifier",
-    3: "Server unavailable",
-    4: "Bad username or password",
-    5: "Not authorised"
-}
+from constants import PROTOCOL_LOOKUP, SSL_LIST, ERROR_CODES
 
 
 class MqttManager:
     def __init__(self, connection_configuration, on_connect_callback, on_disconnect_callback, logger):
+        if not connection_configuration:
+            raise Exception("Invalid connection parameters, configuration empty")
         self.on_connect_callback = on_connect_callback
         self.on_disconnect_callback = on_disconnect_callback
         self.log = logger
@@ -46,21 +33,24 @@ class MqttManager:
                                     keyfile=None,
                                     cert_reqs=ssl.CERT_REQUIRED,
                                     tls_version=ssl.PROTOCOL_TLS,
-                                    ciphers=None)
+                                    ciphers=None,
+                                    keyfile_password=None)
             elif ssl_config.startswith("CA certificate"):
                 self.client.tls_set(ca_certs=connection_configuration.get("ca_file", ""),
                                     certfile=None,
                                     keyfile=None,
                                     cert_reqs=ssl.CERT_REQUIRED,
                                     tls_version=ssl.PROTOCOL_TLS,
-                                    ciphers=None)
-            elif ssl_config.startswith("CA certificate"):
+                                    ciphers=None,
+                                    keyfile_password=None)
+            elif ssl_config.startswith("Self-signed certificate"):
                 self.client.tls_set(ca_certs=connection_configuration.get("ca_file", ""),
                                     certfile=connection_configuration.get("cl_cert", ""),
                                     keyfile=connection_configuration.get("cl_key", ""),
                                     cert_reqs=ssl.CERT_REQUIRED,
                                     tls_version=ssl.PROTOCOL_TLS,
-                                    ciphers=None)
+                                    ciphers=None,
+                                    keyfile_password=None)
 
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect

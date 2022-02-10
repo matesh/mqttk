@@ -3,12 +3,10 @@ import tkinter.ttk as ttk
 import traceback
 from tkinter import filedialog
 from pathlib import Path
-from mqttk.widgets import ScrollFrame, ConnectionFrame
-from mqttk.MQTT_manager import PROTOCOL_LOOKUP, SSL_LIST
+from mqttk.widgets.scroll_frame import ScrollFrame
+from mqttk.constants import SSL_LIST, MQTT_VERSION_LIST
 import uuid
 from functools import partial
-
-MQTT_VERSION_LIST = list(PROTOCOL_LOOKUP.keys())
 
 
 def validate_int(d, i, P, s, S, v, V, W):
@@ -28,6 +26,32 @@ def validate_name(name, name_list):
     while template.format(index) in name_list:
         index += 1
     return template.format(index)
+
+
+class ConnectionFrame(ttk.Frame):
+    def __init__(self, container, connection_name, on_select_callback=None, *args, **kwargs):
+        super().__init__(container, *args, **kwargs)
+        self.container = container
+        self.connection_name = connection_name
+        self.on_select_callback = on_select_callback
+        self["relief"] = "groove"
+        self["borderwidth"] = 2
+        self.connection = ttk.Label(self)
+        self.connection["text"] = connection_name
+        self.connection.pack(fill=tk.X, expand=1)
+        self.bind("<Button-1>", self.on_click)
+        self.connection.bind("<Button-1>", self.on_click)
+
+    def on_click(self, event):
+        if self.on_select_callback is not None:
+            self.configure(style="Selected.TFrame")
+            self.connection.configure(style="Selected.TLabel")
+            self.on_select_callback(self.connection_name)
+
+    def on_unselect(self):
+        self.configure(style="TFrame")
+        self.connection.configure(style="TLabel")
+        self.update()
 
 
 class ConfigurationWindow(tk.Toplevel):
