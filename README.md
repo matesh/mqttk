@@ -20,12 +20,6 @@ package from pypi which is installed as a dependency when installed using pip, o
 in the app packages (windows/mac/linux). That't it, nothing fancy.
 
 # Installation
-## On MacOS as an app
-Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
-and install like any other apps. MacOS might complain about being unable to identify the
-developer, but [here](https://mateszabo.com) I am, so you can do so instead. In such case, just
-Ctrl+click on the file and then "Open" in the appearing window.
-
 ## On MacOS from pypi
 TBC
 
@@ -37,6 +31,11 @@ package, tk/ttk is not included, in which case the python3-tk package is also ne
 The easiest way to install these, is to use brew. The commands below may be different on your
 system.
 
+⚠️ When installing/running the app, use the system interpreter, or the interpreter available via homebrew.
+Conda or other interpreters can cause your system to crash entirely (kernel panic) which issue is
+outside of the code of this software. This crash happens under certain circumstances when switching
+to the app via mission control or the dock, there's nothing I can do about it unfortunately. Therefore,
+use other interpreters at your own risk!
 ```shell
 $ brew install python python-tk
 ```
@@ -82,7 +81,6 @@ TBC
 TBC
 
 ## On Linux from source
-
 ### Dependencies
 You need to install python3, python3-pip and in some cases the python3-tk packages. The process
 will be different depending on your distribution, refer to your distributions package manager or
@@ -123,6 +121,10 @@ $ python3 setup.py sdist
 The built package will appear in the dist/ directory.
 
 ## MacOS appimage
+⚠️ When building the app, use the system interpreter, or the interpreter available via homebrew.
+Conda or other interpreters can cause your system to crash entirely (kernel panic) which issue is
+outside of the code of this software. This crash happens under certain circumstances when switching
+to the app via mission control or the dock. Use other interpreters at your own risk!
 ### Dependencies
 You need to have xcode installed. Use the app store to do that if you don't have it yet.
 You will also need the xcode command line tools to be installed. You can do that from the terminal:
