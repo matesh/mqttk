@@ -1,0 +1,1 @@
+This software is licensed under the GNU LGPLv3 license as described in the COPYING and COPYING.LESSER files.
