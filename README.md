@@ -1,7 +1,35 @@
 ![MQTTk](/mqttk/mqttk_splash.png)
 
+- [Introduction](#introduction)
+- [Dependencies](#dependencies)
+- [Installation](#installation)
+  * [On MacOS](#on-macos)
+    + [Dependencies](#dependencies-1)
+    + [Acquiring and installing the package from source](#acquiring-and-installing-the-package-from-source)
+    + [Installing via pip](#installing-via-pip)
+    + [Running MQTTk](#running-mqttk)
+  * [On windows as an executable](#on-windows-as-an-executable)
+  * [On windows from source](#on-windows-from-source)
+    + [Dependencies](#dependencies-2)
+    + [Acquiring and installing the package from source](#acquiring-and-installing-the-package-from-source-1)
+    + [Installing it via pip](#installing-it-via-pip)
+    + [Running MQTTk](#running-mqttk-1)
+  * [On Linux from source](#on-linux-from-source)
+    + [Dependencies](#dependencies-3)
+    + [Acquiring and installing the package from source](#acquiring-and-installing-the-package-from-source-2)
+    + [Installing it via pip](#installing-it-via-pip-1)
+- [Using the app](#using-the-app)
+  * [Main features](#main-features)
+  * [Planned features](#planned-features)
+- [Building the app from source](#building-the-app-from-source)
+  * [pypi package](#pypi-package)
+  * [MacOS appimage](#macos-appimage)
+    + [Dependencies](#dependencies-4)
+    + [Building the app](#building-the-app)
+    + [Windows executable](#windows-executable)
+
 # Introduction
-MQTTk is a lightweight MQTT GUI client that looks dated and retarded, but it works, or at least so I believe. 
+MQTTk is a lightweight MQTT GUI client that looks retarded, but it works, or at least so I believe. 
 It intends to replicate most features and functionality of MQTT.fx which is no longer free 
 and the free version is no longer maintained. Since upgrading my computer, it was crashing 
 every 2 minutes, practically becoming useless. I always found it more useful than other 
@@ -128,7 +156,7 @@ any QoS and retained as well.
 There is a built-in log feature to show any exceptions/debug information, let me know if you see something
 unusual there.
 
-##Planned features
+## Planned features
 - import MQTT.fx configuration file with all the subscription and publish histories, connections and whatnot
 - tree-style topic inspector where all incoming messages are organised in a tree and the latest content of each will be shown
 - import and export of subscribe, publish templates/history, etc.
@@ -160,7 +188,7 @@ Just like when running the app, you need python3, pip and python3-tk. Install th
 
 In addition, you need the pyinstaller package. Install it using pip:
 ```shell
-$pip install pyinstaller
+$ pip install pyinstaller
 ```
 
 ### Building the app
