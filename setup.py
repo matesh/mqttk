@@ -1,32 +1,8 @@
 from setuptools import setup
 from mqttk import __version__
-import sys
 
 url = "https://github.com/matesh/mqttk"
 readme = open('README.md').read()
-#
-# if sys.platform == "darwin" and "py2app" in sys.argv:
-#     extra_options = dict(
-#         app=['mqttk_entry.py'],
-#         data_files=[('', ['mqttk'])],
-#         setup_requires=['py2app'],
-#         options=dict(
-#             py2app={
-#                     'iconfile':'mqttk.icns',
-#                     'plist': {
-#                                 'CFBundleDevelopmentRegion': 'English',
-#                                 'CFBundleIdentifier': "com.mateszabo.mqttk",
-#                                 'CFBundleVersion': __version__,
-#                                 'NSHumanReadableCopyright': u"Mate Szabo"
-#                     }
-#             }
-#         )
-#     )
-# else:
-#     extra_options = dict(
-#
-#     )
-
 
 setup(
     name="mqttk",
@@ -41,6 +17,7 @@ setup(
     maintainer_email='mate@mateszabo.com',
     description="A lightweight MQTT client GUI written in pure python",
     url=url,
+    python_requires=">=3.7",
     install_requires=[
         "paho-mqtt",
     ],
@@ -52,6 +29,5 @@ setup(
         'mqttk': ['*.png']
     },
     download_url="{}/tarball/{}".format(url, __version__),
-    license="LGPLv3"#,
-    # **extra_options
+    license="LGPLv3"
 )

@@ -20,10 +20,20 @@ import os
 import traceback
 from datetime import datetime
 from functools import partial
-import tkinter as tk
-import tkinter.ttk as ttk
 import sys
 import time
+try:
+    import tkinter as tk
+    import tkinter.ttk as ttk
+except ImportError:
+    print("Couldn't find a valid installation of tkinter/ttk. Please make sure you installed the necessary requirements!")
+    if sys.platform == "darwin":
+        print("Install the python-tk package via homebrew")
+    elif sys.platform == "linux":
+        print("Install the python-tk or python3-tk package via your operating system's package manager!")
+    exit(0)
+
+
 from mqttk.widgets import SubscriptionFrame, HeaderFrame, SubscribeTab, PublishTab, CONNECT, DISCONNECT, LogTab
 from mqttk.dialogs import AboutDialog, SplashScreen
 from mqttk.configuration_dialog import ConfigurationWindow

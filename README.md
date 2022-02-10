@@ -20,10 +20,7 @@ package from pypi which is installed as a dependency when installed using pip, o
 in the app packages (windows/mac/linux). That't it, nothing fancy.
 
 # Installation
-## On MacOS from pypi
-TBC
-
-## On MacOS from source
+## On MacOS
 ### Dependencies
 You must have python3 and python3-pip installed. On some versions of MacOS or the python3
 package, tk/ttk is not included, in which case the python3-tk package is also needed.
@@ -39,13 +36,20 @@ use other interpreters at your own risk!
 ```shell
 $ brew install python python-tk
 ```
-### Acquiring and installing the package
-After that, download the [latest tar.gz release](insertlinkhere) from the [GitHub repository](https://github.com/matesh/mqttk/releases)
-and then install it using pip.
+### Acquiring and installing the package from source
+Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
+and install it using pip.
 ```shell
 $ pip3 install mqttk-x.y.tar.gz
 ```
 
+### Installing via pip
+Issue the following command:
+```shell
+$ pip3 install mqttk
+```
+
+### Running MQTTk
 To run the software, just issue the mqttk command. 
 ```shell
 $ mqttk
@@ -59,38 +63,57 @@ command, which might provide additional debug information.
 
 ## On windows as an executable
 Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
-and install like any other apps.
+and install/run like any other apps.
 
 ## On windows from source
+### Dependencies
 Download python3 from the [official website](https://www.python.org/downloads/) and install it like any other apps.
 
-Download the [latest tar.gz release](insertlinkhere) from the [GitHub repository](https://github.com/matesh/mqttk/releases)
+### Acquiring and installing the package from source
+Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
 and then install it using pip.
 
 ```shell
 > pip3 install mqttk-x.y.tar.gz
 ```
 
-## On windows from pypi
-TBC
+### Installing it via pip
+Issue the following command
+```shell
+> pip3 install mqttk
+```
 
-## On Linux as an app
-TBC
-
-## On Linux from pypi
-TBC
+### Running MQTTk
+From the command line issue the command
+```shell
+> mqttk
+```
 
 ## On Linux from source
 ### Dependencies
 You need to install python3, python3-pip and in some cases the python3-tk packages. The process
 will be different depending on your distribution, refer to your distributions package manager or
-community. As an example, on ubuntu you'd need to install the following packages using apt. On
+community. As an example, on ubuntu you'd need to install the below packages using apt. On
 other distros, python3 might be default, in which case the "3" suffix won't be needed on the packages.
 I know, confusing times, ain't it?
 
 ```shell
 $ sudo apt install python3 python3-pip python3-tk
 ```
+
+### Acquiring and installing the package from source
+Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
+and install it using pip.
+```shell
+$ pip3 install mqttk-x.y.tar.gz
+```
+
+### Installing it via pip
+Just issue the command
+```shell
+$ pip3 install mqttk
+```
+
 
 # Using the app
 ## Main features
@@ -112,7 +135,6 @@ unusual there.
 - message dump
 
 # Building the app from source
-
 ## pypi package
 issue the following command in the project root to build the sdist package.
 ```shell
@@ -121,6 +143,7 @@ $ python3 setup.py sdist
 The built package will appear in the dist/ directory.
 
 ## MacOS appimage
+⚠️ This is highly experimental and needs refiniement
 ⚠️ When building the app, use the system interpreter, or the interpreter available via homebrew.
 Conda or other interpreters can cause your system to crash entirely (kernel panic) which issue is
 outside of the code of this software. This crash happens under certain circumstances when switching
