@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from mqttk import __version__
 
 url = "https://github.com/matesh/mqttk"
@@ -6,7 +6,7 @@ readme = open('README.md').read()
 
 setup(
     name="mqttk",
-    packages=["mqttk"],
+    packages=find_packages(),
     version=__version__,
     long_description=readme,
     long_description_content_type='text/markdown',
@@ -20,6 +20,7 @@ setup(
     python_requires=">=3.7",
     install_requires=[
         "paho-mqtt",
+        "xmltodict"
     ],
     entry_points={
         'gui_scripts': ['mqttk=mqttk.__main__:main'],
