@@ -290,7 +290,11 @@ class SubscribeTab(ttk.Frame):
             self.message_payload_box.insert(1.0, new_message)
 
         elif decoder == "Hex formatter":
-            for line in hex_viewer(message_data.get("payload", "")):
+            try:
+                data_to_decode = message_data.get("payload", "").encode("utf-8")
+            except Exception:
+                data_to_decode = message_data.get("payload", "")
+            for line in hex_viewer(data_to_decode):
                 self.message_payload_box.insert(tk.END, line+linesep)
 
         else:
@@ -359,9 +363,13 @@ class SubscribeTab(ttk.Frame):
         time_string = "{:.6f} - {}".format(round(timestamp, 6),
                                            datetime.fromtimestamp(timestamp).strftime("%Y/%m/%d, %H:%M:%S.%f"))
         simple_time_string = datetime.fromtimestamp(timestamp).strftime("%H:%M:%S.%f")
+        try:
+            payload_decoded = str(mqtt_message_object.payload.decode("utf-8"))
+        except Exception:
+            payload_decoded = mqtt_message_object.payload
         self.messages[new_message_id] = {
             "topic": mqtt_message_object.topic,
-            "payload": mqtt_message_object.payload,
+            "payload": payload_decoded,
             "qos": mqtt_message_object.qos,
             "subscription_pattern": subscription_pattern,
             "time_string": time_string,
@@ -375,7 +383,7 @@ class SubscribeTab(ttk.Frame):
         try:
             colour = self.subscription_frames[subscription_pattern].colour
         except Exception as e:
-            print("Failed to add stuff")
+            self.log.warning("Failed to add new message:", e, mqtt_message_object.topic)
         else:
             self.add_message(message_title, colour)
 

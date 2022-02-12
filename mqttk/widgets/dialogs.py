@@ -2,11 +2,20 @@ from mqttk import __version__ as version
 import tkinter as tk
 import tkinter.ttk as ttk
 
-about_text = "MQTTk is a lightweight free and open source gaphical MQTT client. It is licensed under the " \
-             "GNU LGPLv3 license. To learn more about the license, see\nhttps://www.gnu.org/licenses/\n\nMQTTk " \
-             "is written in pure python and uses the tk/ttk libraries. For license, see\nhttps://docs.python.org/3/" \
-             "license.html\n\nMQTTk uses the Eclipse paho-mqtt client, see relevant license(s) following\nhttps:" \
-             "//github.com/eclipse/paho.mqtt.python\n\nCopyright (C) 2022  Máté Szabó"
+
+about_text = "MQTTk is a lightweight, free and open source graphical MQTT\n" \
+             "client/analyser. It is licensed under the GNU LGPLv3 license.\n" \
+             "For license information please see:\n" \
+             "https://www.gnu.org/licenses/\n\n" \
+             "This software is written in pure Python and is powered by\n" \
+             "the below open source projects:\n\n" \
+             "Python 3 and Tkinter/ttk:\n" \
+             "https://docs.python.org/3/license.html\n\n" \
+             "Eclipse paho-mqtt python client library:\n" \
+             "https://github.com/eclipse/paho.mqtt.python\n\n" \
+             "xmltodict library:\n" \
+             "https://github.com/martinblech/xmltodict\n\n" \
+             "Copyright (C) 2022  Máté Szabó"
 
 
 class AboutDialog(tk.Toplevel):
@@ -14,13 +23,8 @@ class AboutDialog(tk.Toplevel):
         super().__init__(master=master)
         self.master = master
         self.title("About")
-        width = 700
-        height = 350
-        screenwidth = self.winfo_screenwidth()
-        screenheight = self.winfo_screenheight()
-        alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+
         self.resizable(False, False)
-        self.geometry(alignstr)
         self.iconphoto(False, icon)
 
         self.about_frame = ttk.Frame(self)
@@ -34,7 +38,7 @@ class AboutDialog(tk.Toplevel):
         # self.icon_canvas.pack(side=tk.LEFT, expand=1, fill='both')
         self.icon = ttk.Label(self.about_content_frame, image=icon)
         self.icon.pack(side=tk.LEFT, padx=8)
-        self.about_text = tk.Text(self.about_content_frame, wrap='word', height=15, exportselection=False, font='Arial 14')
+        self.about_text = tk.Text(self.about_content_frame, wrap='word', width=55, height=18, exportselection=False, font='Arial 14')
         self.about_text.pack(side=tk.RIGHT, fill='x', expand=1, padx=6, pady=6)
         self.about_text.insert(1.0, about_text)
         self.about_text.configure(bg=style.lookup("TLabel", "background"),
@@ -50,6 +54,15 @@ class AboutDialog(tk.Toplevel):
         self.ok_button.pack(side=tk.BOTTOM, pady=4)
         self.ok_button["command"] = self.on_destroy
         self.about_frame.pack(fill='both', expand=1)
+
+        self.geometry("")
+        self.update()
+        screenwidth = self.winfo_screenwidth()
+        screenheight = self.winfo_screenheight()
+        height = self.winfo_height()
+        width = self.winfo_width()
+        alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+        self.geometry(alignstr)
 
     def on_destroy(self, *args, **kwargs):
         self.grab_release()

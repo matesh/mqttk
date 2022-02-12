@@ -2,8 +2,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from mqttk.widgets.scrolled_text import CustomScrolledText
 from mqttk.widgets.scroll_frame import ScrollFrame
-from mqttk.dialogs import PublishNameDialog
-
+from mqttk.widgets.dialogs import PublishNameDialog
+import base64
 from mqttk.constants import QOS_NAMES, CONNECT, DISCONNECT
 
 
@@ -71,7 +71,7 @@ class PublishHistoryFrame(ttk.Frame):
 
     def on_publish_button(self):
         self.publish_callback(self.configuration["topic"],
-                              self.configuration["payload"],
+                              base64.b64decode(self.configuration["payload"]).decode("utf-8"),
                               self.configuration["qos"],
                               self.configuration["retained"])
 
@@ -158,8 +158,12 @@ class PublishTab(ttk.Frame):
 
     def on_publish_button(self, *args, **kwargs):
         if self.publish_topic_selector.get() != "":
+            payload = self.payload_editor.get(1.0, tk.END)
+            # Remove stupid fucking newline that gets added to the bloody text widget for no reason
+            if payload[-1] == '\n':
+                payload = payload[0:-1]
             self.publish_message(self.publish_topic_selector.get(),
-                                 self.payload_editor.get(1.0, tk.END),
+                                 payload,
                                  QOS_NAMES.get(self.qos_selector.get(), 0),
                                  bool(self.retained_state_var.get()))
             new = self.config_handler.save_publish_topic_history_item(self.current_connection,
@@ -208,7 +212,7 @@ class PublishTab(ttk.Frame):
             "topic": self.publish_topic_selector.get(),
             "qos": QOS_NAMES.get(self.qos_selector.get(), 0),
             "retained": bool(self.retained_state_var.get()),
-            "payload": self.payload_editor.get(1.0, tk.END)
+            "payload": base64.b64encode(self.payload_editor.get(1.0, tk.END).encode("utf-8")).decode("utf-8")
         }
         self.config_handler.save_publish_history_item(self.current_connection, new_name, new_config)
         if self.current_publish_history_selected is None or self.current_publish_history_selected.name != new_name:
@@ -247,7 +251,7 @@ class PublishTab(ttk.Frame):
         self.qos_selector.current(int(history_item.configuration["qos"]))
         self.retained_state_var.set(history_item.configuration["retained"])
         self.payload_editor.delete(1.0, tk.END)
-        self.payload_editor.insert(1.0, history_item.configuration["payload"])
+        self.payload_editor.insert(1.0, base64.b64decode(history_item.configuration["payload"]).decode("utf-8"))
         self.current_publish_history_selected = history_item
 
     def interface_toggle(self, connection_state, mqtt_manager=None, current_connection=None):

@@ -24,6 +24,8 @@ import time
 try:
     import tkinter as tk
     import tkinter.ttk as ttk
+    from tkinter import messagebox
+    from tkinter import filedialog
 except ImportError:
     print("Couldn't find a valid installation of tkinter/ttk. "
           "Please make sure you installed the necessary requirements!")
@@ -39,7 +41,7 @@ from mqttk.widgets.header_frame import HeaderFrame
 from mqttk.widgets.publish_tab import PublishTab
 from mqttk.constants import CONNECT, DISCONNECT
 from mqttk.widgets.log_tab import LogTab
-from mqttk.dialogs import AboutDialog, SplashScreen
+from mqttk.widgets.dialogs import AboutDialog, SplashScreen
 from mqttk.widgets.configuration_dialog import ConfigurationWindow
 from mqttk.config_handler import ConfigHandler
 from mqttk.MQTT_manager import MqttManager
@@ -155,11 +157,16 @@ class App:
         self.root.config(menu=self.menubar)
         self.file_menu = tk.Menu(self.menubar, background=self.style.lookup("TLabel", "background"),
                                  foreground=self.style.lookup("TLabel", "foreground"))
+
+        self.import_menu = tk.Menu(self.menubar, background=self.style.lookup("TLabel", "background"),
+                                   foreground=self.style.lookup("TLabel", "foreground"))
         self.about_menu = tk.Menu(self.menubar)
         self.menubar.add_cascade(menu=self.file_menu, label="File")
+        self.menubar.add_cascade(menu=self.import_menu, label="Import")
         self.menubar.add_cascade(menu=self.about_menu, label="Help")
         self.file_menu.add_command(label="Exit", command=self.on_exit)
         self.about_menu.add_command(label="About", command=self.on_about_menu)
+        self.import_menu.add_command(label="Import MQTT.fx config", command=self.import_mqttfx_config)
 
         self.main_window_frame = ttk.Frame(root)
         self.main_window_frame.pack(fill='both', expand=1)
@@ -224,6 +231,7 @@ class App:
                                             self.log)
         except Exception as e:
             self.log.exception("Failed to initialise MQTT client:", e, "\r\n", traceback.format_exc())
+            self.header_frame.connection_error_notification["text"] = "Failed to connect, see log for details"
             self.header_frame.interface_toggle(DISCONNECT)
             self.publish_frame.interface_toggle(DISCONNECT)
 
@@ -256,7 +264,7 @@ class App:
     def on_about_menu(self):
         about_window = AboutDialog(self.root, self.icon_small, self.style)
         about_window.transient(self.root)
-        about_window.wait_visibility()
+        # about_window.wait_visibility()
         about_window.grab_set_global()
         about_window.wait_window()
 
@@ -269,6 +277,14 @@ class App:
 
     def on_destroy(self):
         self.on_exit()
+
+    def import_mqttfx_config(self):
+        response = messagebox.askquestion("Warning", "This feature is highly experimental! Proceed?", )
+        if response == "no":
+            return
+        success = self.config_handler.import_mqttfx_config()
+        if success:
+            self.on_config_update()
 
 
 def main():

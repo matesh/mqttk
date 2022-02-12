@@ -2,7 +2,9 @@ import sys
 import os
 from pathlib import Path
 import json
-
+from tkinter import messagebox
+from tkinter import filedialog
+import mqttk.mqtt_fx_config_parser as configparser
 
 LOAD = "load"
 SAVE = "save"
@@ -26,7 +28,11 @@ class ConfigHandler:
                 "connection_parameters": {
                     "connection_parameter: value
                 },
-                "subscriptions": [] list of previous subscriptions
+                "subscriptions": { list of previous subscriptions
+                    "subscription_topic": {
+                        "colour": color
+                    }
+                }
                 "publish_topics": [] list of previous publishes
                 "stored_publishes": {
                     "name": {
@@ -59,6 +65,7 @@ class ConfigHandler:
         self.wont_save = False
         self.first_start = True
         self.log = logger
+        self.mqttfx_config_location = None
         self.config_file_manager(LOAD)
 
     def config_file_manager(self, action):
@@ -67,6 +74,12 @@ class ConfigHandler:
         if sys.platform.startswith("win"):
             if self.first_start:
                 self.log.info("Windoze platform detected")
+                appdata_dir = os.getenv('LOCALAPPDATA')
+                mqttfx_config_file = os.path.join(appdata_dir, "MQTT-FX", "mqttfx-config.xml")
+                if os.path.isfile(mqttfx_config_file):
+                    self.mqttfx_config_location = mqttfx_config_file
+                    self.log.info("Found MQTT.fx configuration file", self.mqttfx_config_location)
+
             appdata_dir = os.getenv('LOCALAPPDATA')
             config_dir = os.path.join(appdata_dir, "MQTTk")
             config_file = os.path.join(appdata_dir, "MQTTk", "MQTTk-config.json")
@@ -74,6 +87,12 @@ class ConfigHandler:
         elif sys.platform.startswith("linux"):
             if self.first_start:
                 self.log.info("Linux platform detected")
+                home_dir = str(Path.home())
+                mqttfx_config_file = os.path.join(home_dir, "MQTT-FX", "mqttfx-config.xml")
+                if os.path.isfile(mqttfx_config_file):
+                    self.mqttfx_config_location = mqttfx_config_file
+                    self.log.info("Found MQTT.fx configuration file", self.mqttfx_config_location)
+
             home_dir = str(Path.home())
             config_dir = os.path.join(home_dir, ".config", "MQTTk")
             config_file = os.path.join(home_dir, ".config", "MQTTk", "MQTTk-config.json")
@@ -81,6 +100,12 @@ class ConfigHandler:
         elif sys.platform.startswith("darwin"):
             if self.first_start:
                 self.log.info("MacOS platform detected")
+                home_dir = str(Path.home())
+                mqttfx_config_file = os.path.join(home_dir, "Library", "ApplicationSupport", "MQTT-FX", "mqttfx-config.xml")
+                if os.path.isfile(mqttfx_config_file):
+                    self.mqttfx_config_location = mqttfx_config_file
+                    self.log.info("Found MQTT.fx configuration file", self.mqttfx_config_location)
+
             home_dir = str(Path.home())
             config_dir = os.path.join(home_dir, "Library", "ApplicationSupport", "MQTTk")
             config_file = os.path.join(home_dir, "Library", "ApplicationSupport", "MQTTk", "MQTTk-config.json")
@@ -237,3 +262,32 @@ class ConfigHandler:
     def save_last_used_decoder(self, decoder):
         self.configuration_dict["last_used_decoder"] = decoder
         self.config_file_manager(SAVE)
+
+    def import_mqttfx_config(self):
+        if configparser.XMLTODICT is False:
+            messagebox.showerror("Error", "Failed to import the xmltodict library. Please ensure all dependencies are installed!")
+        if self.mqttfx_config_location is None:
+            response = messagebox.askquestion("MQTT.fx config not found", "Couldn't find MQTT.fx configuration file. Would you like to browse the file?")
+            if response == "no":
+                return False
+            mqtt_fx_config_file = filedialog.askopenfilename(initialdir=str(Path.home()),
+                                                             title="Select MQTT.fx configuration file")
+            if not os.path.isfile(mqtt_fx_config_file):
+                messagebox.showerror("Error", "File cannot be found")
+                return False
+        else:
+            mqtt_fx_config_file = self.mqttfx_config_location
+
+        error, response = configparser.parse_mqttfx_xml(mqtt_fx_config_file)
+        if error:
+            messagebox.showerror("Error", response)
+            return False
+
+        error, response = configparser.parse_mqttfx_config(response, self.configuration_dict)
+        if error:
+            messagebox.showerror("Error", "Failed to parse MQTT.fx config dict: {}".format(response))
+            return False
+
+        messagebox.showinfo("Success!", "Successfully imported MQTT.fx configuration! Please double check SSL configuration!")
+        self.configuration_dict = response
+        return True
