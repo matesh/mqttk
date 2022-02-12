@@ -1,35 +1,42 @@
 ![MQTTk](/mqttk/mqttk_splash.png)
 
 - [Introduction](#introduction)
-- [Dependencies](#dependencies)
+- [Software dependencies](#software-dependencies)
 - [Installation](#installation)
   * [On MacOS](#on-macos)
-    + [Dependencies](#dependencies-1)
-    + [Acquiring and installing the package from source](#acquiring-and-installing-the-package-from-source)
-    + [Installing via pip](#installing-via-pip)
-    + [Running MQTTk](#running-mqttk)
-  * [On windows as an executable](#on-windows-as-an-executable)
-  * [On windows from source](#on-windows-from-source)
-    + [Dependencies](#dependencies-2)
-    + [Acquiring and installing the package from source](#acquiring-and-installing-the-package-from-source-1)
-    + [Installing it via pip](#installing-it-via-pip)
-    + [Running MQTTk](#running-mqttk-1)
+    + [MacOS Dependencies](#macos-dependencies)
+    + [MacOS - acquiring and installing the package from source](#macos---acquiring-and-installing-the-package-from-source)
+    + [MacOS - installing via pip](#macos---installing-via-pip)
+    + [MacOS - running MQTTk](#macos---running-mqttk)
+  * [Windows - as an executable](#windows---as-an-executable)
+  * [Windows - from source](#windows---from-source)
+    + [Windows - dependencies](#windows---dependencies)
+    + [Windows - acquiring and installing the package from source](#windows---acquiring-and-installing-the-package-from-source)
+    + [Windws - installing it via pip](#windws---installing-it-via-pip)
+    + [Windows - running MQTTk](#windows---running-mqttk)
   * [On Linux from source](#on-linux-from-source)
-    + [Dependencies](#dependencies-3)
-    + [Acquiring and installing the package from source](#acquiring-and-installing-the-package-from-source-2)
-    + [Installing it via pip](#installing-it-via-pip-1)
+    + [Linux - dependencies](#linux---dependencies)
+    + [Linux - acquiring and installing the package from source](#linux---acquiring-and-installing-the-package-from-source)
+    + [Linux - installing it via pip](#linux---installing-it-via-pip)
+    + [Linux - Running MQTTk](#linux---running-mqttk)
 - [Using the app](#using-the-app)
   * [Main features](#main-features)
   * [Planned features](#planned-features)
+    + [V1.1](#v11)
+    + [V1.2](#v12)
+    + [V1.3](#v13)
 - [Building the app from source](#building-the-app-from-source)
   * [pypi package](#pypi-package)
   * [MacOS appimage](#macos-appimage)
-    + [Dependencies](#dependencies-4)
-    + [Building the app](#building-the-app)
-    + [Windows executable](#windows-executable)
+    + [Dependencies](#dependencies)
+    + [Building the MacOS app](#building-the-macos-app)
+  * [Windows executable](#windows-executable)
 
 # Introduction
-MQTTk is a lightweight MQTT GUI client that looks retarded, but it works, or at least so I believe. 
+MQTTk is a very lightweight MQTT GUI client that looks retarded, but it does the job fast in a native
+fashion, without bloated and sluggish browser, java and javascript based rubbish that may look good but
+is a pain to use especially in a professional environment.
+
 It intends to replicate most features and functionality of MQTT.fx which is no longer free 
 and the free version is no longer maintained. Since upgrading my computer, it was crashing 
 every 2 minutes, practically becoming useless. I always found it more useful than other 
@@ -40,23 +47,26 @@ the messages themselves.
 Since there is no other similar tool out there, I decided to make my own and share it with
 whoever is interested. The project is written in tk/ttk. I don't have time to learn some
 fancy-pancy GUI environment, it was quick and easy to knock out, and it should run on anything
-including the kitchen sink.
+including the kitchen sink without too much pain.
 
-# Dependencies
-The project is written in pure python, it requires python3, tk/ttk and the paho-mqtt python
-package from pypi which is installed as a dependency when installed using pip, or wrapped
-in the app packages (windows/mac/linux). That't it, nothing fancy.
+# Software dependencies
+The project is written in pure python, powered by the below projects: 
+- [python3.7+](https://www.python.org/)
+- [Tkinter/ttk](https://docs.python.org/3/library/tkinter.html) 
+- [Eclipse paho-mqtt python client](https://github.com/eclipse/paho.mqtt.python)
+- [xmltodict](https://github.com/martinblech/xmltodict) 
+That't it, nothing fancy. Give the above projects a big thumbs up!
 
 # Installation
 ## On MacOS
-### Dependencies
+### MacOS Dependencies
 You must have python3 and python3-pip installed. On some versions of MacOS or the python3
 package, tk/ttk is not included, in which case the python3-tk package is also needed.
 
 The easiest way to install these, is to use brew. The commands below may be different on your
 system.
 
-⚠️ When installing/running the app, use the system interpreter, or the interpreter available via homebrew.
+:warning: When installing/running the app, use the system interpreter, or the interpreter available via homebrew.
 Conda or other interpreters can cause your system to crash entirely (kernel panic) which issue is
 outside of the code of this software. This crash happens under certain circumstances when switching
 to the app via mission control or the dock, there's nothing I can do about it unfortunately. Therefore,
@@ -64,40 +74,40 @@ use other interpreters at your own risk!
 ```shell
 $ brew install python python-tk
 ```
-### Acquiring and installing the package from source
+### MacOS - acquiring and installing the package from source
 Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
 and install it using pip.
 ```shell
 $ pip3 install mqttk-x.y.tar.gz
 ```
 
-### Installing via pip
+### MacOS - installing via pip
 Issue the following command:
 ```shell
 $ pip3 install mqttk
 ```
 
-### Running MQTTk
+### MacOS - running MQTTk
 To run the software, just issue the mqttk command. 
 ```shell
 $ mqttk
 ```
 
-If the app fails to start, you can try re-launching it using the
+If the app fails to start, or crashes randomly, try re-launching it using the
 ```shell
 $ mqttk-console
 ```
-command, which might provide additional debug information.
+command. This will leave a console window, which might provide additional debug information when something goes tits up.
 
-## On windows as an executable
+## Windows - as an executable
 Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
 and install/run like any other apps.
 
-## On windows from source
-### Dependencies
+## Windows - from source
+### Windows - dependencies
 Download python3 from the [official website](https://www.python.org/downloads/) and install it like any other apps.
 
-### Acquiring and installing the package from source
+### Windows - acquiring and installing the package from source
 Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
 and then install it using pip.
 
@@ -105,20 +115,27 @@ and then install it using pip.
 > pip3 install mqttk-x.y.tar.gz
 ```
 
-### Installing it via pip
+### Windws - installing it via pip
 Issue the following command
 ```shell
 > pip3 install mqttk
 ```
 
-### Running MQTTk
+### Windows - running MQTTk
 From the command line issue the command
 ```shell
 > mqttk
 ```
 
+If the app fails to start, or crashes randomly, try re-launching it using the
+```shell
+$ mqttk-console
+```
+command. This will leave a console window, which might provide additional debug information when something goes tits up.
+
+
 ## On Linux from source
-### Dependencies
+### Linux - dependencies
 You need to install python3, python3-pip and in some cases the python3-tk packages. The process
 will be different depending on your distribution, refer to your distributions package manager or
 community. As an example, on ubuntu you'd need to install the below packages using apt. On
@@ -129,18 +146,32 @@ I know, confusing times, ain't it?
 $ sudo apt install python3 python3-pip python3-tk
 ```
 
-### Acquiring and installing the package from source
+### Linux - acquiring and installing the package from source
 Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
 and install it using pip.
 ```shell
 $ pip3 install mqttk-x.y.tar.gz
 ```
 
-### Installing it via pip
+### Linux - installing it via pip
 Just issue the command
 ```shell
 $ pip3 install mqttk
 ```
+
+### Linux - Running MQTTk
+
+From the command line issue the command
+```shell
+> mqttk
+```
+
+If the app fails to start, or crashes randomly, try re-launching it using the
+```shell
+$ mqttk-console
+```
+command. This will leave a console window, which might provide additional debug information when something goes tits up.
+
 
 
 # Using the app
@@ -157,10 +188,16 @@ There is a built-in log feature to show any exceptions/debug information, let me
 unusual there.
 
 ## Planned features
-- import MQTT.fx configuration file with all the subscription and publish histories, connections and whatnot
-- tree-style topic inspector where all incoming messages are organised in a tree and the latest content of each will be shown
-- import and export of subscribe, publish templates/history, etc.
-- message dump
+### V1.1
+- Export and import MQTTk configuration
+- Export and import subscribe topic history, publish topic history and templates
+- Message dump
+- 
+### V1.2
+- tree-style topic inspector where all incoming messages are organised in a tree and the latest payload is shown
+
+### V1.3
+- Broker stats tab
 
 # Building the app from source
 ## pypi package
@@ -171,8 +208,8 @@ $ python3 setup.py sdist
 The built package will appear in the dist/ directory.
 
 ## MacOS appimage
-⚠️ This is highly experimental and needs refiniement
-⚠️ When building the app, use the system interpreter, or the interpreter available via homebrew.
+:warning: This is highly experimental and needs refiniement
+:warning: When building the app, use the system interpreter, or the interpreter available via homebrew.
 Conda or other interpreters can cause your system to crash entirely (kernel panic) which issue is
 outside of the code of this software. This crash happens under certain circumstances when switching
 to the app via mission control or the dock. Use other interpreters at your own risk!
@@ -191,7 +228,7 @@ In addition, you need the pyinstaller package. Install it using pip:
 $ pip install pyinstaller
 ```
 
-### Building the app
+### Building the MacOS app
 I was not able to build a universal app image for MACs that worked on both Intel and M1 architectures,
 so I only build the Intel package, the software runs just fine through rosetta.
 Navigate to the project root and issue
@@ -199,7 +236,7 @@ Navigate to the project root and issue
 $  pyinstaller mqttk.spec
 ```
 
-### Windows executable
+## Windows executable
 Just like when running the app, you need python3, pip and python3-tk. Install these as explained above.
 In addition, you need the pyinstaller package:
 ```shell
