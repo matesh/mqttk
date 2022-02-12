@@ -30,5 +30,5 @@ setup(
         'mqttk': ['*.png']
     },
     download_url="{}/tarball/{}".format(url, __version__),
-    license="LGPLv3"
+    license="GPLv3"
 )

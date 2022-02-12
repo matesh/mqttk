@@ -4,7 +4,7 @@ import tkinter.ttk as ttk
 
 
 about_text = "MQTTk is a lightweight, free and open source graphical MQTT\n" \
-             "client/analyser. It is licensed under the GNU LGPLv3 license.\n" \
+             "client/analyser. It is licensed under the GNU GPLv3 license.\n" \
              "For license information please see:\n" \
              "https://www.gnu.org/licenses/\n\n" \
              "This software is written in pure Python and is powered by\n" \
