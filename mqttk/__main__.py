@@ -279,7 +279,7 @@ class App:
         self.on_exit()
 
     def import_mqttfx_config(self):
-        response = messagebox.askquestion("Warning", "This feature is highly experimental! Proceed?", )
+        response = messagebox.askquestion("Warning", "This feature is experimental. Would you like to proceed?", )
         if response == "no":
             return
         success = self.config_handler.import_mqttfx_config()

@@ -3,16 +3,16 @@
 - [Introduction](#introduction)
 - [Software dependencies](#software-dependencies)
 - [Installation](#installation)
-  * [On MacOS](#on-macos)
-    + [MacOS Dependencies](#macos-dependencies)
-    + [MacOS - acquiring and installing the package from source](#macos---acquiring-and-installing-the-package-from-source)
-    + [MacOS - installing via pip](#macos---installing-via-pip)
-    + [MacOS - running MQTTk](#macos---running-mqttk)
+  * [On macOS](#on-macos)
+    + [macOS Dependencies](#macos-dependencies)
+    + [macOS - acquiring and installing the package from source](#macos---acquiring-and-installing-the-package-from-source)
+    + [macOS - installing via pip](#macos---installing-via-pip)
+    + [macOS - running MQTTk](#macos---running-mqttk)
   * [Windows - as an executable](#windows---as-an-executable)
   * [Windows - from source](#windows---from-source)
     + [Windows - dependencies](#windows---dependencies)
     + [Windows - acquiring and installing the package from source](#windows---acquiring-and-installing-the-package-from-source)
-    + [Windws - installing it via pip](#windws---installing-it-via-pip)
+    + [Windows - installing it via pip](#windows---installing-it-via-pip)
     + [Windows - running MQTTk](#windows---running-mqttk)
   * [On Linux from source](#on-linux-from-source)
     + [Linux - dependencies](#linux---dependencies)
@@ -20,16 +20,16 @@
     + [Linux - installing it via pip](#linux---installing-it-via-pip)
     + [Linux - Running MQTTk](#linux---running-mqttk)
 - [Using the app](#using-the-app)
-  * [Main features](#main-features)
+  * [Main features](#features)
   * [Planned features](#planned-features)
     + [V1.1](#v11)
     + [V1.2](#v12)
     + [V1.3](#v13)
 - [Building the app from source](#building-the-app-from-source)
   * [pypi package](#pypi-package)
-  * [MacOS appimage](#macos-appimage)
+  * [macOS appimage](#macos-appimage)
     + [Dependencies](#dependencies)
-    + [Building the MacOS app](#building-the-macos-app)
+    + [Building the macOS app](#building-the-macos-app)
   * [Windows executable](#windows-executable)
 
 # Introduction
@@ -41,7 +41,7 @@ It intends to replicate most features and functionality of MQTT.fx which is no l
 and the free version is no longer maintained. Since upgrading my computer, it was crashing 
 every 2 minutes, practically becoming useless. I always found it more useful than other 
 MQTT GUI clients, which mostly update the values of topics as they come in, in my work, 
-being able to track message exchange over time is equally as important as the content of 
+being able to track message exchange over time is as important as the content of 
 the messages themselves.
 
 Since there is no other similar tool out there, I decided to make my own and share it with
@@ -58,9 +58,9 @@ The project is written in pure python, powered by the below projects:
 That't it, nothing fancy. Give the above projects a big thumbs up!
 
 # Installation
-## On MacOS
-### MacOS Dependencies
-You must have python3 and python3-pip installed. On some versions of MacOS or the python3
+## On macOS
+### macOS Dependencies
+You must have python3 and python3-pip installed. On some versions of macOS or the python3
 package, tk/ttk is not included, in which case the python3-tk package is also needed.
 
 The easiest way to install these, is to use brew. The commands below may be different on your
@@ -69,25 +69,25 @@ system.
 :warning: When installing/running the app, use the system interpreter, or the interpreter available via homebrew.
 Conda or other interpreters can cause your system to crash entirely (kernel panic) which issue is
 outside of the code of this software. This crash happens under certain circumstances when switching
-to the app via mission control or the dock, there's nothing I can do about it unfortunately. Therefore,
+to the app via mission control or the dock, there's nothing I can do about it, unfortunately. Therefore,
 use other interpreters at your own risk!
 ```shell
 $ brew install python python-tk
 ```
-### MacOS - acquiring and installing the package from source
+### macOS - acquiring and installing the package from source
 Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
 and install it using pip.
 ```shell
 $ pip3 install mqttk-x.y.tar.gz
 ```
 
-### MacOS - installing via pip
+### macOS - installing via pip
 Issue the following command:
 ```shell
 $ pip3 install mqttk
 ```
 
-### MacOS - running MQTTk
+### macOS - running MQTTk
 To run the software, just issue the mqttk command. 
 ```shell
 $ mqttk
@@ -115,7 +115,7 @@ and then install it using pip.
 > pip3 install mqttk-x.y.tar.gz
 ```
 
-### Windws - installing it via pip
+### Windows - installing it via pip
 Issue the following command
 ```shell
 > pip3 install mqttk
@@ -172,17 +172,20 @@ $ mqttk-console
 ```
 command. This will leave a console window, which might provide additional debug information when something goes tits up.
 
-
-
 # Using the app
-## Main features
-Currently the app allows to configure multiple connection profiles. Once configured, the brokers
-can be connected to and you can subscribe to topics. Incoming messages are shown in time, their colour
-can be changed and selected messages payloads displayed. There are currently 3 decoders, plain text, json
+## Features
+MQTTk allows configuration of multiple connection profiles. Once configured, the brokers
+can be connected to, and you can subscribe to topics. Incoming messages are shown in time, their colour
+can be changed and selected message's payloads displayed. There are currently 3 decoders, plain text, json
 pretty formatter and hex decoder to analyse message data. 
 
-You can also publish, save message templates and one-click publish them. You can send messages with
-any QoS and retained as well. 
+You can also publish messages, save message templates and one-click publish them. You can send messages with
+any QoS and retained messages as well.
+
+So far, I added the most useful message decoding features: JSON pretty formatter and hex decoders. 
+
+If you used MQTT.fx in the past, MQTTk will try to find and import your config. The connection profiles,
+subscribe and publish history will be imported, as well as the saved message templates.
 
 There is a built-in log feature to show any exceptions/debug information, let me know if you see something
 unusual there.
@@ -207,7 +210,7 @@ $ python3 setup.py sdist
 ```
 The built package will appear in the dist/ directory.
 
-## MacOS appimage
+## macOS appimage
 :warning: This is highly experimental and needs refiniement
 :warning: When building the app, use the system interpreter, or the interpreter available via homebrew.
 Conda or other interpreters can cause your system to crash entirely (kernel panic) which issue is
@@ -228,7 +231,7 @@ In addition, you need the pyinstaller package. Install it using pip:
 $ pip install pyinstaller
 ```
 
-### Building the MacOS app
+### Building the macOS app
 I was not able to build a universal app image for MACs that worked on both Intel and M1 architectures,
 so I only build the Intel package, the software runs just fine through rosetta.
 Navigate to the project root and issue

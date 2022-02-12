@@ -289,5 +289,6 @@ class ConfigHandler:
             return False
 
         messagebox.showinfo("Success!", "Successfully imported MQTT.fx configuration! Please double check SSL configuration!")
+        self.config_file_manager(SAVE)
         self.configuration_dict = response
         return True
