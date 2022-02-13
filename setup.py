@@ -29,6 +29,6 @@ setup(
     package_data={
         'mqttk': ['*.png']
     },
-    download_url="{}/tarball/{}".format(url, __version__),
+    download_url="{}/releases".format(url),
     license="GPLv3"
 )

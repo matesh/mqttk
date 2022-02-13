@@ -3,7 +3,7 @@
 - [Introduction](#introduction)
 - [Software dependencies](#software-dependencies)
 - [Installation](#installation)
-- [macOS - as an app - M1 (ARM64) macs only!](#macos---app)
+- [macOS - app](#macos---app)
   * [On macOS from source](#on-macos-from-source)
     + [macOS Dependencies](#macos-dependencies)
     + [macOS - acquiring and installing the package from source](#macos---acquiring-and-installing-the-package-from-source)
