@@ -3,7 +3,7 @@
 - [Introduction](#introduction)
 - [Software dependencies](#software-dependencies)
 - [Installation](#installation)
-- [macOS - app](#macos---app)
+  * [macOS - app](#macos---app)
   * [On macOS from source](#on-macos-from-source)
     + [macOS Dependencies](#macos-dependencies)
     + [macOS - acquiring and installing the package from source](#macos---acquiring-and-installing-the-package-from-source)
@@ -63,7 +63,7 @@ The project is written in pure python, powered by the below projects:
 That't it, nothing fancy. Give the above projects a big thumbs up!
 
 # Installation
-# macOS - app
+## macOS - app
 :warning: The built appimage is experimental! Use it at your own risk, it may cause kernel panics and app crashes.
 
 :warning: The app image is only for M1 (ARM64, Apple Silicon) macs! With my current knowledge I can't produce a working
