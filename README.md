@@ -3,7 +3,8 @@
 - [Introduction](#introduction)
 - [Software dependencies](#software-dependencies)
 - [Installation](#installation)
-  * [On macOS](#on-macos)
+- [macOS - as an app - M1 (ARM64) macs only!](#macos---app)
+  * [On macOS from source](#on-macos-from-source)
     + [macOS Dependencies](#macos-dependencies)
     + [macOS - acquiring and installing the package from source](#macos---acquiring-and-installing-the-package-from-source)
     + [macOS - installing via pip](#macos---installing-via-pip)
@@ -36,8 +37,6 @@
   * [macOS universal2 appimage](#macos-universal2-appimage)
   * [Linux binary package or app](#linux-binary-package-or-app)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 # Introduction
 MQTTk is a very lightweight MQTT GUI client that looks retarded, but it does the job fast in a native
 fashion, without bloated and sluggish browser, java and javascript based rubbish that may look good, but
@@ -64,7 +63,20 @@ The project is written in pure python, powered by the below projects:
 That't it, nothing fancy. Give the above projects a big thumbs up!
 
 # Installation
-## On macOS
+# macOS - app
+:warning: The built appimage is experimental! Use it at your own risk, it may cause kernel panics and app crashes.
+
+:warning: The app image is only for M1 (ARM64, Apple Silicon) macs! With my current knowledge I can't produce a working
+intel or universal2 app image.
+
+Download the latest release from [the GitHub releases page](https://github.com/matesh/mqttk/releases) and install it
+like any other apps. 
+
+The system may complain about not being able to verify the developer. You can find more information
+about me [here](https://mateszabo.com), so you can verify the developer yourself instead. To run the app, follow
+the instructions provided by apple [here](https://support.apple.com/en-ie/guide/mac-help/mh40616/mac).
+
+## On macOS from source
 ### macOS Dependencies
 You must have Python 3.7+ and pip installed. On some versions of macOS or the python package, Tk/ttk is not included, 
 in which case the python-tk package is also needed. 
@@ -246,7 +258,7 @@ $ pip install pyinstaller
 
 ### Building the macOS app
 I was not able to build a universal app image for MACs that ran native on both Intel and M1 architectures,
-so I only build the Intel package, the software ran just fine through rosetta, though it takes its time to start up.
+so I only built the ARM64 package.
 
 Navigate to the project root and issue
 
@@ -273,7 +285,7 @@ Use the GitHub [issue reporting page](https://github.com/matesh/mqttk/issues) of
 
 ## macOS universal2 appimage
 My time and knowledge is limited to figure how to properly build a universal2 app image (intel + ARM). I managed to
-build an intel only version, about which I'm not entirely happy, it takes a long time to start up on ARM. Furthermore,
+build an M1 only version, with which I'm not entirely happy, it takes a long time to start up for some reason. Furthermore,
 I had issues with the app when not running on the system interpreter on my M1 mac, causing regular crashes and
 kernel panics when switching to and from MQTTk. I would appreciate help with building the app and testing the 
 resulting image out on other machines. 
