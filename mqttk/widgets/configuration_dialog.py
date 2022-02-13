@@ -1,3 +1,22 @@
+"""
+MQTTk - Lightweight graphical MQTT client and message analyser
+
+Copyright (C) 2022  Máté Szabó
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+"""
+
 import tkinter as tk
 import tkinter.ttk as ttk
 import traceback
@@ -57,6 +76,7 @@ class ConnectionFrame(ttk.Frame):
 class ConfigurationWindow(tk.Toplevel):
     def __init__(self, master, config_handler, config_update_callback, logger, icon):
         super().__init__(master=master)
+        self.transient(master)
         self.master = master
         self.config_handler = config_handler
         self.currently_selected_connection = None
@@ -64,6 +84,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.config_update_callback = config_update_callback
         self.log = logger
 
+        self.grab_set()
         self.title("Connection configuration")
         width = 1000
         height = 600
@@ -73,6 +94,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.geometry(alignstr)
 
         self.protocol("WM_DELETE_WINDOW", self.on_destroy)
+        self.bind("<Escape>", self.cancel)
         vcmd = (self.register(validate_int),
                 '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
 
@@ -161,7 +183,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.password_label["anchor"] = "e"
         self.password_label["text"] = "Password"
         self.password_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
-        self.password_input = ttk.Entry(self.password_frame)
+        self.password_input = ttk.Entry(self.password_frame, show='*')
         self.password_input.pack(side=tk.LEFT, padx=2)
 
         # timeout
@@ -277,19 +299,21 @@ class ConfigurationWindow(tk.Toplevel):
         connection_profiles = self.config_handler.get_connection_profiles()
         for connection_profile in sorted(connection_profiles):
             self.add_profile_widget(connection_profile)
+        self.focus_set()
+        self.wait_window(self)
 
     def on_generate_client_id(self):
         self.client_id_input.delete(0, tk.END)
         self.client_id_input.insert(0, str(uuid.uuid4()).replace("-", ""))
 
-    def apply(self):
+    def apply(self, *args, **kwargs):
         self.save_current_config()
 
-    def ok(self):
+    def ok(self, *args, **kwargs):
         self.save_current_config()
         self.on_destroy()
 
-    def cancel(self):
+    def cancel(self, *args, **kwargs):
         self.on_destroy()
 
     def on_remove(self):

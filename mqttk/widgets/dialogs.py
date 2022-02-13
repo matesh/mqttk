@@ -1,3 +1,22 @@
+"""
+MQTTk - Lightweight graphical MQTT client and message analyser
+
+Copyright (C) 2022  Máté Szabó
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+"""
+
 from mqttk import __version__ as version
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -21,6 +40,7 @@ about_text = "MQTTk is a lightweight, free and open source graphical MQTT\n" \
 class AboutDialog(tk.Toplevel):
     def __init__(self, master, icon, style):
         super().__init__(master=master)
+        self.transient(master)
         self.master = master
         self.title("About")
 
@@ -47,13 +67,14 @@ class AboutDialog(tk.Toplevel):
                                   borderwidth=0,
                                   border=0,
                                   highlightcolor=style.lookup("TLabel", "background"))
-        self.protocol("WM_DELETE_WINDOW", self.on_destroy)
         self.about_content_frame.pack(expand=1, fill='x')
 
         self.ok_button = ttk.Button(self.about_frame, text="OK")
         self.ok_button.pack(side=tk.BOTTOM, pady=4)
         self.ok_button["command"] = self.on_destroy
         self.about_frame.pack(fill='both', expand=1)
+
+        self.grab_set()
 
         self.geometry("")
         self.update()
@@ -63,6 +84,11 @@ class AboutDialog(tk.Toplevel):
         width = self.winfo_width()
         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
         self.geometry(alignstr)
+        self.protocol("WM_DELETE_WINDOW", self.on_destroy)
+        self.bind("<Return>", self.on_destroy)
+        self.bind("<Escape>", self.on_destroy)
+        self.focus_set()
+        self.wait_window(self)
 
     def on_destroy(self, *args, **kwargs):
         self.grab_release()

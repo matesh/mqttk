@@ -1,7 +1,7 @@
 import ssl
 
 from paho.mqtt.client import Client
-from paho.mqtt.client import MQTTv5, MQTTv31, MQTTv311
+from paho.mqtt.client import MQTTv311
 from mqttk.constants import PROTOCOL_LOOKUP, SSL_LIST, ERROR_CODES
 
 

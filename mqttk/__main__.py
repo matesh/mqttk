@@ -1,5 +1,6 @@
 """
-MQTTk - Lightweight MQTT client
+MQTTk - Lightweight graphical MQTT client and message analyser
+
 Copyright (C) 2022  Máté Szabó
 
 This program is free software: you can redistribute it and/or modify
@@ -46,6 +47,14 @@ from mqttk.widgets.configuration_dialog import ConfigurationWindow
 from mqttk.config_handler import ConfigHandler
 from mqttk.MQTT_manager import MqttManager
 from paho.mqtt.client import MQTT_LOG_ERR, MQTT_LOG_INFO, MQTT_LOG_NOTICE, MQTT_LOG_WARNING
+
+
+__author__ = "Máté Szabó"
+__copyright__ = "Copyright 2022, Máté Szabó"
+__credits__ = ["Máté Szabó"]
+__license__ = "GPLv3"
+__maintainer__ = "Máté Szabó"
+__status__ = "Production"
 
 
 root = tk.Tk()
@@ -105,6 +114,8 @@ class App:
         self.current_connection_configuration = None
 
         root.title("MQTTk")
+        # root.createcommand('tk::mac::ShowPreferences', self.show_preferences)  # set preferences menu
+        root.createcommand('tk::mac::ShowHelp', self.on_about_menu)
 
         # Restore window size and position, if not available or out of bounds, reset to default
         screenwidth = root.winfo_screenwidth()
@@ -165,7 +176,7 @@ class App:
         self.menubar.add_cascade(menu=self.import_menu, label="Import")
         self.menubar.add_cascade(menu=self.about_menu, label="Help")
         self.file_menu.add_command(label="Exit", command=self.on_exit)
-        self.about_menu.add_command(label="About", command=self.on_about_menu)
+        self.about_menu.add_command(label="About MQTTk", command=self.on_about_menu)
         self.import_menu.add_command(label="Import MQTT.fx config", command=self.import_mqttfx_config)
 
         self.main_window_frame = ttk.Frame(root)
@@ -256,17 +267,9 @@ class App:
                                                    self.on_config_update,
                                                    self.log,
                                                    self.icon)
-        configuration_window.transient(self.root)
-        configuration_window.wait_visibility()
-        configuration_window.grab_set_global()
-        configuration_window.wait_window()
 
     def on_about_menu(self):
         about_window = AboutDialog(self.root, self.icon_small, self.style)
-        about_window.transient(self.root)
-        # about_window.wait_visibility()
-        about_window.grab_set_global()
-        about_window.wait_window()
 
     def on_exit(self):
         self.on_disconnect_button()

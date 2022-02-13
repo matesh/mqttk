@@ -20,7 +20,7 @@
     + [Linux - installing it via pip](#linux---installing-it-via-pip)
     + [Linux - Running MQTTk](#linux---running-mqttk)
 - [Using the app](#using-the-app)
-  * [Main features](#features)
+  * [Features](#features)
   * [Planned features](#planned-features)
     + [V1.1](#v11)
     + [V1.2](#v12)
@@ -31,21 +31,27 @@
     + [Dependencies](#dependencies)
     + [Building the macOS app](#building-the-macos-app)
   * [Windows executable](#windows-executable)
+- [How to contribute](#how-to-contribute)
+  * [Reporting bugs](#reporting-bugs)
+  * [macOS universal2 appimage](#macos-universal2-appimage)
+  * [Linux binary package or app](#linux-binary-package-or-app)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 # Introduction
 MQTTk is a very lightweight MQTT GUI client that looks retarded, but it does the job fast in a native
-fashion, without bloated and sluggish browser, java and javascript based rubbish that may look good but
-is a pain to use especially in a professional environment.
+fashion, without bloated and sluggish browser, java and javascript based rubbish that may look good, but
+are a pain to use especially in a professional environment.
 
 It intends to replicate most features and functionality of MQTT.fx which is no longer free 
 and the free version is no longer maintained. Since upgrading my computer, it was crashing 
-every 2 minutes, practically becoming useless. I always found it more useful than other 
+every minute, practically becoming useless. I always found it more useful than other 
 MQTT GUI clients, which mostly update the values of topics as they come in, in my work, 
 being able to track message exchange over time is as important as the content of 
 the messages themselves.
 
 Since there is no other similar tool out there, I decided to make my own and share it with
-whoever is interested. The project is written in tk/ttk. I don't have time to learn some
+whoever is interested. The project is written in Tk/ttk. I don't have time to learn some
 fancy-pancy GUI environment, it was quick and easy to knock out, and it should run on anything
 including the kitchen sink without too much pain.
 
@@ -60,20 +66,23 @@ That't it, nothing fancy. Give the above projects a big thumbs up!
 # Installation
 ## On macOS
 ### macOS Dependencies
-You must have python3 and python3-pip installed. On some versions of macOS or the python3
-package, tk/ttk is not included, in which case the python3-tk package is also needed.
+You must have Python 3.7+ and pip installed. On some versions of macOS or the python package, Tk/ttk is not included, 
+in which case the python-tk package is also needed. 
 
-The easiest way to install these, is to use brew. The commands below may be different on your
-system.
+The easiest way to install these, is to use [homebrew](https://brew.sh/). 
+The commands below may be different on your system. Open the terminal and issue these commands:
 
-:warning: When installing/running the app, use the system interpreter, or the interpreter available via homebrew.
-Conda or other interpreters can cause your system to crash entirely (kernel panic) which issue is
-outside of the code of this software. This crash happens under certain circumstances when switching
-to the app via mission control or the dock, there's nothing I can do about it, unfortunately. Therefore,
-use other interpreters at your own risk!
 ```shell
 $ brew install python python-tk
 ```
+
+:warning: When installing/running the app, use the system interpreter, or the interpreter available via homebrew.
+During my testing, Conda or other interpreters occasionally caused my system to crash entirely (kernel panic) and
+when using mission control to switch between apps, MQTTk crashed regularly.
+The cause is outside the code of this software. This crash happens under certain circumstances when switching
+to the app via mission control or the dock, there's nothing I can do about it, unfortunately. Therefore,
+use other interpreters at your own risk!
+
 ### macOS - acquiring and installing the package from source
 Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
 and install it using pip.
@@ -88,7 +97,7 @@ $ pip3 install mqttk
 ```
 
 ### macOS - running MQTTk
-To run the software, just issue the mqttk command. 
+To run the software, just issue the mqttk command from the terminal. 
 ```shell
 $ mqttk
 ```
@@ -109,20 +118,20 @@ Download python3 from the [official website](https://www.python.org/downloads/) 
 
 ### Windows - acquiring and installing the package from source
 Download the latest release from the [GitHub repository](https://github.com/matesh/mqttk/releases)
-and then install it using pip.
+and then install it using pip and the command line:
 
 ```shell
 > pip3 install mqttk-x.y.tar.gz
 ```
 
 ### Windows - installing it via pip
-Issue the following command
+Issue the following command in the command line:
 ```shell
 > pip3 install mqttk
 ```
 
 ### Windows - running MQTTk
-From the command line issue the command
+In the command line issue the command:
 ```shell
 > mqttk
 ```
@@ -140,7 +149,6 @@ You need to install python3, python3-pip and in some cases the python3-tk packag
 will be different depending on your distribution, refer to your distributions package manager or
 community. As an example, on ubuntu you'd need to install the below packages using apt. On
 other distros, python3 might be default, in which case the "3" suffix won't be needed on the packages.
-I know, confusing times, ain't it?
 
 ```shell
 $ sudo apt install python3 python3-pip python3-tk
@@ -163,7 +171,7 @@ $ pip3 install mqttk
 
 From the command line issue the command
 ```shell
-> mqttk
+$ mqttk
 ```
 
 If the app fails to start, or crashes randomly, try re-launching it using the
@@ -195,7 +203,8 @@ unusual there.
 - Export and import MQTTk configuration
 - Export and import subscribe topic history, publish topic history and templates
 - Message dump
-- 
+- Log output to file and better logging
+
 ### V1.2
 - tree-style topic inspector where all incoming messages are organised in a tree and the latest payload is shown
 
@@ -211,11 +220,14 @@ $ python3 setup.py sdist
 The built package will appear in the dist/ directory.
 
 ## macOS appimage
-:warning: This is highly experimental and needs refiniement
+:warning: This is highly experimental and needs refiniement!
+
 :warning: When building the app, use the system interpreter, or the interpreter available via homebrew.
+
 Conda or other interpreters can cause your system to crash entirely (kernel panic) which issue is
 outside of the code of this software. This crash happens under certain circumstances when switching
 to the app via mission control or the dock. Use other interpreters at your own risk!
+
 ### Dependencies
 You need to have xcode installed. Use the app store to do that if you don't have it yet.
 You will also need the xcode command line tools to be installed. You can do that from the terminal:
@@ -227,26 +239,45 @@ $ xcode-select —install
 Just like when running the app, you need python3, pip and python3-tk. Install these as explained above.
 
 In addition, you need the pyinstaller package. Install it using pip:
+
 ```shell
 $ pip install pyinstaller
 ```
 
 ### Building the macOS app
-I was not able to build a universal app image for MACs that worked on both Intel and M1 architectures,
-so I only build the Intel package, the software runs just fine through rosetta.
+I was not able to build a universal app image for MACs that ran native on both Intel and M1 architectures,
+so I only build the Intel package, the software ran just fine through rosetta, though it takes its time to start up.
+
 Navigate to the project root and issue
+
 ```shell
 $  pyinstaller mqttk.spec
 ```
 
 ## Windows executable
 Just like when running the app, you need python3, pip and python3-tk. Install these as explained above.
-In addition, you need the pyinstaller package:
+In addition, you need the pyinstaller package, use the command line:
+
 ```shell
-> pip install pyinstaller
+> pip3 install pyinstaller
 ```
 
 Navigate to the project root and issue the following command:
 ```shell
 > pyinstaller mqttk.spec
 ```
+
+# How to contribute
+## Reporting bugs
+Use the GitHub [issue reporting page](https://github.com/matesh/mqttk/issues) of the project to help me squish bugs.
+
+## macOS universal2 appimage
+My time and knowledge is limited to figure how to properly build a universal2 app image (intel + ARM). I managed to
+build an intel only version, about which I'm not entirely happy, it takes a long time to start up on ARM. Furthermore,
+I had issues with the app when not running on the system interpreter on my M1 mac, causing regular crashes and
+kernel panics when switching to and from MQTTk. I would appreciate help with building the app and testing the 
+resulting image out on other machines. 
+
+## Linux binary package or app
+There are more ways to distribute apps on various linux distros than stars on the sky. I'd appreciate recommendations
+on what format to use and maybe a helping hand figuring it out and getting things set up.
