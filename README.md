@@ -49,7 +49,7 @@ MQTT GUI clients, which mostly update the values of topics as they come in, in m
 being able to track message exchange over time is as important as the content of 
 the messages themselves.
 
-Since there is no other similar tool out there, I decided to make my own and share it with
+Since I couldn't find a similar tool out there, I decided to make my own and share it with
 whoever is interested. The project is written in Tk/ttk. I don't have time to learn some
 fancy-pancy GUI environment, it was quick and easy to knock out, and it should run on anything
 including the kitchen sink without too much pain.
@@ -60,6 +60,7 @@ The project is written in pure python, powered by the below projects:
 - [Tkinter/ttk](https://docs.python.org/3/library/tkinter.html) 
 - [Eclipse paho-mqtt python client](https://github.com/eclipse/paho.mqtt.python)
 - [xmltodict](https://github.com/martinblech/xmltodict) 
+
 That't it, nothing fancy. Give the above projects a big thumbs up!
 
 # Installation
@@ -210,6 +211,15 @@ subscribe and publish history will be imported, as well as the saved message tem
 There is a built-in log feature to show any exceptions/debug information, let me know if you see something
 unusual there.
 
+Subscribe interface
+![Subscribe interface](/assets/subscribe.png)
+
+Publish interface
+![Publish interface](/assets/publish.png)
+
+Configuration interface
+![Configuration interface](/assets/configuration.png)
+
 ## Planned features
 ### V1.1
 - Export and import MQTTk configuration
@@ -222,6 +232,7 @@ unusual there.
 
 ### V1.3
 - Broker stats tab
+- MQTT 5.0 features
 
 # Building the app from source
 ## pypi package
