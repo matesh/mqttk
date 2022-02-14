@@ -114,8 +114,6 @@ class App:
         self.current_connection_configuration = None
 
         root.title("MQTTk")
-        # root.createcommand('tk::mac::ShowPreferences', self.show_preferences)  # set preferences menu
-        root.createcommand('tk::mac::ShowHelp', self.on_about_menu)
 
         # Restore window size and position, if not available or out of bounds, reset to default
         screenwidth = root.winfo_screenwidth()
@@ -156,6 +154,10 @@ class App:
             self.style.theme_use('winnative')
         if sys.platform == "darwin":
             self.style.theme_use("default")  # aqua, clam, alt, default, classic
+            root.createcommand('tk::mac::ReopenApplication', root.deiconify)
+            root.createcommand('tk::mac::ShowHelp', self.on_about_menu)
+            # root.createcommand('tk::mac::ShowPreferences', self.show_preferences)  # set preferences menu
+
         self.style.configure("New.TFrame", background="#b3ffb5")
         self.style.configure("New.TLabel", background="#b3ffb5")
         self.style.configure("Selected.TFrame", background="#96bfff")
