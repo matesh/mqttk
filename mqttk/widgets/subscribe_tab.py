@@ -290,15 +290,21 @@ class SubscribeTab(ttk.Frame):
         self.message_topic_label.delete(1.0, tk.END)
         self.message_topic_label.insert(1.0, message_data.get("topic", ""))
         self.message_topic_label["state"] = "disabled"
-        self.message_date_label["text"] = message_data.get("time_string", "")
+        time_string = "{:.6f} - {}".format(round(message_data.get("timestamp", 0), 6),
+                                           datetime.fromtimestamp(message_data.get("timestamp", 0)).strftime("%Y/%m/%d, %H:%M:%S.%f"))
+        self.message_date_label["text"] = time_string
         self.message_qos_label["text"] = "QoS: {}".format(message_data.get("qos", ""))
         self.message_id_label["text"] = "ID: {}".format(message_id)
         self.message_payload_box.configure(state="normal")
         self.message_payload_box.delete(1.0, tk.END)
+        try:
+            payload_decoded = str(message_data["payload"].decode("utf-8"))
+        except Exception:
+            payload_decoded = message_data.get("payload", "")
         decoder = self.message_decoder_selector.get()
         if decoder == "JSON pretty formatter":
             try:
-                new_message_structure = json.loads(message_data.get("payload", ""))
+                new_message_structure = json.loads(payload_decoded)
             except Exception as e:
                 new_message = "        *** FAILED TO LOAD JSON ***{}{}{}{}".format(linesep+linesep,
                                                                                    e,
@@ -310,14 +316,14 @@ class SubscribeTab(ttk.Frame):
 
         elif decoder == "Hex formatter":
             try:
-                data_to_decode = message_data.get("payload", "").encode("utf-8")
+                data_to_decode = payload_decoded.encode("utf-8")
             except Exception:
-                data_to_decode = message_data.get("payload", "")
+                data_to_decode = payload_decoded
             for line in hex_viewer(data_to_decode):
                 self.message_payload_box.insert(tk.END, line+linesep)
 
         else:
-            self.message_payload_box.insert(1.0, message_data.get("payload", ""))
+            self.message_payload_box.insert(1.0, payload_decoded)
         self.message_payload_box.configure(state="disabled")
 
     def get_color(self, topic):
@@ -379,20 +385,14 @@ class SubscribeTab(ttk.Frame):
         # Theoretically there will be no race condition here?
         new_message_id = self.message_id_counter
         self.message_id_counter += 1
-        time_string = "{:.6f} - {}".format(round(timestamp, 6),
-                                           datetime.fromtimestamp(timestamp).strftime("%Y/%m/%d, %H:%M:%S.%f"))
         simple_time_string = datetime.fromtimestamp(timestamp).strftime("%H:%M:%S.%f")
-        try:
-            payload_decoded = str(mqtt_message_object.payload.decode("utf-8"))
-        except Exception:
-            payload_decoded = mqtt_message_object.payload
         self.messages[new_message_id] = {
             "topic": mqtt_message_object.topic,
-            "payload": payload_decoded,
+            "payload": mqtt_message_object.payload,
             "qos": mqtt_message_object.qos,
             "subscription_pattern": subscription_pattern,
-            "time_string": time_string,
-            "retained": mqtt_message_object.retain
+            "retained": mqtt_message_object.retain,
+            "timestamp": timestamp
         }
         message_title = "{}  -  {:70} {:8} QoS: {} #{:05d}".format(simple_time_string,
                                                                    mqtt_message_object.topic,
