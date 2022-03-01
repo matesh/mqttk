@@ -314,12 +314,13 @@ class App:
             messagebox.showinfo("Info", "The message list is empty")
             return
 
-        output_location = filedialog.asksaveasfilename(initialdir=str(Path.home()),
+        output_location = filedialog.asksaveasfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                        title="Export {}".format(format),
                                                        defaultextension="json" if format == "JSON" else "csv")
 
         self.log.info("Exporting messages in {} format to {}".format(format,
                                                                      output_location))
+        self.config_handler.save_last_used_directory(output_location)
 
         try:
             data = ""

@@ -355,10 +355,11 @@ class ConfigurationWindow(tk.Toplevel):
             self.connection_selected(self.currently_selected_connection)
 
     def browse_file(self, target_entry):
-        target_text = filedialog.askopenfilename(initialdir=str(Path.home()),
-                                                 title="Select CA file")
+        file_path_name = filedialog.askopenfilename(initialdir=self.config_handler.get_last_used_directory(),
+                                                    title="Select CA file")
+        self.config_handler.save_last_used_directory(file_path_name)
         target_entry.delete(0, tk.END)
-        target_entry.insert(0, target_text)
+        target_entry.insert(0, file_path_name)
 
     def add_profile_widget(self, connection_profile):
         self.profiles_widgets[connection_profile] = ConnectionFrame(self.connections_listbox.viewPort,
