@@ -67,9 +67,10 @@ class PotatoLog:
     def __init__(self):
         self.add_message_callback = None
         self.message_queue = []
+        self.config_handler = None
 
     def add_message(self, message_level, *args):
-        message = "{} - {} ".format(datetime.now().strftime("%H:%M:%S.%f"), message_level)
+        message = "{} - {} ".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"), message_level)
         message += ", ".join([str(x) for x in args])
         message += os.linesep
         if self.add_message_callback is None:
@@ -78,8 +79,10 @@ class PotatoLog:
             if len(self.message_queue) != 0:
                 for queued_message in self.message_queue:
                     self.add_message_callback(queued_message)
+                    self.config_handler.add_log_message(queued_message)
                 self.message_queue = []
             self.add_message_callback(message)
+            self.config_handler.add_log_message(message)
 
     def warning(self, *args):
         message_level = "[W]"
@@ -112,6 +115,7 @@ class App:
     def __init__(self, root):
         self.log = PotatoLog()
         self.config_handler = ConfigHandler(self.log)
+        self.log.config_handler = self.config_handler
 
         self.mqtt_manager = None
         self.current_connection_configuration = None
