@@ -45,7 +45,7 @@ from mqttk.widgets.header_frame import HeaderFrame
 from mqttk.widgets.publish_tab import PublishTab
 from mqttk.constants import CONNECT, DISCONNECT
 from mqttk.widgets.log_tab import LogTab
-from mqttk.widgets.dialogs import AboutDialog, SplashScreen
+from mqttk.widgets.dialogs import AboutDialog, SplashScreen, ConnectionConfigImportExport
 from mqttk.widgets.configuration_dialog import ConfigurationWindow
 from mqttk.config_handler import ConfigHandler
 from mqttk.MQTT_manager import MqttManager
@@ -192,16 +192,22 @@ class App:
                                             foreground=self.style.lookup("TLabel", "foreground"))
 
         self.menubar.add_cascade(menu=self.file_menu, label="File")
-        self.menubar.add_cascade(menu=self.import_menu, label="Import")
-        self.menubar.add_cascade(menu=self.export_menu, label="Export")
-        self.export_menu.add_cascade(menu=self.export_messages_menu, label="Export messages")
-        self.menubar.add_cascade(menu=self.about_menu, label="Help")
-
         self.file_menu.add_command(label="Exit", command=self.on_exit)
-        self.about_menu.add_command(label="About MQTTk", command=self.on_about_menu)
-        self.import_menu.add_command(label="Import MQTT.fx config", command=self.import_mqttfx_config)
+
+        self.menubar.add_cascade(menu=self.import_menu, label="Import")
+        self.import_menu.add_command(label="MQTT.fx config", command=self.import_mqttfx_config)
+        self.import_menu.add_command(label="Connection configuration", command=self.import_connection_config)
+        self.import_menu.add_command(label="Subscribe/publish content", command=self.import_subscribe_publish)
+
+        self.menubar.add_cascade(menu=self.export_menu, label="Export")
+        self.export_menu.add_cascade(menu=self.export_messages_menu, label="Messages")
         self.export_messages_menu.add_command(label="JSON", command=partial(self.export_messages, format="JSON"))
         self.export_messages_menu.add_command(label="CSV", command=partial(self.export_messages, format="CSV"))
+        self.export_menu.add_command(label="Connection configuration", command=self.export_connection_config)
+        self.export_menu.add_command(label="Subscribe/publish content", command=self.export_subscribe_publish)
+
+        self.menubar.add_cascade(menu=self.about_menu, label="Help")
+        self.about_menu.add_command(label="About MQTTk", command=self.on_about_menu)
 
         self.main_window_frame = ttk.Frame(root)
         self.main_window_frame.pack(fill='both', expand=1)
@@ -365,6 +371,18 @@ class App:
         else:
             self.log.info("Messages exported successfully")
             messagebox.showinfo("Success", "Messages exported successfully")
+
+    def export_connection_config(self):
+        export_dialog = ConnectionConfigImportExport(self.root, self.icon, self.config_handler, self.log, False)
+
+    def import_connection_config(self):
+        import_dialog = ConnectionConfigImportExport(self.root, self.icon, self.config_handler, self.log, True)
+
+    def import_subscribe_publish(self):
+        pass
+
+    def export_subscribe_publish(self):
+        pass
 
 
 def main():
