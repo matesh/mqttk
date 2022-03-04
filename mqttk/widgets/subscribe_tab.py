@@ -26,11 +26,30 @@ import traceback
 from functools import partial
 import time
 from datetime import datetime
+import zlib
+from bz2 import decompress
 
 from mqttk.widgets.scroll_frame import ScrollFrame
 from mqttk.widgets.scrolled_text import CustomScrolledText
 from mqttk.constants import CONNECT, DECODER_OPTIONS, COLOURS
 from mqttk.hex_printer import hex_viewer
+
+ZLIB_TAG0 = chr(0x78)
+ZLIB_TAG1 = (chr(0x01), chr(0x5E), chr(0x9C), chr(0xDA))
+
+
+def decompress_message(message_data):
+    try:
+        return zlib.decompress(message_data)
+    except Exception:
+        pass
+
+    try:
+        return decompress(message_data)
+    except Exception:
+        pass
+
+    return message_data
 
 
 class SubscriptionFrame(ttk.Frame):
@@ -226,6 +245,16 @@ class SubscribeTab(ttk.Frame):
         self.message_qos_label = ttk.Label(self.message_date_and_qos_frame, width=10)
         self.message_qos_label["text"] = "QOS"
         self.message_qos_label.pack(side=tk.RIGHT, padx=3, pady=3)
+
+        self.attempt_to_decompress = tk.IntVar()
+        self.decompress_checkbox = ttk.Checkbutton(self.message_date_and_qos_frame,
+                                                   text="Attempt to decompress",
+                                                   variable=self.attempt_to_decompress,
+                                                   offvalue=0,
+                                                   onvalue=1,
+                                                   command=self.on_message_select)
+        self.decompress_checkbox.pack(side=tk.RIGHT, padx=3)
+
         # Decoder selector
         self.message_decoder_selector = ttk.Combobox(self.message_date_and_qos_frame,
                                                      width=40,
@@ -297,10 +326,16 @@ class SubscribeTab(ttk.Frame):
         self.message_id_label["text"] = "ID: {}".format(message_id)
         self.message_payload_box.configure(state="normal")
         self.message_payload_box.delete(1.0, tk.END)
+
+        if bool(self.attempt_to_decompress.get()) and 4 < len(message_data.get("payload", "")):
+            payload = decompress_message(message_data["payload"])
+        else:
+            payload = message_data.get("payload", "")
+
         try:
-            payload_decoded = str(message_data["payload"].decode("utf-8"))
+            payload_decoded = str(payload.decode("utf-8"))
         except Exception:
-            payload_decoded = message_data.get("payload", "")
+            payload_decoded = payload
         decoder = self.message_decoder_selector.get()
         if decoder == "JSON pretty formatter":
             try:
