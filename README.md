@@ -22,8 +22,8 @@
     + [Linux - Running MQTTk](#linux---running-mqttk)
 - [Using the app](#using-the-app)
   * [Features](#features)
+  * [Screenshots](#screenshots)
   * [Planned features](#planned-features)
-    + [V1.1](#v11)
     + [V1.2](#v12)
     + [V1.3](#v13)
 - [Building the app from source](#building-the-app-from-source)
@@ -36,6 +36,7 @@
   * [Reporting bugs](#reporting-bugs)
   * [macOS universal2 appimage](#macos-universal2-appimage)
   * [Linux binary package or app](#linux-binary-package-or-app)
+
 
 # Introduction
 MQTTk is a very lightweight MQTT GUI client that looks retarded, but it does the job fast in a native
@@ -216,6 +217,8 @@ Connection profiles, subscription and publish history and saved message template
 
 Messages can be dumped into .CSV and .JSON formats. Message payload is exported as unicode text if possible,
 otherwise it is encoded in base64.
+
+## Screenshots
 
 Subscribe interface
 

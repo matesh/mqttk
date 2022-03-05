@@ -49,4 +49,4 @@ app = BUNDLE(exe,
              name='mqttk.app',
              icon='mqttk.icns',
              bundle_identifier='com.mateszabo.mqttk',
-             version='0.1.0')
+             version='1.1.0')
