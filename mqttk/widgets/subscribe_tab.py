@@ -257,7 +257,7 @@ class SubscribeTab(ttk.Frame):
 
         # Decoder selector
         self.message_decoder_selector = ttk.Combobox(self.message_date_and_qos_frame,
-                                                     width=40,
+                                                     width=20,
                                                      state='readonly',
                                                      values=DECODER_OPTIONS,
                                                      exportselection=False)

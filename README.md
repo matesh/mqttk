@@ -203,7 +203,8 @@ pretty formatter and hex decoder to analyse message data.
 You can also publish messages, save message templates and one-click publish them. You can send messages with
 any QoS and retained messages as well.
 
-So far, I added the most useful message decoding features: JSON pretty formatter and hex decoders. 
+So far, I added the most useful message decoding features: JSON pretty formatter and hex decoders. There is also an
+option to attempt to decompress the payload before feeding it into the decoder.
 
 If you used MQTT.fx in the past, MQTTk will try to find and import your config. The connection profiles,
 subscribe and publish history will be imported, as well as the saved message templates.
@@ -211,22 +212,28 @@ subscribe and publish history will be imported, as well as the saved message tem
 There is a built-in log feature to show any exceptions/debug information, let me know if you see something
 unusual there.
 
+Connection profiles, subscription and publish history and saved message templates can be exported and imported.
+
+Messages can be dumped into .CSV and .JSON formats. Message payload is exported as unicode text if possible,
+otherwise it is encoded in base64.
+
 Subscribe interface
+
 ![Subscribe interface](/assets/subscribe.png)
 
 Publish interface
+
 ![Publish interface](/assets/publish.png)
 
 Configuration interface
+
 ![Configuration interface](/assets/configuration.png)
 
-## Planned features
-### V1.1
-- Export and import MQTTk configuration
-- Export and import subscribe topic history, publish topic history and templates
-- Message dump
-- Log output to file and better logging
+Export subscribe/publish history interface
 
+![Configuration interface](/assets/export.png)
+
+## Planned features
 ### V1.2
 - tree-style topic inspector where all incoming messages are organised in a tree and the latest payload is shown
 
