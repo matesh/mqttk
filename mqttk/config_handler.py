@@ -24,9 +24,35 @@ import json
 from tkinter import messagebox
 from tkinter import filedialog
 import mqttk.mqtt_fx_config_parser as configparser
+from datetime import datetime
 
 LOAD = "load"
 SAVE = "save"
+
+DEFAULT_CONFIGURATION = {
+    "connections": {
+        "test.mosquitto.org": {
+            "connection_parameters": {
+            "broker_addr": "test.mosquitto.org",
+            "broker_port": "1883",
+            "client_id": "272fb6890d1c4eefac4f46b39deb83fb",
+            "user": "",
+            "pass": "",
+            "timeout": "10",
+            "keepalive": "60",
+            "mqtt_version": "3.1.1",
+            "ssl": "Disabled",
+            "ca_file": "",
+            "cl_cert": "",
+            "cl_key": ""
+            },
+        "subscriptions": {},
+        "publish_topics": [],
+        "stored_publishes": {},
+        "last_subscribe_used": "#"
+        }
+    }
+}
 
 
 class ConfigHandler:
@@ -39,7 +65,8 @@ class ConfigHandler:
             "last_used_connection": connection name,
             "window_geometry: last used window geometry string,
             "autoscroll: true/false,
-            "last_used_decoder" = last used message decoder
+            "last_used_decoder": last used message decoder,
+            "last_used_directory": last used directory for browsing files
         }
 
         configuration_dict[connections] = {
@@ -81,6 +108,7 @@ class ConfigHandler:
 
         """
         self.configuration_dict = {}
+        self.log_file = None
         self.wont_save = False
         self.first_start = True
         self.log = logger
@@ -102,6 +130,7 @@ class ConfigHandler:
             appdata_dir = os.getenv('LOCALAPPDATA')
             config_dir = os.path.join(appdata_dir, "MQTTk")
             config_file = os.path.join(appdata_dir, "MQTTk", "MQTTk-config.json")
+            self.log_file = os.path.join(appdata_dir, "MQTTk", "MQTTk-log.txt")
 
         elif sys.platform.startswith("linux"):
             if self.first_start:
@@ -115,6 +144,7 @@ class ConfigHandler:
             home_dir = str(Path.home())
             config_dir = os.path.join(home_dir, ".config", "MQTTk")
             config_file = os.path.join(home_dir, ".config", "MQTTk", "MQTTk-config.json")
+            self.log_file = os.path.join(home_dir, ".config", "MQTTk", "MQTTk-log.txt")
 
         elif sys.platform.startswith("darwin"):
             if self.first_start:
@@ -128,6 +158,7 @@ class ConfigHandler:
             home_dir = str(Path.home())
             config_dir = os.path.join(home_dir, "Library", "ApplicationSupport", "MQTTk")
             config_file = os.path.join(home_dir, "Library", "ApplicationSupport", "MQTTk", "MQTTk-config.json")
+            self.log_file = os.path.join(home_dir, "Library", "ApplicationSupport", "MQTTk", "MQTTk-log.txt")
         else:
             self.log.warning("Unsupported platform detected. Configuration file won't be saved! Use this thing at your own risk :(")
             self.wont_save = True
@@ -138,11 +169,12 @@ class ConfigHandler:
             return
 
         if not os.path.isfile(config_file):
+            self.configuration_dict = DEFAULT_CONFIGURATION
             self.first_start = True
             if not os.path.isdir(config_dir):
                 os.makedirs(config_dir)
             with open(config_file, "w") as configfile:
-                configfile.write("{}")
+                configfile.write(json.dumps(self.configuration_dict, indent=2))
 
         else:
             if action == LOAD:
@@ -311,3 +343,24 @@ class ConfigHandler:
         self.config_file_manager(SAVE)
         self.configuration_dict = response
         return True
+
+    def get_last_used_directory(self):
+        if "last_used_directory" not in self.configuration_dict:
+            self.configuration_dict["last_used_directory"] = Path.home()
+        if not os.path.isdir(self.configuration_dict["last_used_directory"]):
+            self.configuration_dict["last_used_directory"] = Path.home()
+        return self.configuration_dict["last_used_directory"]
+
+    def save_last_used_directory(self, directory):
+        head, tail = os.path.split(directory)
+        self.configuration_dict["last_used_directory"] = head
+        self.config_file_manager(SAVE)
+
+    def add_log_message(self, message):
+        if self.log_file is not None:
+            if not os.path.isfile(self.log_file):
+                with open(self.log_file, 'w') as logfile:
+                    logfile.write("New log file started {}{}".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"),
+                                                                     os.linesep))
+            with open(self.log_file, 'a') as logfile:
+                logfile.write(message)

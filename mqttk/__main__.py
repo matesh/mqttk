@@ -16,12 +16,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
+import json
 import os
 import traceback
 from datetime import datetime
 import sys
 import time
+from pathlib import Path
+from functools import partial
+import base64
 try:
     import tkinter as tk
     import tkinter.ttk as ttk
@@ -42,7 +45,7 @@ from mqttk.widgets.header_frame import HeaderFrame
 from mqttk.widgets.publish_tab import PublishTab
 from mqttk.constants import CONNECT, DISCONNECT
 from mqttk.widgets.log_tab import LogTab
-from mqttk.widgets.dialogs import AboutDialog, SplashScreen
+from mqttk.widgets.dialogs import AboutDialog, SplashScreen, ConnectionConfigImportExport, SubscribePublishImportExport
 from mqttk.widgets.configuration_dialog import ConfigurationWindow
 from mqttk.config_handler import ConfigHandler
 from mqttk.MQTT_manager import MqttManager
@@ -64,9 +67,10 @@ class PotatoLog:
     def __init__(self):
         self.add_message_callback = None
         self.message_queue = []
+        self.config_handler = None
 
     def add_message(self, message_level, *args):
-        message = "{} - {} ".format(datetime.now().strftime("%H:%M:%S.%f"), message_level)
+        message = "{} - {} ".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"), message_level)
         message += ", ".join([str(x) for x in args])
         message += os.linesep
         if self.add_message_callback is None:
@@ -75,8 +79,10 @@ class PotatoLog:
             if len(self.message_queue) != 0:
                 for queued_message in self.message_queue:
                     self.add_message_callback(queued_message)
+                    self.config_handler.add_log_message(queued_message)
                 self.message_queue = []
             self.add_message_callback(message)
+            self.config_handler.add_log_message(message)
 
     def warning(self, *args):
         message_level = "[W]"
@@ -109,13 +115,12 @@ class App:
     def __init__(self, root):
         self.log = PotatoLog()
         self.config_handler = ConfigHandler(self.log)
+        self.log.config_handler = self.config_handler
 
         self.mqtt_manager = None
         self.current_connection_configuration = None
 
         root.title("MQTTk")
-        # root.createcommand('tk::mac::ShowPreferences', self.show_preferences)  # set preferences menu
-        root.createcommand('tk::mac::ShowHelp', self.on_about_menu)
 
         # Restore window size and position, if not available or out of bounds, reset to default
         screenwidth = root.winfo_screenwidth()
@@ -156,6 +161,10 @@ class App:
             self.style.theme_use('winnative')
         if sys.platform == "darwin":
             self.style.theme_use("default")  # aqua, clam, alt, default, classic
+            root.createcommand('tk::mac::ReopenApplication', root.deiconify)
+            root.createcommand('tk::mac::ShowHelp', self.on_about_menu)
+            # root.createcommand('tk::mac::ShowPreferences', self.show_preferences)  # set preferences menu
+
         self.style.configure("New.TFrame", background="#b3ffb5")
         self.style.configure("New.TLabel", background="#b3ffb5")
         self.style.configure("Selected.TFrame", background="#96bfff")
@@ -166,18 +175,39 @@ class App:
         self.menubar = tk.Menu(root, background=self.style.lookup("TLabel", "background"),
                                foreground=self.style.lookup("TLabel", "foreground"))
         self.root.config(menu=self.menubar)
+
         self.file_menu = tk.Menu(self.menubar, background=self.style.lookup("TLabel", "background"),
                                  foreground=self.style.lookup("TLabel", "foreground"))
 
         self.import_menu = tk.Menu(self.menubar, background=self.style.lookup("TLabel", "background"),
                                    foreground=self.style.lookup("TLabel", "foreground"))
-        self.about_menu = tk.Menu(self.menubar)
+
+        self.about_menu = tk.Menu(self.menubar, background=self.style.lookup("TLabel", "background"),
+                                  foreground=self.style.lookup("TLabel", "foreground"))
+
+        self.export_menu = tk.Menu(self.menubar, background=self.style.lookup("TLabel", "background"),
+                                   foreground=self.style.lookup("TLabel", "foreground"))
+
+        self.export_messages_menu = tk.Menu(self.menubar, background=self.style.lookup("TLabel", "background"),
+                                            foreground=self.style.lookup("TLabel", "foreground"))
+
         self.menubar.add_cascade(menu=self.file_menu, label="File")
-        self.menubar.add_cascade(menu=self.import_menu, label="Import")
-        self.menubar.add_cascade(menu=self.about_menu, label="Help")
         self.file_menu.add_command(label="Exit", command=self.on_exit)
+
+        self.menubar.add_cascade(menu=self.import_menu, label="Import")
+        self.import_menu.add_command(label="MQTT.fx config", command=self.import_mqttfx_config)
+        self.import_menu.add_command(label="Connection configuration", command=self.import_connection_config)
+        self.import_menu.add_command(label="Subscribe/publish content", command=self.import_subscribe_publish)
+
+        self.menubar.add_cascade(menu=self.export_menu, label="Export")
+        self.export_menu.add_cascade(menu=self.export_messages_menu, label="Messages")
+        self.export_messages_menu.add_command(label="JSON", command=partial(self.export_messages, format="JSON"))
+        self.export_messages_menu.add_command(label="CSV", command=partial(self.export_messages, format="CSV"))
+        self.export_menu.add_command(label="Connection configuration", command=self.export_connection_config)
+        self.export_menu.add_command(label="Subscribe/publish content", command=self.export_subscribe_publish)
+
+        self.menubar.add_cascade(menu=self.about_menu, label="Help")
         self.about_menu.add_command(label="About MQTTk", command=self.on_about_menu)
-        self.import_menu.add_command(label="Import MQTT.fx config", command=self.import_mqttfx_config)
 
         self.main_window_frame = ttk.Frame(root)
         self.main_window_frame.pack(fill='both', expand=1)
@@ -288,6 +318,71 @@ class App:
         success = self.config_handler.import_mqttfx_config()
         if success:
             self.on_config_update()
+
+    def export_messages(self, format):
+        if len(self.subscribe_frame.messages) == 0:
+            messagebox.showinfo("Info", "The message list is empty")
+            return
+
+        output_location = filedialog.asksaveasfilename(initialdir=self.config_handler.get_last_used_directory(),
+                                                       title="Export {}".format(format),
+                                                       defaultextension="json" if format == "JSON" else "csv")
+
+        self.log.info("Exporting messages in {} format to {}".format(format,
+                                                                     output_location))
+        self.config_handler.save_last_used_directory(output_location)
+
+        try:
+            data = ""
+            if format == "JSON":
+                messages = list(self.subscribe_frame.messages.values())
+                for message in messages:
+                    message["payload"] = base64.b64encode(message["payload"]).decode("utf-8")
+                data = json.dumps(messages, indent=2)
+
+            if format == "CSV":
+                data = "ID,timestamp,date,time,subscription pattern,topic,QoS,retained,payload{}".format(os.linesep)
+                for message_id, message in self.subscribe_frame.messages.items():
+                    timestamp = message["timestamp"]
+                    datetime_object = datetime.fromtimestamp(timestamp)
+                    try:
+                        payload_decoded = str(message["payload"].decode("utf-8"))
+                    except Exception:
+                        payload_decoded = base64.b64encode(message["payload"]).decode("utf-8")
+                    data += '{},{},{},{},{},{},{},{},"{}"{}'.format(
+                        message_id,
+                        timestamp,
+                        datetime_object.strftime("%Y/%m/%d"),
+                        datetime_object.strftime("%H:%M:%S.%f"),
+                        message["subscription_pattern"],
+                        message["topic"],
+                        message["qos"],
+                        message["retained"],
+                        payload_decoded,
+                        os.linesep
+                    )
+
+            with open(output_location, "w") as outputfile:
+                outputfile.write(data)
+
+        except Exception as e:
+            self.log.exception("Failed to export message data", e, traceback.format_exc())
+            messagebox.showerror("Failed to export messages", "Failed to export messages: {} See log for details".format(e))
+        else:
+            self.log.info("Messages exported successfully")
+            messagebox.showinfo("Success", "Messages exported successfully")
+
+    def export_connection_config(self):
+        export_dialog = ConnectionConfigImportExport(self.root, self.icon, self.config_handler, self.log, False)
+
+    def import_connection_config(self):
+        import_dialog = ConnectionConfigImportExport(self.root, self.icon, self.config_handler, self.log, True)
+
+    def import_subscribe_publish(self):
+        import_dialog = SubscribePublishImportExport(self.root, self.icon, self.config_handler, self.log, True)
+
+    def export_subscribe_publish(self):
+        export_dialog = SubscribePublishImportExport(self.root, self.icon, self.config_handler, self.log, False)
 
 
 def main():
