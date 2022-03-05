@@ -45,7 +45,7 @@ from mqttk.widgets.header_frame import HeaderFrame
 from mqttk.widgets.publish_tab import PublishTab
 from mqttk.constants import CONNECT, DISCONNECT
 from mqttk.widgets.log_tab import LogTab
-from mqttk.widgets.dialogs import AboutDialog, SplashScreen, ConnectionConfigImportExport
+from mqttk.widgets.dialogs import AboutDialog, SplashScreen, ConnectionConfigImportExport, SubscribePublishImportExport
 from mqttk.widgets.configuration_dialog import ConfigurationWindow
 from mqttk.config_handler import ConfigHandler
 from mqttk.MQTT_manager import MqttManager
@@ -379,10 +379,10 @@ class App:
         import_dialog = ConnectionConfigImportExport(self.root, self.icon, self.config_handler, self.log, True)
 
     def import_subscribe_publish(self):
-        pass
+        import_dialog = SubscribePublishImportExport(self.root, self.icon, self.config_handler, self.log, True)
 
     def export_subscribe_publish(self):
-        pass
+        export_dialog = SubscribePublishImportExport(self.root, self.icon, self.config_handler, self.log, False)
 
 
 def main():

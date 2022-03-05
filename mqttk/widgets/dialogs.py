@@ -254,7 +254,7 @@ class ConnectionConfigImportExport(tk.Toplevel):
 
         if not self.is_import:
             self.log.info("File selected for communication config export: {}".format(file_path_name))
-            self.ok_button["state"] = "enabled"
+            self.ok_button["state"] = "normal"
             return
 
         if not os.path.isfile(file_path_name):
@@ -280,7 +280,7 @@ class ConnectionConfigImportExport(tk.Toplevel):
                                                                                 "" if len(connection_configs) == 1 else "s")
         self.info_label["foreground"] = "green"
         self.imported_connection_configs = connection_configs
-        self.ok_button["state"] = "enabled"
+        self.ok_button["state"] = "normal"
         self.log.info("File selected for communication config import: {}".format(file_path_name))
 
     def on_destroy(self, *args, **kwargs):
@@ -307,7 +307,7 @@ class ConnectionConfigImportExport(tk.Toplevel):
         else:
             connection_to_export = self.connection_selector.get()
             connection_config = self.config_handler.get_connection_config_dict(connection_to_export)
-            self.log.info("Exporting connection profile {} into {}".format(connection_to_export,
+            self.log.info("Exporting connection config {} into {}".format(connection_to_export,
                                                                            self.file_input.get()))
             export_dict = {
                 "connections": {
@@ -325,9 +325,230 @@ class ConnectionConfigImportExport(tk.Toplevel):
                 with open(self.file_input.get(), "w") as export_file:
                     export_file.write(json.dumps(export_dict, indent=2))
             except Exception as e:
-                self.log.error("Failed to export connection profile", e, traceback.format_exc())
-                messagebox.showerror("Error exporting communication config", "See log for details")
+                self.log.error("Failed to export connection config", e, traceback.format_exc())
+                messagebox.showerror("Error", "Error exporting communication config. SSee log for details")
             else:
-                self.log.info("Successfully exported connection profile")
+                self.log.info("Successfully exported connection config")
                 messagebox.showinfo("Success", "Communication profile exported successfully")
+            self.on_destroy()
+
+
+class SubscribePublishImportExport(tk.Toplevel):
+    def __init__(self, master, icon, config_handler, logger, is_import=False):
+        super().__init__(master=master)
+        self.transient(master)
+        self.is_import = is_import
+        self.master = master
+        self.title("{} subscribe/publish/template content".format("Import" if is_import else "Export"))
+        self.resizable(False, False)
+        self.iconphoto(False, icon)
+        self.config_handler = config_handler
+        self.log = logger
+        self.imported_history = None
+
+        self.dialog_frame = ttk.Frame(self)
+        self.dialog_frame.pack(fill="both", expand=1)
+
+        self.select_profile_frame = ttk.Frame(self.dialog_frame)
+        self.select_profile_frame.pack(expand=1, fill='y', padx=4, pady=4)
+
+        connection_selector_label = ttk.Label(self.select_profile_frame, text="Select connection")
+        connection_selector_label.pack(side=tk.LEFT)
+
+        self.connection_selector = ttk.Combobox(self.select_profile_frame, width=30, exportselection=False)
+        self.connection_selector.bind("<<ComboboxSelected>>", self.on_profile_select)
+        self.connection_selector.pack(side=tk.LEFT, padx=3, pady=3)
+
+        self.browse_frame = ttk.Frame(self.dialog_frame)
+        self.browse_frame.pack(fill="x", padx=4, pady=4)
+        self.browse_label = ttk.Label(self.browse_frame, text="File")
+        self.browse_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4, expand=1)
+        self.file_input = ttk.Entry(self.browse_frame, width=40)
+        self.file_input.pack(side=tk.LEFT, padx=2)
+        self.browser_button = ttk.Button(self.browse_frame, width=3, text="...", command=self.browse_file)
+        self.browser_button.pack(side=tk.LEFT, padx=2, pady=2)
+
+        self.checkbox_frame = ttk.Frame(self.dialog_frame)
+        self.checkbox_frame.pack(padx=4, pady=4, expand=1)
+
+        self.subscribe_topic_selection = tk.IntVar()
+        self.subscribe_topic_checkbox = ttk.Checkbutton(self.checkbox_frame,
+                                                        text="Subscribe topic history items",
+                                                        variable=self.subscribe_topic_selection,
+                                                        offvalue=0,
+                                                        onvalue=1,
+                                                        command=self.on_checkbox)
+        self.subscribe_topic_checkbox.pack(expand=1, fill="x", padx=4, pady=4)
+
+        self.publish_topic_selection = tk.IntVar()
+        self.publish_topic_checkbox = ttk.Checkbutton(self.checkbox_frame,
+                                                      text="Publish topic history items",
+                                                      variable=self.publish_topic_selection,
+                                                      offvalue=0,
+                                                      onvalue=1,
+                                                      command=self.on_checkbox)
+        self.publish_topic_checkbox.pack(expand=1, fill="x", padx=4, pady=4)
+
+        self.message_template_selection = tk.IntVar()
+        self.message_template_checkbox = ttk.Checkbutton(self.checkbox_frame,
+                                                         text="Message template items",
+                                                         variable=self.message_template_selection,
+                                                         offvalue=0,
+                                                         onvalue=1,
+                                                         command=self.on_checkbox)
+        self.message_template_checkbox.pack(expand=1, fill="x", padx=4, pady=4)
+
+        self.info_frame = ttk.Frame(self.dialog_frame)
+        self.info_frame.pack(padx=4, pady=4, fill="x", expand=1)
+        self.info_label = ttk.Label(self.info_frame)
+        self.info_label.pack(fill="x")
+
+        self.button_frame = ttk.Frame(self.dialog_frame)
+        self.button_frame.pack(expand=1, pady=4, padx=4, fill="x")
+        self.ok_button = ttk.Button(self.button_frame,
+                                    text="Import" if is_import else "Export",
+                                    command=self.ok,
+                                    state="disabled")
+        self.ok_button.pack(side=tk.RIGHT)
+
+        self.cancel_button = ttk.Button(self.button_frame,
+                                        text="Cancel",
+                                        command=self.on_destroy)
+        self.cancel_button.pack(side=tk.RIGHT, padx=4, pady=4)
+
+        connection_profile_list = sorted(self.config_handler.get_connection_profiles())
+        if len(connection_profile_list) != 0:
+            self.connection_selector.configure(values=connection_profile_list)
+            if self.config_handler.get_last_used_connection() in connection_profile_list:
+                self.connection_selector.current(
+                    connection_profile_list.index(self.config_handler.get_last_used_connection()))
+                self.on_profile_select()
+            else:
+                self.connection_selector.current(0)
+                self.on_profile_select()
+
+        self.grab_set()
+        self.geometry("")
+        self.update()
+        screenwidth = self.winfo_screenwidth()
+        screenheight = self.winfo_screenheight()
+        height = self.winfo_height()
+        width = self.winfo_width()
+        alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+        self.geometry(alignstr)
+        self.protocol("WM_DELETE_WINDOW", self.on_destroy)
+        self.bind("<Escape>", self.on_destroy)
+        self.focus_set()
+        self.wait_window(self)
+
+    def on_checkbox(self):
+        if any((bool(self.subscribe_topic_selection.get()),
+                bool(self.publish_topic_selection.get()),
+                bool(self.message_template_selection.get()))) and self.file_input.get() != "":
+            self.ok_button["state"] = "normal"
+        else:
+            self.ok_button["state"] = "disabled"
+
+    def on_profile_select(self, *args, **kwargs):
+        if self.is_import:
+            return
+
+        connection_config = self.config_handler.get_connection_config_dict(self.connection_selector.get())
+        self.update_items(connection_config)
+
+    def browse_file(self):
+        self.imported_history = None
+        self.ok_button["state"] = "disabled"
+        self.info_label["text"] = ""
+
+        if self.is_import:
+            file_path_name = filedialog.askopenfilename(initialdir=self.config_handler.get_last_used_directory(),
+                                                        title="Import connection configuration")
+        else:
+            file_path_name = filedialog.asksaveasfilename(initialdir=self.config_handler.get_last_used_directory(),
+                                                          title="Export connection configuration",
+                                                          defaultextension="json")
+
+        self.config_handler.save_last_used_directory(file_path_name)
+        self.file_input.delete(0, tk.END)
+        self.file_input.insert(0, file_path_name)
+
+        if not self.is_import:
+            self.log.info("File selected for topic and message export: {}".format(file_path_name))
+            self.on_checkbox()
+            return
+
+        if not os.path.isfile(file_path_name):
+            self.log.error("The file picked for topic and message history import doesn't exist!", file_path_name)
+            self.info_label["text"] = "Invalid file"
+            self.info_label["foreground"] = "red"
+            return
+
+        try:
+            with open(file_path_name, "r") as configfile:
+                history_dict = json.loads(configfile.read())
+        except Exception as e:
+            self.log.error("Failed to load topic and message history file", e, traceback.format_exc())
+
+        self.update_items(history_dict)
+
+        self.imported_history = history_dict
+        self.log.info("File selected for communication config import: {}".format(file_path_name))
+
+    def on_destroy(self, *args, **kwargs):
+        self.grab_release()
+        self.destroy()
+
+    def update_items(self, history_dict):
+        self.subscribe_topic_checkbox["text"] = "{} Subscribe topic history items".format(
+            0 if "subscriptions" not in history_dict else len(history_dict["subscriptions"]))
+
+        self.publish_topic_checkbox["text"] = "{} Publish topic history items".format(
+            0 if "publish_topics" not in history_dict else len(history_dict["publish_topics"])
+        )
+
+        self.message_template_checkbox["text"] = "{} Message template items".format(
+            0 if "stored_publishes" not in history_dict else len(history_dict["stored_publishes"]))
+
+    def ok(self, *args, **kwargs):
+        if self.is_import:
+            connection_to_import_to = self.connection_selector.get()
+            self.log.info("Attempting to import publish/subscribe history into {}".format(connection_to_import_to))
+            config_to_update = self.config_handler.get_connection_config_dict(connection_to_import_to)
+            try:
+                for key in ("subscriptions", "stored_publishes"):
+                    config_to_update[key].update(self.imported_history.get(key, {}))
+                if "publish_topics" in self.imported_history:
+                    for topic in self.imported_history["publish_topics"]:
+                        if topic not in config_to_update["publish_topics"]:
+                            config_to_update["publish_topics"].append(topic)
+                self.config_handler.save_connection_config(connection_to_import_to, config_to_update)
+            except Exception as e:
+                self.log.error("Failed to import subscribe/publish history", e, traceback.format_exc())
+                messagebox.showerror("Error", "Error importing subscribe/publish history. See log for details")
+            else:
+                messagebox.showinfo("Success", "Publish/subscribe history imported successfully")
+            self.on_destroy()
+        else:
+            connection_to_export = self.connection_selector.get()
+            connection_config = self.config_handler.get_connection_config_dict(connection_to_export)
+            self.log.info("Exporting subscription and publish history from {} into {}".format(connection_to_export,
+                                                                                              self.file_input.get()))
+            export_dict = {}
+            if bool(self.subscribe_topic_selection.get()):
+                export_dict["subscriptions"] = connection_config.get("subscriptions", {})
+            if bool(self.publish_topic_selection.get()):
+                export_dict["publish_topics"] = connection_config.get("publish_topics", {})
+            if bool(self.message_template_selection.get()):
+                export_dict["stored_publishes"] = connection_config.get("stored_publishes", {})
+
+            try:
+                with open(self.file_input.get(), "w") as export_file:
+                    export_file.write(json.dumps(export_dict, indent=2))
+            except Exception as e:
+                self.log.error("Failed to export publish and subscription history", e, traceback.format_exc())
+                messagebox.showerror("Error exporting publish and subscription history", "See log for details")
+            else:
+                self.log.info("Successfully exported publish and subscription history")
+                messagebox.showinfo("Success", "Subscription/publish history exported successfully")
             self.on_destroy()
