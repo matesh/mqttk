@@ -41,7 +41,7 @@ class HeaderFrame(ttk.Frame):
                                             command=app.on_disconnect_button)
         self.disconnect_button.pack(side=tk.LEFT, expand=False, padx=3, pady=3)
 
-        self.connection_indicator = tk.Label(self, text="DISCONNECTED", bg="red")
+        self.connection_indicator = tk.Label(self, text="DISCONNECTED", bg="#ff6b6b")
         self.connection_indicator.pack(side=tk.RIGHT, padx=5, pady=5)
         self.connection_error_notification = ttk.Label(self, foreground='red')
         self.connection_error_notification.pack(side=tk.RIGHT, expand=1, fill='x')
@@ -54,4 +54,4 @@ class HeaderFrame(ttk.Frame):
 
     def connection_indicator_toggle(self, connection_state):
         self.connection_indicator.configure(text='CONNECTED' if connection_state == CONNECT else "DISCONNECTED",
-                                            bg="green" if connection_state == CONNECT else "red")
+                                            bg="#76ff61" if connection_state == CONNECT else "#ff6b6b")
