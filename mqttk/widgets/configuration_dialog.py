@@ -333,8 +333,8 @@ class ConfigurationWindow(tk.Toplevel):
             try:
                 self.profiles_widgets[self.currently_selected_connection].on_unselect()
             except Exception as e:
-                self.log.error("Exception deselecting profile widget", e,
-                               self.currently_selected_connection, connection_name)
+                self.log.warning("Exception deselecting profile widget, maybe there wasn't one selected?", e,
+                                 self.currently_selected_connection, connection_name)
             try:
                 self.all_config_state_change("normal")
                 self.currently_selected_connection_dict = self.config_handler.get_connection_config_dict(

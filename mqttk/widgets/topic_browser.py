@@ -123,6 +123,15 @@ class TopicBrowser(ttk.Frame):
         self.subscribe_selector.configure(state="normal" if connection_state is CONNECT else "disabled")
         self.current_subscription = None
 
+    def get_color(self, topic):
+        colour = self.config_handler.get_subscription_colour(self.current_connection, topic)
+        if colour is not None:
+            return colour
+        self.color_carousel += 1
+        if self.color_carousel > len(COLOURS):
+            self.color_carousel = 0
+        return COLOURS[self.color_carousel]
+
     def add_subscription(self):
         topic = self.subscribe_selector.get()
         if topic != "":
@@ -139,6 +148,9 @@ class TopicBrowser(ttk.Frame):
                 self.subscribe_selector["values"] = [topic]
             elif topic not in self.subscribe_selector['values']:
                 self.subscribe_selector['values'] += (topic,)
+            self.config_handler.add_subscription_history(self.current_connection,
+                                                         topic,
+                                                         self.get_color(topic))
         self.current_subscription = topic
         self.browse_button["state"] = "disabled"
         self.stop_button["state"] = "normal"
