@@ -45,6 +45,7 @@ from mqttk.widgets.header_frame import HeaderFrame
 from mqttk.widgets.publish_tab import PublishTab
 from mqttk.constants import CONNECT, DISCONNECT
 from mqttk.widgets.log_tab import LogTab
+from mqttk.widgets.topic_browser import TopicBrowser
 from mqttk.widgets.dialogs import AboutDialog, SplashScreen, ConnectionConfigImportExport, SubscribePublishImportExport
 from mqttk.widgets.configuration_dialog import ConfigurationWindow
 from mqttk.config_handler import ConfigHandler
@@ -232,14 +233,21 @@ class App:
         self.publish_frame = PublishTab(self.tabs, self, self.log, self.style)
         self.tabs.add(self.publish_frame, text="Publish")
 
-        # ====================================== Log tab =========================================================
+        # ====================================== Topic browser tab ====================================================
+
+        self.topic_browser = TopicBrowser(self.tabs, self.config_handler, self.log, self.style)
+        self.tabs.add(self.topic_browser, text="Topic browser")
+
+        # ====================================== Log tab =============================================================
 
         self.log_tab = LogTab(self.tabs)
         self.tabs.add(self.log_tab, text="Log")
         self.log.add_message_callback = self.log_tab.add_message
         self.log.info("Logger output live")
+        self.tabs.bind("<<NotebookTabChanged>>", self.on_tab_select)
 
         self.subscribe_frame.interface_toggle(DISCONNECT, None, None)
+        self.topic_browser.interface_toggle(DISCONNECT, None, None)
         self.header_frame.interface_toggle(DISCONNECT)
         self.publish_frame.interface_toggle(DISCONNECT)
 
@@ -249,6 +257,7 @@ class App:
         self.subscribe_frame.cleanup_subscriptions()
         try:
             self.subscribe_frame.interface_toggle(DISCONNECT, None, None)
+            self.topic_browser.interface_toggle(DISCONNECT, None, None)
             self.header_frame.interface_toggle(DISCONNECT)
             self.publish_frame.interface_toggle(DISCONNECT)
             self.header_frame.connection_indicator_toggle(DISCONNECT)
@@ -257,9 +266,11 @@ class App:
 
     def on_client_connect(self):
         self.subscribe_frame.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
+        self.topic_browser.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
         self.publish_frame.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
         self.header_frame.connection_indicator_toggle(CONNECT)
         self.subscribe_frame.load_subscription_history()
+        self.topic_browser.load_subscription_history()
 
     def on_connect_button(self):
         self.header_frame.connection_error_notification["text"] = ""
@@ -383,6 +394,10 @@ class App:
 
     def export_subscribe_publish(self):
         export_dialog = SubscribePublishImportExport(self.root, self.icon, self.config_handler, self.log, False)
+
+    def on_tab_select(self, *args, **kwargs):
+        if "logtab" in self.tabs.select():
+            self.log_tab.mark_as_read()
 
 
 def main():
