@@ -43,7 +43,7 @@ except ImportError:
 from mqttk.widgets.subscribe_tab import SubscribeTab
 from mqttk.widgets.header_frame import HeaderFrame
 from mqttk.widgets.publish_tab import PublishTab
-from mqttk.constants import CONNECT, DISCONNECT
+from mqttk.constants import CONNECT, DISCONNECT, EVENT_LEVELS
 from mqttk.widgets.log_tab import LogTab
 from mqttk.widgets.topic_browser import TopicBrowser
 from mqttk.widgets.dialogs import AboutDialog, SplashScreen, ConnectionConfigImportExport, SubscribePublishImportExport
@@ -69,9 +69,10 @@ class PotatoLog:
         self.add_message_callback = None
         self.message_queue = []
         self.config_handler = None
+        self.notification_callback = None
 
     def add_message(self, message_level, *args):
-        message = "{} - {} ".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"), message_level)
+        message = "{} - {} ".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"), EVENT_LEVELS.get(message_level))
         message += ", ".join([str(x) for x in args])
         message += os.linesep
         if self.add_message_callback is None:
@@ -84,22 +85,20 @@ class PotatoLog:
                 self.message_queue = []
             self.add_message_callback(message)
             self.config_handler.add_log_message(message)
+            if 1 < message_level and self.notification_callback is not None:
+                self.notification_callback()
 
     def warning(self, *args):
-        message_level = "[W]"
-        self.add_message(message_level, *args)
+        self.add_message(1, *args)
 
     def error(self, *args):
-        message_level = "[E]"
-        self.add_message(message_level, *args)
+        self.add_message(2, *args)
 
     def exception(self, *args):
-        message_level = "[X]"
-        self.add_message(message_level, *args)
+        self.add_message(3, *args)
 
     def info(self, *args):
-        message_level = "[i]"
-        self.add_message(message_level, *args)
+        self.add_message(0, *args)
 
     def on_paho_log(self, _, __, level, buf):
         if level == MQTT_LOG_INFO:
@@ -235,12 +234,13 @@ class App:
 
         # ====================================== Topic browser tab ====================================================
 
-        self.topic_browser = TopicBrowser(self.tabs, self.config_handler, self.log, self.style)
+        self.topic_browser = TopicBrowser(self.tabs, self.config_handler, self.log, root)
         self.tabs.add(self.topic_browser, text="Topic browser")
 
         # ====================================== Log tab =============================================================
 
         self.log_tab = LogTab(self.tabs)
+        self.log.notification_callback = self.log_tab.notify
         self.tabs.add(self.log_tab, text="Log")
         self.log.add_message_callback = self.log_tab.add_message
         self.log.info("Logger output live")

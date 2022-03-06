@@ -52,5 +52,12 @@ ERROR_CODES = {
     5: "Not authorised"
 }
 
+EVENT_LEVELS = {
+    0: "[i]",
+    1: "[W]",
+    2: "[E]",
+    3: "[X]"
+}
+
 
 MQTT_VERSION_LIST = list(PROTOCOL_LOOKUP.keys())

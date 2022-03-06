@@ -31,10 +31,12 @@ class LogTab(ttk.Frame):
         self.log_output.pack(fill='both', expand=1, padx=3, pady=3)
 
     def add_message(self, message):
-        self.master.tab(self, text="* Log *")
         self.log_output.configure(state="normal")
         self.log_output.insert(tk.END, message)
         self.log_output.configure(state="disabled")
 
     def mark_as_read(self, *args, **kwargs):
         self.master.tab(self, text="Log")
+
+    def notify(self):
+        self.master.tab(self, text="* Log *")
