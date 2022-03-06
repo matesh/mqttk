@@ -20,6 +20,7 @@ import os.path
 import tkinter as tk
 import tkinter.ttk as ttk
 import time
+import sys
 import traceback
 from functools import partial
 from datetime import datetime
@@ -28,7 +29,7 @@ from mqttk.constants import CONNECT, DECODER_OPTIONS, COLOURS
 
 
 class TopicBrowser(ttk.Frame):
-    def __init__(self, master, config_handler, log, root_style, *args, **kwargs):
+    def __init__(self, master, config_handler, log, root, *args, **kwargs):
         super().__init__(master=master, *args, **kwargs)
         self.config_handler = config_handler
         self.log = log
@@ -37,6 +38,7 @@ class TopicBrowser(ttk.Frame):
         self.current_connection = None
         self.last_connection = None
         self.current_subscription = None
+        self.root = root
 
         self.mqtt_manager = None
         self.message_id_counter = 0
@@ -87,6 +89,12 @@ class TopicBrowser(ttk.Frame):
         self.topic_treeview.column('last_message', minwidth=70, width=90, stretch=tk.NO)
         self.topic_treeview.heading('payload', text='Payload')
         self.topic_treeview.column('payload', minwidth=300, width=900, stretch=tk.NO)
+        if sys.platform == "darwin":
+            self.topic_treeview.bind("<Button-2>", self.popup)
+        if sys.platform == "linux":
+            self.topic_treeview.bind("<Button-3>", self.popup)
+        if sys.platform == "win32":
+            self.topic_treeview.bind("<Button-3>", self.popup)
 
         self.vertical_scrollbar = ttk.Scrollbar(self.treeview_frame, orient="vertical", command=self.topic_treeview.yview)
         self.vertical_scrollbar.pack(side=tk.RIGHT, fill="y")
@@ -96,6 +104,10 @@ class TopicBrowser(ttk.Frame):
         self.horizontal_scrollbar = ttk.Scrollbar(self, orient="horizontal", command=self.topic_treeview.xview)
         self.horizontal_scrollbar.pack(side=tk.BOTTOM, fill="x")
         self.topic_treeview.configure(xscrollcommand=self.horizontal_scrollbar.set)
+
+        self.popup_menu = tk.Menu(self, tearoff=0)
+        self.popup_menu.add_command(label="Copy topic", command=self.copy_topic)
+        self.popup_menu.add_command(label="Copy payload", command=self.copy_payload)
 
     def interface_toggle(self, connection_state, mqtt_manager, current_connection):
         # Subscribe tab items
@@ -208,3 +220,24 @@ class TopicBrowser(ttk.Frame):
         else:
             self.individual_topics += 1
         self.stat_label["text"] = "{} individual topics mapped".format(self.individual_topics)
+
+    def copy_topic(self, *args, **kwargs):
+        self.root.clipboard_clear()
+        self.root.clipboard_append(self.topic_treeview.selection()[0])
+
+    def copy_payload(self, *args, **kwargs):
+        selection = self.topic_treeview.selection()[0]
+        values = self.topic_treeview.item(selection).get("values", [])
+        self.root.clipboard_clear()
+        try:
+            self.root.clipboard_append(values[3])
+        except IndexError:
+            self.root.clipboard_append("")
+
+    def popup(self, event, *args, **kwargs):
+        try:
+            self.popup_menu.tk_popup(event.x_root, event.y_root, 0)
+        except Exception as e:
+            print("Exception on popup")
+        finally:
+            self.popup_menu.grab_release()
