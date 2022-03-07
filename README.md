@@ -1,6 +1,16 @@
 ![MQTTk](/mqttk/mqttk_splash.png)
 
 - [Introduction](#introduction)
+- [Features](#features)
+  * [Connection profile management](#connection-profile-management)
+  * [Subscribe interface](#subscribe-interface)
+  * [Publish interface](#publish-interface)
+  * [Topic browser](#topic-browser)
+  * [Log tab](#log-tab)
+  * [Import MQTT.fx configuration](#import-mqttfx-configuration)
+- [Planned features](#planned-features)
+  * [V1.3](#v13)
+  * [V1.4](#v14)
 - [Software dependencies](#software-dependencies)
 - [Installation](#installation)
   * [macOS - app](#macos---app)
@@ -20,12 +30,6 @@
     + [Linux - acquiring and installing the package from source](#linux---acquiring-and-installing-the-package-from-source)
     + [Linux - installing it via pip](#linux---installing-it-via-pip)
     + [Linux - Running MQTTk](#linux---running-mqttk)
-- [Using the app](#using-the-app)
-  * [Features](#features)
-  * [Screenshots](#screenshots)
-  * [Planned features](#planned-features)
-    + [V1.2](#v12)
-    + [V1.3](#v13)
 - [Building the app from source](#building-the-app-from-source)
   * [pypi package](#pypi-package)
   * [macOS appimage](#macos-appimage)
@@ -54,6 +58,105 @@ Since I couldn't find a similar tool out there, I decided to make my own and sha
 whoever is interested. The project is written in Tk/ttk. I don't have time to learn some
 fancy-pancy GUI environment, it was quick and easy to knock out, and it should run on anything
 including the kitchen sink without too much pain.
+
+# Features
+## Connection profile management
+MQTTk allows the user to create and manage multiple connection profiles. For each connection profile, the broker
+configuration, the topics that have been subscribed to along with the associated colour, the topics in which messages 
+have been published and the message templates are saved. From these connection profiles, the broker connection 
+configuration and the associated subscribe/publish history and message templates can be exported and imported 
+separately.
+
+Once a connection has been configured, it can be connected to. Upon successful connection, the different interfaces for
+subscription, publish and topic inspection become available.
+
+The configuration files and logs are saved in the following locations:
+
+**macOS**: `~/Library/ApplicationSupport/MQTTk/`
+
+**Windows**: `%LOCALAPPDATA/MQTTk/`
+
+**Linux:** `~/.config/MQTTk/`
+
+
+Configuration interface
+
+![Configuration interface](/assets/configuration.png)
+
+Export subscribe/publish history interface
+
+![Configuration interface](/assets/export.png)
+
+## Subscribe interface
+On the subscribe tab, topics can be subscribed to. The $SYS topics and both the `#` and `+` wildcards are supported.
+Once subscribed, the messages arriving in the topic(s) are listed in the listbox with the time of their arrival, topic,
+QOS, retained state and their ID in MQTTk. Topics and topic patterns subscribed to get a colour assigned to them, 
+messages arriving in these topis appear in the colour associated to the topic pattern. The colour can be changed on the
+fly and the new colour gets applied to all previous messages that arrived in these topics. Activating the `Autoscroll`
+checkbox will cause the last message that arrived to be selected automatically and its details to be shown immediately
+in the message details section of the interface. Topic subscriptions can be temporarily muted using the `Mute` checkbox
+on the subscription widget.
+
+Once messages arrived, they can be selected in the listbox. Selected message details appear in the lower right part of
+the interface. Here, different decoders are available to quickly decode or format the most common message types in
+the message content textbox. So far, a JSON pretty formatter and a hex decoder are available, but decoders can be
+added in the future on demand.
+
+The `Attempt to decompress` option will try to decompress the payload using the most common compression algorithms
+(currently zlib and bz2 are supported, but these can be extended in the future). 
+
+Messages that have arrived, can be exported in .CSV and .JSON formats. Message payload is exported as unicode text if 
+possible, otherwise it is encoded in base64.
+
+Subscribe interface
+
+![Subscribe interface](/assets/subscribe.png)
+
+## Publish interface
+On this interface, messages can be published. Once a topic is input, a message payload can be inserted, the QoS of the
+message selected and if needed be, the message can be made retained. Once a message is published, the topic will be
+saved in the topic drop-down for future use. If a message or a payload is needed often, the message can be saved as a
+template with a custom name, and published by just a click of the publish button on the message template widget.
+Selecting the message template will fill the relevant fields on the interface so the content can be modified and/or
+saved as a new template.
+
+Publish interface
+
+![Publish interface](/assets/publish.png)
+
+## Topic browser
+The topic browser allows to subscribe to a topic pattern and organises all incoming messages in a tree format, split
+by the `/` in message the topic. The most important message information (time of arrival of the last message, QoS, 
+retained status, payload) are also shown. The message payload is decoded into a string if possible, otherwise it remains
+the bitstring as it arrived. Right clicking on the selected message allows the topic and the payload to  be copied on 
+the clipboard. The `Ignore retained messages` option will ignore all retained messages, only freshly arrived messages 
+will make it into the topic browser.
+
+Topic browser
+
+![Topic browser](/assets/topic_browser.png)
+
+## Log tab
+The log may contain useful information in case something isn't working with the app as expected. The log is also output
+in a file, which is in the same directory as the configuration files. The log tab text will change to `* Log *` when
+error or exception level messages get inserted to it, to indicate an issue. Upon clicking on the tab, the text returns
+to normal.
+
+## Import MQTT.fx configuration
+If MQTT.fx was already installed on the computer, the "MQTT.fx config" option in the "Import" will try to find and
+import it. If MQTTk cannot find it, the file can also be browsed for. This feature has only been tested with my MQTT.fx
+configs and although it worked, there may be config files out there that may fail to import.
+
+# Planned features
+## V1.3
+- option to encrypt the configuration file and decrypt it at application launch or use an alternative unencrypted config
+in the current session
+- option to encrypt exported broker configuration
+
+## V1.4
+- Broker stats tab
+- MQTT 5.0 features
+
 
 # Software dependencies
 The project is written in pure python, powered by the below projects: 
@@ -193,56 +296,6 @@ If the app fails to start, or crashes randomly, try re-launching it using the
 $ mqttk-console
 ```
 command. This will leave a console window, which might provide additional debug information when something goes tits up.
-
-# Using the app
-## Features
-MQTTk allows configuration of multiple connection profiles. Once configured, the brokers
-can be connected to, and you can subscribe to topics. Incoming messages are shown in time, their colour
-can be changed and selected message's payloads displayed. There are currently 3 decoders, plain text, json
-pretty formatter and hex decoder to analyse message data. 
-
-You can also publish messages, save message templates and one-click publish them. You can send messages with
-any QoS and retained messages as well.
-
-So far, I added the most useful message decoding features: JSON pretty formatter and hex decoders. There is also an
-option to attempt to decompress the payload before feeding it into the decoder.
-
-If you used MQTT.fx in the past, MQTTk will try to find and import your config. The connection profiles,
-subscribe and publish history will be imported, as well as the saved message templates.
-
-There is a built-in log feature to show any exceptions/debug information, let me know if you see something
-unusual there.
-
-Connection profiles, subscription and publish history and saved message templates can be exported and imported.
-
-Messages can be dumped into .CSV and .JSON formats. Message payload is exported as unicode text if possible,
-otherwise it is encoded in base64.
-
-## Screenshots
-
-Subscribe interface
-
-![Subscribe interface](/assets/subscribe.png)
-
-Publish interface
-
-![Publish interface](/assets/publish.png)
-
-Configuration interface
-
-![Configuration interface](/assets/configuration.png)
-
-Export subscribe/publish history interface
-
-![Configuration interface](/assets/export.png)
-
-## Planned features
-### V1.2
-- tree-style topic inspector where all incoming messages are organised in a tree and the latest payload is shown
-
-### V1.3
-- Broker stats tab
-- MQTT 5.0 features
 
 # Building the app from source
 ## pypi package
