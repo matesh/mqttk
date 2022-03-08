@@ -311,6 +311,8 @@ class ConfigurationWindow(tk.Toplevel):
     def browse_file(self, target_entry):
         file_path_name = filedialog.askopenfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                     title="Select CA file")
+        if file_path_name == "":
+            return
         self.config_handler.save_last_used_directory(file_path_name)
         target_entry.delete(0, tk.END)
         target_entry.insert(0, file_path_name)

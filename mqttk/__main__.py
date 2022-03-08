@@ -273,6 +273,8 @@ class App:
         self.topic_browser.load_subscription_history()
 
     def on_connect_button(self):
+        if self.header_frame.connection_selector.get() == "":
+            return
         self.header_frame.connection_error_notification["text"] = ""
         self.header_frame.interface_toggle(CONNECT)
         self.config_handler.update_last_used_connection(self.header_frame.connection_selector.get())
@@ -337,10 +339,15 @@ class App:
 
         output_location = filedialog.asksaveasfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                        title="Export {}".format(format),
-                                                       defaultextension="json" if format == "JSON" else "csv")
+                                                       defaultextension="json" if format == "JSON" else "csv",
+                                                       initialfile="MQTTk_messages_{}".format(time.time()))
+        if output_location == "":
+            self.log.warning("Empty file name on export message (maybe the cancel button was pressed?")
+            return
 
         self.log.info("Exporting messages in {} format to {}".format(format,
                                                                      output_location))
+
         self.config_handler.save_last_used_directory(output_location)
 
         try:
