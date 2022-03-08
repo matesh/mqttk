@@ -11,6 +11,7 @@
 - [Planned features](#planned-features)
   * [V1.3](#v13)
   * [V1.4](#v14)
+  * [V1.5](#v15)
 - [Software dependencies](#software-dependencies)
 - [Installation](#installation)
   * [macOS - app](#macos---app)
@@ -128,7 +129,7 @@ Publish interface
 The topic browser allows to subscribe to a topic pattern and organises all incoming messages in a tree format, split
 by the `/` in message the topic. The most important message information (time of arrival of the last message, QoS, 
 retained status, payload) are also shown. The message payload is decoded into a string if possible, otherwise it remains
-the bitstring as it arrived. Right clicking on the selected message allows the topic and the payload to  be copied on 
+the bytestring as it arrived. Right clicking on the selected message allows the topic and the payload to  be copied on 
 the clipboard. The `Ignore retained messages` option will ignore all retained messages, only freshly arrived messages 
 will make it into the topic browser.
 
@@ -155,8 +156,9 @@ in the current session
 
 ## V1.4
 - Broker stats tab
-- MQTT 5.0 features
 
+## V1.5
+- MQTT 5.0 features
 
 # Software dependencies
 The project is written in pure python, powered by the below projects: 
@@ -179,7 +181,7 @@ like any other apps.
 
 The system may complain about not being able to verify the developer. You can find more information
 about me [here](https://mateszabo.com), so you can verify the developer yourself instead. To run the app, follow
-the instructions provided by apple [here](https://support.apple.com/en-ie/guide/mac-help/mh40616/mac).
+the instructions provided by Apple [here](https://support.apple.com/en-ie/guide/mac-help/mh40616/mac).
 
 ## On macOS from source
 ### macOS Dependencies
