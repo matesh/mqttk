@@ -243,10 +243,18 @@ class ConnectionConfigImportExport(tk.Toplevel):
         if self.is_import:
             file_path_name = filedialog.askopenfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                         title="Import connection configuration")
+            if file_path_name == "":
+                self.log.warning("Empty file name when browsing for connection config to import. Maybe the cancel button was pressed?")
+                return
         else:
             file_path_name = filedialog.asksaveasfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                           title="Export connection configuration",
-                                                          defaultextension="json")
+                                                          defaultextension="json",
+                                                          initialfile="{}-config".format(self.connection_selector.get().replace(" ", "_")))
+
+            if file_path_name == "":
+                self.log.warning("Empty file name when exporting connection config. Maybe the cancel button was pressed?")
+                return
 
         self.config_handler.save_last_used_directory(file_path_name)
         self.file_input.delete(0, tk.END)
@@ -464,10 +472,17 @@ class SubscribePublishImportExport(tk.Toplevel):
         if self.is_import:
             file_path_name = filedialog.askopenfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                         title="Import connection configuration")
+            if file_path_name == "":
+                self.log.warning("Empty file name when importing subscribe/publish stuff. Maybe the cancel button was pressed?")
+                return
         else:
             file_path_name = filedialog.asksaveasfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                           title="Export connection configuration",
-                                                          defaultextension="json")
+                                                          defaultextension="json",
+                                                          initialfile="{}-topics-content".format(self.connection_selector.get().replace(" ", "_")))
+            if file_path_name == "":
+                self.log.warning("Empty file name when exporting subscribe/publish stuff. Maybe the cancel button was pressed?")
+                return
 
         self.config_handler.save_last_used_directory(file_path_name)
         self.file_input.delete(0, tk.END)

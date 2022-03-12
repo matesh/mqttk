@@ -19,6 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 import os
+import traceback
 from pathlib import Path
 import json
 from tkinter import messagebox
@@ -352,6 +353,7 @@ class ConfigHandler:
         return self.configuration_dict["last_used_directory"]
 
     def save_last_used_directory(self, directory):
+        print(directory, type(directory))
         head, tail = os.path.split(directory)
         self.configuration_dict["last_used_directory"] = head
         self.config_file_manager(SAVE)

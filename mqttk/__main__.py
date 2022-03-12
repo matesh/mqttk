@@ -43,8 +43,9 @@ except ImportError:
 from mqttk.widgets.subscribe_tab import SubscribeTab
 from mqttk.widgets.header_frame import HeaderFrame
 from mqttk.widgets.publish_tab import PublishTab
-from mqttk.constants import CONNECT, DISCONNECT
+from mqttk.constants import CONNECT, DISCONNECT, EVENT_LEVELS
 from mqttk.widgets.log_tab import LogTab
+from mqttk.widgets.topic_browser import TopicBrowser
 from mqttk.widgets.dialogs import AboutDialog, SplashScreen, ConnectionConfigImportExport, SubscribePublishImportExport
 from mqttk.widgets.configuration_dialog import ConfigurationWindow
 from mqttk.config_handler import ConfigHandler
@@ -68,9 +69,10 @@ class PotatoLog:
         self.add_message_callback = None
         self.message_queue = []
         self.config_handler = None
+        self.notification_callback = None
 
     def add_message(self, message_level, *args):
-        message = "{} - {} ".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"), message_level)
+        message = "{} - {} ".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"), EVENT_LEVELS.get(message_level))
         message += ", ".join([str(x) for x in args])
         message += os.linesep
         if self.add_message_callback is None:
@@ -83,22 +85,20 @@ class PotatoLog:
                 self.message_queue = []
             self.add_message_callback(message)
             self.config_handler.add_log_message(message)
+            if 1 < message_level and self.notification_callback is not None:
+                self.notification_callback()
 
     def warning(self, *args):
-        message_level = "[W]"
-        self.add_message(message_level, *args)
+        self.add_message(1, *args)
 
     def error(self, *args):
-        message_level = "[E]"
-        self.add_message(message_level, *args)
+        self.add_message(2, *args)
 
     def exception(self, *args):
-        message_level = "[X]"
-        self.add_message(message_level, *args)
+        self.add_message(3, *args)
 
     def info(self, *args):
-        message_level = "[i]"
-        self.add_message(message_level, *args)
+        self.add_message(0, *args)
 
     def on_paho_log(self, _, __, level, buf):
         if level == MQTT_LOG_INFO:
@@ -232,14 +232,22 @@ class App:
         self.publish_frame = PublishTab(self.tabs, self, self.log, self.style)
         self.tabs.add(self.publish_frame, text="Publish")
 
-        # ====================================== Log tab =========================================================
+        # ====================================== Topic browser tab ====================================================
+
+        self.topic_browser = TopicBrowser(self.tabs, self.config_handler, self.log, root)
+        self.tabs.add(self.topic_browser, text="Topic browser")
+
+        # ====================================== Log tab =============================================================
 
         self.log_tab = LogTab(self.tabs)
+        self.log.notification_callback = self.log_tab.notify
         self.tabs.add(self.log_tab, text="Log")
         self.log.add_message_callback = self.log_tab.add_message
         self.log.info("Logger output live")
+        self.tabs.bind("<<NotebookTabChanged>>", self.on_tab_select)
 
         self.subscribe_frame.interface_toggle(DISCONNECT, None, None)
+        self.topic_browser.interface_toggle(DISCONNECT, None, None)
         self.header_frame.interface_toggle(DISCONNECT)
         self.publish_frame.interface_toggle(DISCONNECT)
 
@@ -249,6 +257,7 @@ class App:
         self.subscribe_frame.cleanup_subscriptions()
         try:
             self.subscribe_frame.interface_toggle(DISCONNECT, None, None)
+            self.topic_browser.interface_toggle(DISCONNECT, None, None)
             self.header_frame.interface_toggle(DISCONNECT)
             self.publish_frame.interface_toggle(DISCONNECT)
             self.header_frame.connection_indicator_toggle(DISCONNECT)
@@ -257,11 +266,15 @@ class App:
 
     def on_client_connect(self):
         self.subscribe_frame.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
+        self.topic_browser.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
         self.publish_frame.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
         self.header_frame.connection_indicator_toggle(CONNECT)
         self.subscribe_frame.load_subscription_history()
+        self.topic_browser.load_subscription_history()
 
     def on_connect_button(self):
+        if self.header_frame.connection_selector.get() == "":
+            return
         self.header_frame.connection_error_notification["text"] = ""
         self.header_frame.interface_toggle(CONNECT)
         self.config_handler.update_last_used_connection(self.header_frame.connection_selector.get())
@@ -326,10 +339,15 @@ class App:
 
         output_location = filedialog.asksaveasfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                        title="Export {}".format(format),
-                                                       defaultextension="json" if format == "JSON" else "csv")
+                                                       defaultextension="json" if format == "JSON" else "csv",
+                                                       initialfile="MQTTk_messages_{}".format(time.time()))
+        if output_location == "":
+            self.log.warning("Empty file name on export message (maybe the cancel button was pressed?")
+            return
 
         self.log.info("Exporting messages in {} format to {}".format(format,
                                                                      output_location))
+
         self.config_handler.save_last_used_directory(output_location)
 
         try:
@@ -383,6 +401,10 @@ class App:
 
     def export_subscribe_publish(self):
         export_dialog = SubscribePublishImportExport(self.root, self.icon, self.config_handler, self.log, False)
+
+    def on_tab_select(self, *args, **kwargs):
+        if "logtab" in self.tabs.select():
+            self.log_tab.mark_as_read()
 
 
 def main():

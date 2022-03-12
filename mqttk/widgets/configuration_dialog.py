@@ -311,6 +311,8 @@ class ConfigurationWindow(tk.Toplevel):
     def browse_file(self, target_entry):
         file_path_name = filedialog.askopenfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                     title="Select CA file")
+        if file_path_name == "":
+            return
         self.config_handler.save_last_used_directory(file_path_name)
         target_entry.delete(0, tk.END)
         target_entry.insert(0, file_path_name)
@@ -333,8 +335,8 @@ class ConfigurationWindow(tk.Toplevel):
             try:
                 self.profiles_widgets[self.currently_selected_connection].on_unselect()
             except Exception as e:
-                self.log.error("Exception deselecting profile widget", e,
-                               self.currently_selected_connection, connection_name)
+                self.log.warning("Exception deselecting profile widget, maybe there wasn't one selected?", e,
+                                 self.currently_selected_connection, connection_name)
             try:
                 self.all_config_state_change("normal")
                 self.currently_selected_connection_dict = self.config_handler.get_connection_config_dict(
