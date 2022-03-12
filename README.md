@@ -11,7 +11,6 @@
 - [Planned features](#planned-features)
   * [V1.3](#v13)
   * [V1.4](#v14)
-  * [V1.5](#v15)
 - [Software dependencies](#software-dependencies)
 - [Installation](#installation)
   * [macOS - app](#macos---app)
@@ -150,15 +149,12 @@ configs and although it worked, there may be config files out there that may fai
 
 # Planned features
 ## V1.3
+- Broker stats tab
+
+## V1.4
 - option to encrypt the configuration file and decrypt it at application launch or use an alternative unencrypted config
 in the current session
 - option to encrypt exported broker configuration
-
-## V1.4
-- Broker stats tab
-
-## V1.5
-- MQTT 5.0 features
 
 # Software dependencies
 The project is written in pure python, powered by the below projects: 
