@@ -440,10 +440,10 @@ class SubscribeTab(ttk.Frame):
             "timestamp": timestamp
         }
         message_title = "{} #{:05d} [QoS:{}] [{}] - {}".format(simple_time_string,
-                                                        new_message_id,
-                                                        mqtt_message_object.qos,
-                                                        "R" if mqtt_message_object.retain else " ",
-                                                        mqtt_message_object.topic)
+                                                               new_message_id,
+                                                               mqtt_message_object.qos,
+                                                               "R" if mqtt_message_object.retain else " ",
+                                                               mqtt_message_object.topic)
         try:
             colour = self.subscription_frames[subscription_pattern].colour
         except Exception as e:
