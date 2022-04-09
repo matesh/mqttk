@@ -6,6 +6,7 @@
   * [Subscribe interface](#subscribe-interface)
   * [Publish interface](#publish-interface)
   * [Topic browser](#topic-browser)
+  * [Broker stats](#broker-stats)
   * [Log tab](#log-tab)
   * [Import MQTT.fx configuration](#import-mqttfx-configuration)
 - [Planned features](#planned-features)
@@ -135,6 +136,13 @@ will make it into the topic browser.
 Topic browser
 
 ![Topic browser](/assets/topic_browser.png)
+
+## Broker stats
+This allows the statistics of the broker connected to, to be viewed in a similar fashion as the topic browser. 
+
+Broker stats
+
+![Broker stats](/assets/broker_stats.png)
 
 ## Log tab
 The log may contain useful information in case something isn't working with the app as expected. The log is also output
