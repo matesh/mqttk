@@ -43,6 +43,7 @@ except ImportError:
 from mqttk.widgets.subscribe_tab import SubscribeTab
 from mqttk.widgets.header_frame import HeaderFrame
 from mqttk.widgets.publish_tab import PublishTab
+from mqttk.widgets.broker_stats import BrokerStats
 from mqttk.constants import CONNECT, DISCONNECT, EVENT_LEVELS
 from mqttk.widgets.log_tab import LogTab
 from mqttk.widgets.topic_browser import TopicBrowser
@@ -237,6 +238,11 @@ class App:
         self.topic_browser = TopicBrowser(self.tabs, self.config_handler, self.log, root)
         self.tabs.add(self.topic_browser, text="Topic browser")
 
+        # ====================================== Broker stats tab ====================================================
+
+        self.broker_stats = BrokerStats(self.tabs, root, self.log)
+        self.tabs.add(self.broker_stats, text="Broker stats")
+
         # ====================================== Log tab =============================================================
 
         self.log_tab = LogTab(self.tabs)
@@ -250,6 +256,7 @@ class App:
         self.topic_browser.interface_toggle(DISCONNECT, None, None)
         self.header_frame.interface_toggle(DISCONNECT)
         self.publish_frame.interface_toggle(DISCONNECT)
+        self.broker_stats.interface_toggle(DISCONNECT, None)
 
     def on_client_disconnect(self, notify=None):
         if notify is not None:
@@ -260,6 +267,7 @@ class App:
             self.topic_browser.interface_toggle(DISCONNECT, None, None)
             self.header_frame.interface_toggle(DISCONNECT)
             self.publish_frame.interface_toggle(DISCONNECT)
+            self.broker_stats.interface_toggle(DISCONNECT, None)
             self.header_frame.connection_indicator_toggle(DISCONNECT)
         except Exception as e:
             self.log.exception("Failed to toggle user interface element!", e)
@@ -267,6 +275,7 @@ class App:
     def on_client_connect(self):
         self.subscribe_frame.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
         self.topic_browser.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
+        self.broker_stats.interface_toggle(CONNECT, self.mqtt_manager)
         self.publish_frame.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())
         self.header_frame.connection_indicator_toggle(CONNECT)
         self.subscribe_frame.load_subscription_history()

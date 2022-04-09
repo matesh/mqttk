@@ -200,15 +200,24 @@ class SubscribeTab(ttk.Frame):
         # Incoming messages listbox
         self.incoming_messages_frame = ttk.Frame(self.subscribe_tab_bottom_frame)
         self.incoming_messages_frame.pack(expand=1, fill='both')
+
         self.incoming_messages_list = tk.Listbox(self.incoming_messages_frame, selectmode="browse",
                                                  font="Courier 13", background=background_colour)  # TkFixedFont, "Courier 13"
-        self.incoming_messages_list.pack(side=tk.LEFT, fill='both', expand=1)
         self.incoming_messages_list.bind("<<ListboxSelect>>", self.on_message_select)
+
         self.incoming_messages_scrollbar = ttk.Scrollbar(self.incoming_messages_frame,
                                                          orient='vertical',
                                                          command=self.incoming_messages_list.yview)
         self.incoming_messages_list['yscrollcommand'] = self.incoming_messages_scrollbar.set
         self.incoming_messages_scrollbar.pack(side=tk.RIGHT, fill='y')
+
+        self.incoming_messages_scrollbar_h = ttk.Scrollbar(self.incoming_messages_frame,
+                                                           orient='horizontal',
+                                                           command=self.incoming_messages_list.xview)
+        self.incoming_messages_list['xscrollcommand'] = self.incoming_messages_scrollbar_h.set
+        self.incoming_messages_scrollbar_h.pack(side=tk.BOTTOM, fill='x')
+        self.incoming_messages_list.pack(side=tk.LEFT, fill='both', expand=1)
+
         self.message_paned_window.add(self.incoming_messages_frame, height=300)
 
         # Incoming messages scrollable frame
@@ -313,7 +322,8 @@ class SubscribeTab(ttk.Frame):
         if message_label is None:
             message_id = 0
         else:
-            message_id = int(message_label[-5:])
+            # message_id = int(message_label[-5:])
+            message_id = message_list_id[0]
         message_data = self.get_message_details(message_id)
         self.message_topic_label["state"] = "normal"
         self.message_topic_label.delete(1.0, tk.END)
@@ -420,7 +430,7 @@ class SubscribeTab(ttk.Frame):
         # Theoretically there will be no race condition here?
         new_message_id = self.message_id_counter
         self.message_id_counter += 1
-        simple_time_string = datetime.fromtimestamp(timestamp).strftime("%H:%M:%S.%f")
+        simple_time_string = datetime.fromtimestamp(round(timestamp, 3)).strftime("%H:%M:%S.%f")[:-3]
         self.messages[new_message_id] = {
             "topic": mqtt_message_object.topic,
             "payload": mqtt_message_object.payload,
@@ -429,11 +439,11 @@ class SubscribeTab(ttk.Frame):
             "retained": mqtt_message_object.retain,
             "timestamp": timestamp
         }
-        message_title = "{}  -  {:70} {:8} QoS: {} #{:05d}".format(simple_time_string,
-                                                                   mqtt_message_object.topic,
-                                                                   "RETAINED" if mqtt_message_object.retain else "",
-                                                                   mqtt_message_object.qos,
-                                                                   new_message_id)
+        message_title = "{} #{:05d} [QoS:{}] [{}] - {}".format(simple_time_string,
+                                                               new_message_id,
+                                                               mqtt_message_object.qos,
+                                                               "R" if mqtt_message_object.retain else " ",
+                                                               mqtt_message_object.topic)
         try:
             colour = self.subscription_frames[subscription_pattern].colour
         except Exception as e:

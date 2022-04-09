@@ -142,7 +142,6 @@ class TopicBrowser(ttk.Frame):
                                                    on_message_callback=callback)
             except Exception as e:
                 self.log.exception("Failed to subscribe!", e)
-                self.subscription_frames[topic].on_unsubscribe()
                 return
             if self.subscribe_selector["values"] == "":
                 self.subscribe_selector["values"] = [topic]

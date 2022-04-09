@@ -6,11 +6,12 @@
   * [Subscribe interface](#subscribe-interface)
   * [Publish interface](#publish-interface)
   * [Topic browser](#topic-browser)
+  * [Broker stats](#broker-stats)
   * [Log tab](#log-tab)
   * [Import MQTT.fx configuration](#import-mqttfx-configuration)
 - [Planned features](#planned-features)
-  * [V1.3](#v13)
   * [V1.4](#v14)
+  * [V1.5](#v15)
 - [Software dependencies](#software-dependencies)
 - [Installation](#installation)
   * [macOS - app](#macos---app)
@@ -136,6 +137,13 @@ Topic browser
 
 ![Topic browser](/assets/topic_browser.png)
 
+## Broker stats
+This allows the statistics of the broker connected to, to be viewed in a similar fashion as the topic browser. 
+
+Broker stats
+
+![Broker stats](/assets/broker_stats.png)
+
 ## Log tab
 The log may contain useful information in case something isn't working with the app as expected. The log is also output
 in a file, which is in the same directory as the configuration files. The log tab text will change to `* Log *` when
@@ -148,10 +156,12 @@ import it. If MQTTk cannot find it, the file can also be browsed for. This featu
 configs and although it worked, there may be config files out there that may fail to import.
 
 # Planned features
-## V1.3
-- Broker stats tab
 
 ## V1.4
+- Option to turn on notifications when new messages arrive
+- Notifications only for specific subscriptions
+
+## V1.5
 - option to encrypt the configuration file and decrypt it at application launch or use an alternative unencrypted config
 in the current session
 - option to encrypt exported broker configuration
