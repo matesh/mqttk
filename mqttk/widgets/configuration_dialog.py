@@ -42,7 +42,7 @@ class ConnectionFrame(ttk.Frame):
         self.bind("<Button-1>", self.on_click)
         self.connection.bind("<Button-1>", self.on_click)
 
-    def on_click(self, event):
+    def on_click(self, *args, **kwargs):
         if self.on_select_callback is not None:
             self.configure(style="Selected.TFrame")
             self.connection.configure(style="Selected.TLabel")
@@ -55,7 +55,7 @@ class ConnectionFrame(ttk.Frame):
 
 
 class ConfigurationWindow(tk.Toplevel):
-    def __init__(self, master, config_handler, config_update_callback, logger, icon):
+    def __init__(self, master, config_handler, config_update_callback, logger, icon, selected_connection):
         super().__init__(master=master)
         self.transient(master)
         self.master = master
@@ -253,6 +253,8 @@ class ConfigurationWindow(tk.Toplevel):
         connection_profiles = self.config_handler.get_connection_profiles()
         for connection_profile in sorted(connection_profiles):
             self.add_profile_widget(connection_profile)
+            if connection_profile == selected_connection:
+                self.profiles_widgets[connection_profile].on_click()
         self.focus_set()
         self.wait_window(self)
 
@@ -307,6 +309,8 @@ class ConfigurationWindow(tk.Toplevel):
                 self.currently_selected_connection]
             self.config_handler.remove_connection_config(self.currently_selected_connection)
             self.connection_selected(self.currently_selected_connection)
+
+        self.config_handler.update_last_used_connection(self.currently_selected_connection)
 
     def browse_file(self, target_entry):
         file_path_name = filedialog.askopenfilename(initialdir=self.config_handler.get_last_used_directory(),

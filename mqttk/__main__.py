@@ -22,7 +22,6 @@ import traceback
 from datetime import datetime
 import sys
 import time
-from pathlib import Path
 from functools import partial
 import base64
 try:
@@ -318,7 +317,8 @@ class App:
                                                    self.config_handler,
                                                    self.on_config_update,
                                                    self.log,
-                                                   self.icon)
+                                                   self.icon,
+                                                   self.header_frame.connection_selector.get())
 
     def on_about_menu(self):
         about_window = AboutDialog(self.root, self.icon_small, self.style)
