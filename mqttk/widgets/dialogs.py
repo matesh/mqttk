@@ -152,13 +152,13 @@ class SplashScreen(tk.Toplevel):
         screenwidth = master.winfo_screenwidth()
         screenheight = master.winfo_screenheight()
         self.overrideredirect(True)
-        width = 350
+        width = 370
         height = 350
         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
         self.geometry(alignstr)
         self.title("Splash")
-        splash_label = ttk.Label(self, image=splash_icon)
-        splash_label.pack()
+        splash_label = ttk.Label(self, image=splash_icon, anchor=tk.CENTER)
+        splash_label.pack(expand=1, fill="both")
         self.update()
 
 
