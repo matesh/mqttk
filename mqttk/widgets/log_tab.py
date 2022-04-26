@@ -33,6 +33,7 @@ class LogTab(ttk.Frame):
     def add_message(self, message):
         self.log_output.configure(state="normal")
         self.log_output.insert(tk.END, message)
+        self.log_output.see(tk.END)
         self.log_output.configure(state="disabled")
 
     def mark_as_read(self, *args, **kwargs):
