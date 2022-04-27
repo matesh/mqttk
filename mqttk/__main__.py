@@ -413,7 +413,9 @@ class App:
 
     def on_tab_select(self, *args, **kwargs):
         if "logtab" in self.tabs.select():
-            self.log_tab.mark_as_read()
+            self.log_tab.selected()
+        else:
+            self.log_tab.deselected()
 
 
 def main():

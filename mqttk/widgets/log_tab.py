@@ -29,15 +29,25 @@ class LogTab(ttk.Frame):
         self.log_output = CustomScrolledText(self, font="Courier 14", exportselection=False, state='disabled',
                                              background="white", foreground="black")
         self.log_output.pack(fill='both', expand=1, padx=3, pady=3)
+        self.selected = False
 
     def add_message(self, message):
         self.log_output.configure(state="normal")
         self.log_output.insert(tk.END, message)
         self.log_output.see(tk.END)
         self.log_output.configure(state="disabled")
+        if self.selected:
+            self.mark_as_read()
 
     def mark_as_read(self, *args, **kwargs):
         self.master.tab(self, text="Log")
 
     def notify(self):
         self.master.tab(self, text="* Log *")
+
+    def selected(self):
+        self.selected = True
+        self.mark_as_read()
+
+    def deselected(self):
+        self.selected = False
