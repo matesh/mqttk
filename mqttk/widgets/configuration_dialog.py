@@ -25,7 +25,7 @@ from mqttk.widgets.scroll_frame import ScrollFrame
 from mqttk.constants import SSL_LIST, MQTT_VERSION_LIST
 import uuid
 from functools import partial
-from mqttk.helpers import validate_name, validate_int
+from mqttk.helpers import validate_name, validate_int, get_clear_combobox_selection_function, clear_combobox_selection
 
 
 class ConnectionFrame(ttk.Frame):
@@ -176,6 +176,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.version_label = ttk.Label(self.version_frame, width=20, anchor="e", text="MQTT version")
         self.version_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.version_input = ttk.Combobox(self.version_frame, exportselection=False, values=MQTT_VERSION_LIST)
+        self.version_input.bind("<<ComboboxSelected>>", get_clear_combobox_selection_function(self.version_input))
         self.version_input.pack(side=tk.LEFT, padx=2)
         self.version_input.current(1)
         self.version_input["state"] = "readonly"
@@ -189,6 +190,7 @@ class ConfigurationWindow(tk.Toplevel):
                                             exportselection=False,
                                             values=SSL_LIST,
                                             state="readonly")
+        self.ssl_state_input.bind("<<ComboboxSelected>>", get_clear_combobox_selection_function(self.ssl_state_input))
         self.ssl_state_input.pack(side=tk.LEFT, padx=2)
 
         # ca file
@@ -415,6 +417,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.cl_key_browser_button.configure(state=clk)
 
     def ssl_state_change(self, _):
+        clear_combobox_selection(combobox_instance=self.ssl_state_input)
         if self.ssl_state_input.get() == "Disabled" or self.ssl_state_input.get() == "CA signed server certificate":
             self.cert_state_change("disabled", "disabled", "disabled")
         elif self.ssl_state_input.get() == "CA certificate file":

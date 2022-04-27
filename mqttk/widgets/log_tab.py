@@ -45,9 +45,9 @@ class LogTab(ttk.Frame):
     def notify(self):
         self.master.tab(self, text="* Log *")
 
-    def selected(self):
+    def tab_selected(self):
         self.selected = True
         self.mark_as_read()
 
-    def deselected(self):
+    def tab_deselected(self):
         self.selected = False

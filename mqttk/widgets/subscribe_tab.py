@@ -33,6 +33,7 @@ from mqttk.widgets.scroll_frame import ScrollFrame
 from mqttk.widgets.scrolled_text import CustomScrolledText
 from mqttk.constants import CONNECT, DECODER_OPTIONS, COLOURS
 from mqttk.hex_printer import hex_viewer
+from mqttk.helpers import get_clear_combobox_selection_function, clear_combobox_selection
 
 ZLIB_TAG0 = chr(0x78)
 ZLIB_TAG1 = (chr(0x01), chr(0x5E), chr(0x9C), chr(0xDA))
@@ -152,6 +153,8 @@ class SubscribeTab(ttk.Frame):
         self.subscribe_bar_frame.pack(anchor="nw", side=tk.TOP, fill=tk.X)
         # Subscribe selector combobox
         self.subscribe_selector = ttk.Combobox(self.subscribe_bar_frame, width=30, exportselection=False)
+        self.subscribe_selector.bind("<<ComboboxSelected>>",
+                                     get_clear_combobox_selection_function(self.subscribe_selector))
         self.subscribe_selector.pack(side=tk.LEFT, padx=3, pady=3)
         self.subscribe_selector["values"] = []
         # Subscribe button
@@ -270,7 +273,6 @@ class SubscribeTab(ttk.Frame):
                                                      state='readonly',
                                                      values=DECODER_OPTIONS,
                                                      exportselection=False)
-        self.message_decoder_selector.bind()
         self.message_decoder_selector.pack(side=tk.RIGHT, padx=3, pady=3)
         self.message_decoder_selector_label = ttk.Label(self.message_date_and_qos_frame, text="Message decoder")
         self.message_decoder_selector_label.pack(side=tk.RIGHT, padx=3, pady=3)
@@ -299,6 +301,7 @@ class SubscribeTab(ttk.Frame):
         self.subscribe_selector.configure(state="normal" if connection_state is CONNECT else "disabled")
 
     def on_decoder_select(self, *args, **kwargs):
+        clear_combobox_selection(self.message_decoder_selector)
         self.on_message_select()
         pass
 
