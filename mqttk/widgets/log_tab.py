@@ -49,14 +49,13 @@ class LogTab(ttk.Frame):
         self.log_output.insert(tk.END, message)
         self.log_output.see(tk.END)
         self.log_output.configure(state="disabled")
-        if self.selected:
-            self.mark_as_read()
 
     def mark_as_read(self, *args, **kwargs):
         self.master.tab(self, text="Log")
 
     def notify(self):
-        self.master.tab(self, text="* Log *")
+        if not self.selected:
+            self.master.tab(self, text="* Log *")
 
     def tab_selected(self):
         self.selected = True
