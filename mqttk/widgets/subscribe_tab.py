@@ -301,7 +301,7 @@ class SubscribeTab(ttk.Frame):
         self.subscribe_selector.configure(state="normal" if connection_state is CONNECT else "disabled")
 
     def on_decoder_select(self, *args, **kwargs):
-        clear_combobox_selection(self.message_decoder_selector)
+        clear_combobox_selection(combobox_instance=self.message_decoder_selector)
         self.on_message_select()
         pass
 

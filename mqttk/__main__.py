@@ -70,6 +70,7 @@ class PotatoLog:
         self.message_queue = []
         self.config_handler = None
         self.notification_callback = None
+        self.allow_paho_debug = False
 
     def add_message(self, message_level, *args):
         message = "{} - {} ".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"), EVENT_LEVELS.get(message_level))
@@ -109,6 +110,9 @@ class PotatoLog:
             self.warning("[M] " + buf)
         elif level == MQTT_LOG_ERR:
             self.error("[M] " + buf)
+        else:
+            if self.allow_paho_debug:
+                self.info("[MD]" + buf)
 
 
 class App:
@@ -244,7 +248,7 @@ class App:
 
         # ====================================== Log tab =============================================================
 
-        self.log_tab = LogTab(self.tabs)
+        self.log_tab = LogTab(self.tabs, self.log)
         self.log.notification_callback = self.log_tab.notify
         self.tabs.add(self.log_tab, text="Log")
         self.log.add_message_callback = self.log_tab.add_message
