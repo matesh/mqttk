@@ -414,6 +414,8 @@ class App:
     def on_tab_select(self, *args, **kwargs):
         if "logtab" in self.tabs.select():
             self.log_tab.mark_as_read()
+        # Solves display errors on Mac mini M1 (Monterey) 
+        root.after(50, lambda: self.tabs.tab(self.tabs.select(), text=self.tabs.tab(self.tabs.select(), "text")))
 
 
 def main():
