@@ -24,7 +24,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import filedialog
 import json
-from mqttk.helpers import validate_name
+from mqttk.helpers import validate_name, clear_combobox_selection, get_clear_combobox_selection_function
 from tkinter import messagebox
 from copy import deepcopy
 
@@ -152,13 +152,13 @@ class SplashScreen(tk.Toplevel):
         screenwidth = master.winfo_screenwidth()
         screenheight = master.winfo_screenheight()
         self.overrideredirect(True)
-        width = 350
+        width = 370
         height = 350
         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
         self.geometry(alignstr)
         self.title("Splash")
-        splash_label = ttk.Label(self, image=splash_icon)
-        splash_label.pack()
+        splash_label = ttk.Label(self, image=splash_icon, anchor=tk.CENTER)
+        splash_label.pack(expand=1, fill="both")
         self.update()
 
 
@@ -186,6 +186,7 @@ class ConnectionConfigImportExport(tk.Toplevel):
             connection_selector_label.pack(side=tk.LEFT)
 
             self.connection_selector = ttk.Combobox(self.select_profile_frame, width=30, exportselection=False)
+            self.connection_selector.bind("<<ComboboxSelected>>", get_clear_combobox_selection_function(self.connection_selector))
             self.connection_selector.pack(side=tk.LEFT, padx=3, pady=3)
             connection_profile_list = sorted(self.config_handler.get_connection_profiles())
             if len(connection_profile_list) != 0:
@@ -458,6 +459,7 @@ class SubscribePublishImportExport(tk.Toplevel):
             self.ok_button["state"] = "disabled"
 
     def on_profile_select(self, *args, **kwargs):
+        clear_combobox_selection(combobox_instance=self.connection_selector)
         if self.is_import:
             return
 

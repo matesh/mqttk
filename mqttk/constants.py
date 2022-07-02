@@ -54,7 +54,7 @@ ERROR_CODES = {
 
 EVENT_LEVELS = {
     0: "[i]",
-    1: "[W]",
+    1: "[w]",
     2: "[E]",
     3: "[X]"
 }

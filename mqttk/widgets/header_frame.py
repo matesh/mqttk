@@ -21,6 +21,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 from mqttk.constants import CONNECT
+from mqttk.helpers import get_clear_combobox_selection_function
 
 
 class HeaderFrame(ttk.Frame):
@@ -28,6 +29,8 @@ class HeaderFrame(ttk.Frame):
         super().__init__(master=master, *args, **kwargs)
 
         self.connection_selector = ttk.Combobox(self, width=30, exportselection=False)
+        self.connection_selector.bind("<<ComboboxSelected>>",
+                                      get_clear_combobox_selection_function(self.connection_selector))
         self.connection_selector.pack(side=tk.LEFT, padx=3, pady=3)
         self.connection_selector.configure(state="readonly")
         self.config_window_button = ttk.Button(self, width=10, text="Configure", command=app.spawn_configuration_window)
