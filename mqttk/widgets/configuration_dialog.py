@@ -25,7 +25,7 @@ from mqttk.widgets.scroll_frame import ScrollFrame
 from mqttk.constants import SSL_LIST, MQTT_VERSION_LIST
 import uuid
 from functools import partial
-from mqttk.helpers import validate_name, validate_int
+from mqttk.helpers import validate_name, validate_int, get_clear_combobox_selection_function, clear_combobox_selection
 
 
 class ConnectionFrame(ttk.Frame):
@@ -42,7 +42,7 @@ class ConnectionFrame(ttk.Frame):
         self.bind("<Button-1>", self.on_click)
         self.connection.bind("<Button-1>", self.on_click)
 
-    def on_click(self, event):
+    def on_click(self, *args, **kwargs):
         if self.on_select_callback is not None:
             self.configure(style="Selected.TFrame")
             self.connection.configure(style="Selected.TLabel")
@@ -55,7 +55,7 @@ class ConnectionFrame(ttk.Frame):
 
 
 class ConfigurationWindow(tk.Toplevel):
-    def __init__(self, master, config_handler, config_update_callback, logger, icon):
+    def __init__(self, master, config_handler, config_update_callback, logger, icon, selected_connection):
         super().__init__(master=master)
         self.transient(master)
         self.master = master
@@ -64,6 +64,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.currently_selected_connection_dict = {}
         self.config_update_callback = config_update_callback
         self.log = logger
+        self.just_opened = True
 
         self.grab_set()
         self.title("Connection configuration")
@@ -175,6 +176,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.version_label = ttk.Label(self.version_frame, width=20, anchor="e", text="MQTT version")
         self.version_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.version_input = ttk.Combobox(self.version_frame, exportselection=False, values=MQTT_VERSION_LIST)
+        self.version_input.bind("<<ComboboxSelected>>", get_clear_combobox_selection_function(self.version_input))
         self.version_input.pack(side=tk.LEFT, padx=2)
         self.version_input.current(1)
         self.version_input["state"] = "readonly"
@@ -188,6 +190,7 @@ class ConfigurationWindow(tk.Toplevel):
                                             exportselection=False,
                                             values=SSL_LIST,
                                             state="readonly")
+        self.ssl_state_input.bind("<<ComboboxSelected>>", get_clear_combobox_selection_function(self.ssl_state_input))
         self.ssl_state_input.pack(side=tk.LEFT, padx=2)
 
         # ca file
@@ -253,6 +256,8 @@ class ConfigurationWindow(tk.Toplevel):
         connection_profiles = self.config_handler.get_connection_profiles()
         for connection_profile in sorted(connection_profiles):
             self.add_profile_widget(connection_profile)
+            if connection_profile == selected_connection:
+                self.profiles_widgets[connection_profile].on_click()
         self.focus_set()
         self.wait_window(self)
 
@@ -308,6 +313,8 @@ class ConfigurationWindow(tk.Toplevel):
             self.config_handler.remove_connection_config(self.currently_selected_connection)
             self.connection_selected(self.currently_selected_connection)
 
+        self.config_handler.update_last_used_connection(self.currently_selected_connection)
+
     def browse_file(self, target_entry):
         file_path_name = filedialog.askopenfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                     title="Select CA file")
@@ -335,8 +342,10 @@ class ConfigurationWindow(tk.Toplevel):
             try:
                 self.profiles_widgets[self.currently_selected_connection].on_unselect()
             except Exception as e:
-                self.log.warning("Exception deselecting profile widget, maybe there wasn't one selected?", e,
+                if not self.just_opened:
+                    self.log.warning("Exception deselecting profile widget, maybe there wasn't one selected?", e,
                                  self.currently_selected_connection, connection_name)
+                    self.just_opened = False
             try:
                 self.all_config_state_change("normal")
                 self.currently_selected_connection_dict = self.config_handler.get_connection_config_dict(
@@ -408,6 +417,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.cl_key_browser_button.configure(state=clk)
 
     def ssl_state_change(self, _):
+        clear_combobox_selection(combobox_instance=self.ssl_state_input)
         if self.ssl_state_input.get() == "Disabled" or self.ssl_state_input.get() == "CA signed server certificate":
             self.cert_state_change("disabled", "disabled", "disabled")
         elif self.ssl_state_input.get() == "CA certificate file":

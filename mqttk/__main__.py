@@ -22,7 +22,6 @@ import traceback
 from datetime import datetime
 import sys
 import time
-from pathlib import Path
 from functools import partial
 import base64
 try:
@@ -71,6 +70,7 @@ class PotatoLog:
         self.message_queue = []
         self.config_handler = None
         self.notification_callback = None
+        self.allow_paho_debug = False
 
     def add_message(self, message_level, *args):
         message = "{} - {} ".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"), EVENT_LEVELS.get(message_level))
@@ -110,6 +110,9 @@ class PotatoLog:
             self.warning("[M] " + buf)
         elif level == MQTT_LOG_ERR:
             self.error("[M] " + buf)
+        else:
+            if self.allow_paho_debug:
+                self.info("[MD]" + buf)
 
 
 class App:
@@ -245,7 +248,7 @@ class App:
 
         # ====================================== Log tab =============================================================
 
-        self.log_tab = LogTab(self.tabs)
+        self.log_tab = LogTab(self.tabs, self.log)
         self.log.notification_callback = self.log_tab.notify
         self.tabs.add(self.log_tab, text="Log")
         self.log.add_message_callback = self.log_tab.add_message
@@ -318,7 +321,8 @@ class App:
                                                    self.config_handler,
                                                    self.on_config_update,
                                                    self.log,
-                                                   self.icon)
+                                                   self.icon,
+                                                   self.header_frame.connection_selector.get())
 
     def on_about_menu(self):
         about_window = AboutDialog(self.root, self.icon_small, self.style)
@@ -413,7 +417,10 @@ class App:
 
     def on_tab_select(self, *args, **kwargs):
         if "logtab" in self.tabs.select():
-            self.log_tab.mark_as_read()
+            self.log_tab.tab_selected()
+        else:
+            self.log_tab.tab_deselected()
+            
         # Solves display errors on Mac mini M1 (Monterey) 
         root.after(50, lambda: self.tabs.tab(self.tabs.select(), text=self.tabs.tab(self.tabs.select(), "text")))
 

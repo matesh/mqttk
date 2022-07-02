@@ -22,6 +22,7 @@ import tkinter.ttk as ttk
 from mqttk.widgets.scrolled_text import CustomScrolledText
 from mqttk.widgets.scroll_frame import ScrollFrame
 from mqttk.widgets.dialogs import PublishNameDialog
+from mqttk.helpers import get_clear_combobox_selection_function
 import base64
 from mqttk.constants import QOS_NAMES, CONNECT, DISCONNECT
 
@@ -129,6 +130,8 @@ class PublishTab(ttk.Frame):
         self.publish_interface_actions = ttk.Frame(self.publish_interface)
         self.publish_interface_actions.pack(fill='x', side=tk.TOP)
         self.publish_topic_selector = ttk.Combobox(self.publish_interface_actions, width=40)
+        self.publish_topic_selector.bind("<<ComboboxSelected>>",
+                                         get_clear_combobox_selection_function(self.publish_topic_selector))
         self.publish_topic_selector.pack(side=tk.LEFT, padx=4, pady=4)
 
         self.publish_button = ttk.Button(self.publish_interface_actions, text="Publish")
@@ -151,6 +154,8 @@ class PublishTab(ttk.Frame):
                                          exportselection=False,
                                          width=7,
                                          values=list(QOS_NAMES.keys()))
+        self.qos_selector.bind("<<ComboboxSelected>>",
+                               get_clear_combobox_selection_function(self.qos_selector))
         self.qos_selector.current(0)
         self.qos_selector.pack(side=tk.RIGHT, pady=4, padx=2)
 
