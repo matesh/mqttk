@@ -420,6 +420,9 @@ class App:
             self.log_tab.tab_selected()
         else:
             self.log_tab.tab_deselected()
+            
+        # Solves display errors on Mac mini M1 (Monterey) 
+        root.after(50, lambda: self.tabs.tab(self.tabs.select(), text=self.tabs.tab(self.tabs.select(), "text")))
 
 
 def main():
