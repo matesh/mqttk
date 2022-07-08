@@ -28,6 +28,7 @@ import time
 from datetime import datetime
 import zlib
 from bz2 import decompress
+from threading import Lock
 
 from mqttk.widgets.scroll_frame import ScrollFrame
 from mqttk.widgets.scrolled_text import CustomScrolledText
@@ -126,6 +127,7 @@ class SubscribeTab(ttk.Frame):
         self.color_carousel = -1
         self.current_connection = None
         self.last_connection = None
+        self.message_list_lock = Lock()
 
         # Holds messages and relevant stuff
         # {
@@ -401,9 +403,10 @@ class SubscribeTab(ttk.Frame):
             self.mute_patterns.remove(topic)
 
     def on_colour_change(self, topic, colour):
-        for message_id, message_data in self.messages.items():
-            if message_data["subscription_pattern"] == topic:
-                self.incoming_messages_list.itemconfig(message_id, fg=colour)
+        with self.message_list_lock:
+            for message_id, message_data in self.messages.items():
+                if message_data["subscription_pattern"] == topic:
+                    self.incoming_messages_list.itemconfig(message_id, fg=colour)
         self.config_handler.add_subscription_history(self.current_connection, topic, colour)
 
     def add_subscription(self):
@@ -468,11 +471,13 @@ class SubscribeTab(ttk.Frame):
     def on_mqtt_message(self, _, __, msg, subscription_pattern):
         if subscription_pattern in self.mute_patterns:
             return
-        self.add_new_message(mqtt_message_object=msg,
-                             subscription_pattern=subscription_pattern)
+        with self.message_list_lock:
+            self.add_new_message(mqtt_message_object=msg,
+                                 subscription_pattern=subscription_pattern)
 
     def get_message_details(self, message_id):
-        return self.messages.get(message_id, {})
+        with self.message_list_lock:
+            return self.messages.get(message_id, {})
 
     def on_unsubscribe(self, topic):
         self.subscription_frames.pop(topic, None)
@@ -482,7 +487,8 @@ class SubscribeTab(ttk.Frame):
             self.log.warning("Failed to unsubscribe", topic, "maybe a failed subscription?")
 
     def flush_messages(self):
-        self.message_id_counter = 0
-        self.incoming_messages_list.delete(0, "end")
-        self.messages = {}
-        self.on_message_select()
+        with self.message_list_lock:
+            self.message_id_counter = 0
+            self.incoming_messages_list.delete(0, "end")
+            self.messages = {}
+            self.on_message_select()
