@@ -205,8 +205,9 @@ class App:
 
         self.menubar.add_cascade(menu=self.export_menu, label="Export")
         self.export_menu.add_cascade(menu=self.export_messages_menu, label="Messages")
-        self.export_messages_menu.add_command(label="JSON", command=partial(self.export_messages, format="JSON"))
-        self.export_messages_menu.add_command(label="CSV", command=partial(self.export_messages, format="CSV"))
+        self.export_messages_menu.add_command(label="All messages as JSON", command=partial(self.export_messages, format="JSON"))
+        self.export_messages_menu.add_command(label="All messages as CSV", command=partial(self.export_messages, format="CSV"))
+        self.export_messages_menu.add_command(label="Current message as raw data", command=partial(self.export_messages, format="RAW"))
         self.export_menu.add_command(label="Connection configuration", command=self.export_connection_config)
         self.export_menu.add_command(label="Subscribe/publish content", command=self.export_subscribe_publish)
 
@@ -352,7 +353,7 @@ class App:
 
         output_location = filedialog.asksaveasfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                        title="Export {}".format(format),
-                                                       defaultextension="json" if format == "JSON" else "csv",
+                                                       defaultextension=format.lower(),
                                                        initialfile="MQTTk_messages_{}".format(time.time()))
         if output_location == "":
             self.log.warning("Empty file name on export message (maybe the cancel button was pressed?")
@@ -365,6 +366,19 @@ class App:
 
         try:
             data = ""
+            file_method = "w"
+            if format == "RAW":
+                try:
+                    message_list_id = self.subscribe_frame.incoming_messages_list.curselection()
+                    message_id = message_list_id[0]
+                    message_data = self.subscribe_frame.get_message_details(message_id)["payload"]
+                except Exception as e:
+                    print("No message selected?", e)
+                    return
+                else:
+                    data = message_data
+                    file_method = "wb"
+
             if format == "JSON":
                 messages = list(self.subscribe_frame.messages.values())
                 for message in messages:
@@ -393,7 +407,7 @@ class App:
                         os.linesep
                     )
 
-            with open(output_location, "w") as outputfile:
+            with open(output_location, file_method) as outputfile:
                 outputfile.write(data)
 
         except Exception as e:
