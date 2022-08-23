@@ -476,8 +476,7 @@ class SubscribeTab(ttk.Frame):
                                  subscription_pattern=subscription_pattern)
 
     def get_message_details(self, message_id):
-        with self.message_list_lock:
-            return self.messages.get(message_id, {})
+        return self.messages.get(message_id, {})
 
     def on_unsubscribe(self, topic):
         self.subscription_frames.pop(topic, None)
