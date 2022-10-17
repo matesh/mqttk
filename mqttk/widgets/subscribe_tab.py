@@ -29,7 +29,7 @@ import time
 from datetime import datetime
 import zlib
 from bz2 import decompress
-from threading import Lock
+from multiprocessing import Lock
 from copy import deepcopy
 
 from mqttk.widgets.scroll_frame import ScrollFrame
