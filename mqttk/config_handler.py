@@ -353,7 +353,6 @@ class ConfigHandler:
         return self.configuration_dict["last_used_directory"]
 
     def save_last_used_directory(self, directory):
-        print(directory, type(directory))
         head, tail = os.path.split(directory)
         self.configuration_dict["last_used_directory"] = head
         self.config_file_manager(SAVE)
@@ -366,3 +365,10 @@ class ConfigHandler:
                                                                      os.linesep))
             with open(self.log_file, 'a') as logfile:
                 logfile.write(message)
+
+    def save_export_encode_selection(self, value):
+        self.configuration_dict["export_encoding"] = value
+        self.config_file_manager(SAVE)
+
+    def get_export_encode_selection(self):
+        return self.configuration_dict.get("export_encoding", 1)

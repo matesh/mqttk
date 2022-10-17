@@ -304,7 +304,6 @@ class ConnectionConfigImportExport(tk.Toplevel):
                 for connection_name, configuration in self.imported_connection_configs.items():
                     name = validate_name(connection_name, all_connection_configs)
                     self.config_handler.save_connection_config(name, configuration.get("connection_parameters", {}))
-                    print(configuration)
             except Exception as e:
                 self.log.error("Failed to import connection configurations", e, traceback.format_exc())
                 messagebox.showerror("Error importing communication config", "See log for details")

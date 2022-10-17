@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter.colorchooser import askcolor
+import base64
 import json
 from os import linesep
 import traceback
@@ -29,6 +30,7 @@ from datetime import datetime
 import zlib
 from bz2 import decompress
 from threading import Lock
+from copy import deepcopy
 
 from mqttk.widgets.scroll_frame import ScrollFrame
 from mqttk.widgets.scrolled_text import CustomScrolledText
@@ -329,6 +331,7 @@ class SubscribeTab(ttk.Frame):
         else:
             # message_id = int(message_label[-5:])
             message_id = message_list_id[0]
+
         message_data = self.get_message_details(message_id)
         self.message_topic_label["state"] = "normal"
         self.message_topic_label.delete(1.0, tk.END)
@@ -491,3 +494,29 @@ class SubscribeTab(ttk.Frame):
             self.incoming_messages_list.delete(0, "end")
             self.messages = {}
             self.on_message_select()
+
+    def message_list_length(self):
+        return len(self.messages)
+
+    def get_selected_message_payload(self):
+        try:
+            message_list_id = self.incoming_messages_list.curselection()
+            message_id = message_list_id[0]
+            message_data = self.get_message_details(message_id)["payload"]
+        except Exception as e:
+            return None
+        return message_data
+
+    def get_messages(self, base64_only):
+        with self.message_list_lock:
+            for message in self.messages.values():
+                message_to_export = deepcopy(message)
+                if base64_only:
+                    message_to_export["payload"] = base64.b64encode(message_to_export["payload"]).decode("utf-8")
+                    yield message_to_export
+                    continue
+                try:
+                    message_to_export["payload"] = message_to_export["payload"].decode("utf-8")
+                except Exception:
+                    message_to_export["payload"] = base64.b64encode(message_to_export["payload"]).decode("utf-8")
+                yield message_to_export

@@ -22,8 +22,9 @@ import traceback
 from datetime import datetime
 import sys
 import time
+from io import StringIO
+import csv
 from functools import partial
-import base64
 try:
     import tkinter as tk
     import tkinter.ttk as ttk
@@ -123,6 +124,8 @@ class App:
 
         self.mqtt_manager = None
         self.current_connection_configuration = None
+        self.base64_only = tk.IntVar()
+        self.base64_only.set(self.config_handler.get_export_encode_selection())
 
         root.title("MQTTk")
 
@@ -207,7 +210,11 @@ class App:
         self.export_menu.add_cascade(menu=self.export_messages_menu, label="Messages")
         self.export_messages_menu.add_command(label="All messages as JSON", command=partial(self.export_messages, format="JSON"))
         self.export_messages_menu.add_command(label="All messages as CSV", command=partial(self.export_messages, format="CSV"))
-        self.export_messages_menu.add_command(label="Current message as raw data", command=partial(self.export_messages, format="RAW"))
+        self.export_messages_menu.add_separator()
+        self.export_messages_menu.add_radiobutton(label="Base64 encode all message payload", value=1, variable=self.base64_only, command=self.save_export_selection)
+        self.export_messages_menu.add_radiobutton(label="Base64 encode binary payload only", value=0, variable=self.base64_only, command=self.save_export_selection)
+        self.export_messages_menu.add_separator()
+        self.export_messages_menu.add_command(label="Current message payload as raw data", command=partial(self.export_messages, format="RAW"))
         self.export_menu.add_command(label="Connection configuration", command=self.export_connection_config)
         self.export_menu.add_command(label="Subscribe/publish content", command=self.export_subscribe_publish)
 
@@ -347,9 +354,21 @@ class App:
             self.on_config_update()
 
     def export_messages(self, format):
-        if len(self.subscribe_frame.messages) == 0:
+
+        if self.tabs.tab(self.tabs.select(), "text") not in ("Subscribe"):
+            messagebox.showinfo("Info", 'Please engage this operation on the "Subscribe" tab')
+            return
+
+        if self.subscribe_frame.message_list_length() == 0:
             messagebox.showinfo("Info", "The message list is empty")
             return
+
+        selected_message_payload = None
+        if format == "RAW":
+            selected_message_payload = self.subscribe_frame.get_selected_message_payload()
+            if selected_message_payload is None:
+                messagebox.showinfo("Info", "No message has been selected or message is invalid")
+                return
 
         output_location = filedialog.asksaveasfilename(initialdir=self.config_handler.get_last_used_directory(),
                                                        title="Export {}".format(format),
@@ -359,56 +378,44 @@ class App:
             self.log.warning("Empty file name on export message (maybe the cancel button was pressed?")
             return
 
-        self.log.info("Exporting messages in {} format to {}".format(format,
-                                                                     output_location))
+        self.log.info("Exporting message(s) in {} format to {}".format(format,
+                                                                       output_location))
 
         self.config_handler.save_last_used_directory(output_location)
 
         try:
-            data = ""
-            file_method = "w"
             if format == "RAW":
-                try:
-                    message_list_id = self.subscribe_frame.incoming_messages_list.curselection()
-                    message_id = message_list_id[0]
-                    message_data = self.subscribe_frame.get_message_details(message_id)["payload"]
-                except Exception as e:
-                    print("No message selected?", e)
-                    return
-                else:
-                    data = message_data
-                    file_method = "wb"
+                data = selected_message_payload
+                with open(output_location, "wb") as outputfile:
+                    outputfile.write(data)
 
             if format == "JSON":
-                messages = list(self.subscribe_frame.messages.values())
-                for message in messages:
-                    message["payload"] = base64.b64encode(message["payload"]).decode("utf-8")
+                messages = []
+                for message in self.subscribe_frame.get_messages(bool(int(self.base64_only.get()))):
+                    messages.append(message)
                 data = json.dumps(messages, indent=2)
+                with open(output_location, "w") as outputfile:
+                    outputfile.write(data)
 
             if format == "CSV":
-                data = "ID,timestamp,date,time,subscription pattern,topic,QoS,retained,payload{}".format(os.linesep)
-                for message_id, message in self.subscribe_frame.messages.items():
-                    timestamp = message["timestamp"]
-                    datetime_object = datetime.fromtimestamp(timestamp)
-                    try:
-                        payload_decoded = str(message["payload"].decode("utf-8"))
-                    except Exception:
-                        payload_decoded = base64.b64encode(message["payload"]).decode("utf-8")
-                    data += '{},{},{},{},{},{},{},{},"{}"{}'.format(
-                        message_id,
-                        timestamp,
-                        datetime_object.strftime("%Y/%m/%d"),
-                        datetime_object.strftime("%H:%M:%S.%f"),
-                        message["subscription_pattern"],
-                        message["topic"],
-                        message["qos"],
-                        message["retained"],
-                        payload_decoded,
-                        os.linesep
-                    )
-
-            with open(output_location, file_method) as outputfile:
-                outputfile.write(data)
+                with open(output_location, "w") as outputfile:
+                    output_writer = csv.writer(outputfile, quoting=csv.QUOTE_MINIMAL, delimiter=',', quotechar='"')
+                    header = "timestamp,date,time,subscription pattern,topic,QoS,retained,payload"
+                    output_writer.writerow(header)
+                    for message in self.subscribe_frame.get_messages(bool(int(self.base64_only.get()))):
+                        timestamp = message["timestamp"]
+                        datetime_object = datetime.fromtimestamp(timestamp)
+                        row = [
+                            timestamp,
+                            datetime_object.strftime("%Y/%m/%d"),
+                            datetime_object.strftime("%H:%M:%S.%f"),
+                            message["subscription_pattern"],
+                            message["topic"],
+                            message["qos"],
+                            message["retained"],
+                            message["payload"]
+                        ]
+                        output_writer.writerow(row)
 
         except Exception as e:
             self.log.exception("Failed to export message data", e, traceback.format_exc())
@@ -434,6 +441,9 @@ class App:
             self.log_tab.tab_selected()
         else:
             self.log_tab.tab_deselected()
+
+    def save_export_selection(self, *args, **kwargs):
+        self.config_handler.save_export_encode_selection(int(self.base64_only.get()))
 
 
 def main():
