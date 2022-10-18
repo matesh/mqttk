@@ -129,8 +129,7 @@ class SubscribeTab(ttk.Frame):
         self.color_carousel = -1
         self.current_connection = None
         self.last_connection = None
-        self.message_list_lock = Lock()
-
+        self.exporting = False
         # Holds messages and relevant stuff
         # {
         #     "id": {
@@ -472,11 +471,12 @@ class SubscribeTab(ttk.Frame):
         self.subscription_frames = {}
 
     def on_mqtt_message(self, _, __, msg, subscription_pattern):
+        if self.exporting:
+            return
         if subscription_pattern in self.mute_patterns:
             return
-        with self.message_list_lock:
-            self.add_new_message(mqtt_message_object=msg,
-                                 subscription_pattern=subscription_pattern)
+        self.add_new_message(mqtt_message_object=msg,
+                             subscription_pattern=subscription_pattern)
 
     def get_message_details(self, message_id):
         return self.messages.get(message_id, {})
@@ -489,11 +489,10 @@ class SubscribeTab(ttk.Frame):
             self.log.warning("Failed to unsubscribe", topic, "maybe a failed subscription?")
 
     def flush_messages(self):
-        with self.message_list_lock:
-            self.message_id_counter = 0
-            self.incoming_messages_list.delete(0, "end")
-            self.messages = {}
-            self.on_message_select()
+        self.message_id_counter = 0
+        self.incoming_messages_list.delete(0, "end")
+        self.messages = {}
+        self.on_message_select()
 
     def message_list_length(self):
         return len(self.messages)
@@ -508,15 +507,16 @@ class SubscribeTab(ttk.Frame):
         return message_data
 
     def get_messages(self, base64_only):
-        with self.message_list_lock:
-            for message in self.messages.values():
-                message_to_export = deepcopy(message)
-                if base64_only:
-                    message_to_export["payload"] = base64.b64encode(message_to_export["payload"]).decode("utf-8")
-                    yield message_to_export
-                    continue
-                try:
-                    message_to_export["payload"] = message_to_export["payload"].decode("utf-8")
-                except Exception:
-                    message_to_export["payload"] = base64.b64encode(message_to_export["payload"]).decode("utf-8")
+        self.exporting = True
+        for message in self.messages.values():
+            message_to_export = deepcopy(message)
+            if base64_only:
+                message_to_export["payload"] = base64.b64encode(message_to_export["payload"]).decode("utf-8")
                 yield message_to_export
+                continue
+            try:
+                message_to_export["payload"] = message_to_export["payload"].decode("utf-8")
+            except Exception:
+                message_to_export["payload"] = base64.b64encode(message_to_export["payload"]).decode("utf-8")
+            yield message_to_export
+        self.exporting = False
