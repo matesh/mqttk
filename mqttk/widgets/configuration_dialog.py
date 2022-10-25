@@ -16,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
 import tkinter as tk
 import tkinter.ttk as ttk
 import traceback
@@ -102,7 +101,7 @@ class ConfigurationWindow(tk.Toplevel):
         # Profile name
         self.profile_name_frame = ttk.Frame(self.connection_configuration_frame)
         self.profile_name_frame.pack(fill="x")
-        self.profile_label = ttk.Label(self.profile_name_frame, width=20, anchor="e", text="Profile name")
+        self.profile_label = ttk.Label(self.profile_name_frame, width=15, anchor="e", text="Profile name")
         self.profile_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.profile_name_input = ttk.Entry(self.profile_name_frame)
         self.profile_name_input.pack(side=tk.LEFT, padx=2)
@@ -110,7 +109,7 @@ class ConfigurationWindow(tk.Toplevel):
         # Broker address
         self.broker_address_frame = ttk.Frame(self.connection_configuration_frame)
         self.broker_address_frame.pack(fill="x")
-        self.broker_label = ttk.Label(self.broker_address_frame, width=20, anchor="e", text="Broker address")
+        self.broker_label = ttk.Label(self.broker_address_frame, width=15, anchor="e", text="Broker address")
         self.broker_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.broker_address_input = ttk.Entry(self.broker_address_frame, background="white")
         self.broker_address_input.pack(side=tk.LEFT, padx=2)
@@ -118,7 +117,7 @@ class ConfigurationWindow(tk.Toplevel):
         # Broker port
         self.broker_port_frame = ttk.Frame(self.connection_configuration_frame)
         self.broker_port_frame.pack(fill="x")
-        self.broker_port_label = ttk.Label(self.broker_port_frame, width=20, anchor="e", text="Broker port")
+        self.broker_port_label = ttk.Label(self.broker_port_frame, width=15, anchor="e", text="Broker port")
         self.broker_port_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.broker_port_name_input = ttk.Entry(self.broker_port_frame)
         self.broker_port_name_input.configure(validate="all", validatecommand=vcmd)
@@ -127,19 +126,27 @@ class ConfigurationWindow(tk.Toplevel):
         # Client ID
         self.client_id_frame = ttk.Frame(self.connection_configuration_frame)
         self.client_id_frame.pack(fill="x")
-        self.client_id_label = ttk.Label(self.client_id_frame, width=20, anchor="e", text="Client ID")
+        self.client_id_label = ttk.Label(self.client_id_frame, width=15, anchor="e", text="Client ID")
         self.client_id_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.client_id_input = ttk.Entry(self.client_id_frame)
         self.client_id_input.pack(side=tk.LEFT, padx=2)
         self.client_id_generate_button = ttk.Button(self.client_id_frame,
                                                     text="Generate client ID",
                                                     command=self.on_generate_client_id)
+        self.client_id_autogen = tk.IntVar()
         self.client_id_generate_button.pack(side=tk.LEFT, padx=2, pady=2)
+        self.client_id_autogen_checkbox = ttk.Checkbutton(self.client_id_frame,
+                                                          text="Generate ID before connecting",
+                                                          variable=self.client_id_autogen,
+                                                          offvalue=0,
+                                                          onvalue=1,
+                                                          command=self.on_client_id_autogen)
+        self.client_id_autogen_checkbox.pack(side=tk.LEFT, padx=2, pady=2)
 
         # username
         self.username_frame = ttk.Frame(self.connection_configuration_frame)
         self.username_frame.pack(fill="x")
-        self.username_label = ttk.Label(self.username_frame, width=20, anchor="e", text="Username")
+        self.username_label = ttk.Label(self.username_frame, width=15, anchor="e", text="Username")
         self.username_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.username_input = ttk.Entry(self.username_frame)
         self.username_input.pack(side=tk.LEFT, padx=2)
@@ -147,7 +154,7 @@ class ConfigurationWindow(tk.Toplevel):
         # password
         self.password_frame = ttk.Frame(self.connection_configuration_frame)
         self.password_frame.pack(fill="x")
-        self.password_label = ttk.Label(self.password_frame, width=20, anchor="e", text="Password")
+        self.password_label = ttk.Label(self.password_frame, width=15, anchor="e", text="Password")
         self.password_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.password_input = ttk.Entry(self.password_frame, show='*')
         self.password_input.pack(side=tk.LEFT, padx=2)
@@ -155,7 +162,7 @@ class ConfigurationWindow(tk.Toplevel):
         # timeout
         self.timeout_frame = ttk.Frame(self.connection_configuration_frame)
         self.timeout_frame.pack(fill="x")
-        self.timeout_label = ttk.Label(self.timeout_frame, width=20, anchor="e", text="Timeout")
+        self.timeout_label = ttk.Label(self.timeout_frame, width=15, anchor="e", text="Timeout")
         self.timeout_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.timeout_input = ttk.Entry(self.timeout_frame)
         self.timeout_input.configure(validate="all", validatecommand=vcmd)
@@ -164,7 +171,7 @@ class ConfigurationWindow(tk.Toplevel):
         # keepalive
         self.keepalive_frame = ttk.Frame(self.connection_configuration_frame)
         self.keepalive_frame.pack(fill="x")
-        self.keepalive_label = ttk.Label(self.keepalive_frame, width=20, anchor="e", text="Keepalive")
+        self.keepalive_label = ttk.Label(self.keepalive_frame, width=15, anchor="e", text="Keepalive")
         self.keepalive_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.keepalive_input = ttk.Entry(self.keepalive_frame)
         self.keepalive_input.configure(validate="all", validatecommand=vcmd)
@@ -173,7 +180,7 @@ class ConfigurationWindow(tk.Toplevel):
         # MQTT version
         self.version_frame = ttk.Frame(self.connection_configuration_frame)
         self.version_frame.pack(fill="x")
-        self.version_label = ttk.Label(self.version_frame, width=20, anchor="e", text="MQTT version")
+        self.version_label = ttk.Label(self.version_frame, width=15, anchor="e", text="MQTT version")
         self.version_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.version_input = ttk.Combobox(self.version_frame, exportselection=False, values=MQTT_VERSION_LIST)
         self.version_input.bind("<<ComboboxSelected>>", get_clear_combobox_selection_function(self.version_input))
@@ -184,7 +191,7 @@ class ConfigurationWindow(tk.Toplevel):
         # SSL
         self.ssl_state_frame = ttk.Frame(self.connection_configuration_frame)
         self.ssl_state_frame.pack(fill="x")
-        self.ssl_state_label = ttk.Label(self.ssl_state_frame, width=20, anchor="e", text="SSL")
+        self.ssl_state_label = ttk.Label(self.ssl_state_frame, width=15, anchor="e", text="SSL")
         self.ssl_state_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.ssl_state_input = ttk.Combobox(self.ssl_state_frame,
                                             exportselection=False,
@@ -196,7 +203,7 @@ class ConfigurationWindow(tk.Toplevel):
         # ca file
         self.ca_file_frame = ttk.Frame(self.connection_configuration_frame)
         self.ca_file_frame.pack(fill="x")
-        self.ca_file_label = ttk.Label(self.ca_file_frame, width=20, anchor="e", text="CA file")
+        self.ca_file_label = ttk.Label(self.ca_file_frame, width=15, anchor="e", text="CA file")
         self.ca_file_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.ca_file_input = ttk.Entry(self.ca_file_frame, width=40)
         self.ca_file_input.pack(side=tk.LEFT, padx=2)
@@ -210,7 +217,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.cl_cert_file_frame = ttk.Frame(self.connection_configuration_frame)
         self.cl_cert_file_frame.pack(fill="x")
         self.cl_cert_file_label = ttk.Label(self.cl_cert_file_frame,
-                                            width=20,
+                                            width=15,
                                             anchor="e",
                                             text="Client certificate file")
         self.cl_cert_file_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
@@ -226,7 +233,7 @@ class ConfigurationWindow(tk.Toplevel):
         # client_key
         self.cl_key_file_frame = ttk.Frame(self.connection_configuration_frame)
         self.cl_key_file_frame.pack(fill="x")
-        self.cl_key_file_label = ttk.Label(self.cl_key_file_frame, width=20, anchor="e", text="Client key file")
+        self.cl_key_file_label = ttk.Label(self.cl_key_file_frame, width=15, anchor="e", text="Client key file")
         self.cl_key_file_label.pack(side=tk.LEFT, anchor="w", padx=2, pady=4)
         self.cl_key_file_input = ttk.Entry(self.cl_key_file_frame, width=40)
         self.cl_key_file_input.pack(side=tk.LEFT, padx=2)
@@ -265,6 +272,10 @@ class ConfigurationWindow(tk.Toplevel):
         self.client_id_input.delete(0, tk.END)
         self.client_id_input.insert(0, str(uuid.uuid4()).replace("-", ""))
 
+    def on_client_id_autogen(self, *args, **kwargs):
+        self.client_id_input.configure(state="normal" if self.client_id_autogen.get() == 0 else "disabled")
+        self.client_id_generate_button.configure(state="normal" if self.client_id_autogen.get() == 0 else "disabled")
+
     def apply(self, *args, **kwargs):
         self.save_current_config()
 
@@ -290,6 +301,7 @@ class ConfigurationWindow(tk.Toplevel):
             "broker_addr": self.broker_address_input.get(),
             "broker_port": self.broker_port_name_input.get(),
             "client_id": self.client_id_input.get(),
+            "client_id_autogen": self.client_id_autogen.get(),
             "user": self.username_input.get(),
             "pass": self.password_input.get(),
             "timeout": self.timeout_input.get(),
@@ -360,6 +372,7 @@ class ConfigurationWindow(tk.Toplevel):
                                                                                                   "1883"))
                 self.client_id_input.delete(0, tk.END)
                 self.client_id_input.insert(0, self.currently_selected_connection_dict.get("client_id", "MQTTk_Client"))
+                self.client_id_autogen.set(self.currently_selected_connection_dict.get("client_id_autogen", 0))
                 self.username_input.delete(0, tk.END)
                 self.username_input.insert(0, self.currently_selected_connection_dict.get("user", ""))
                 self.password_input.delete(0, tk.END)
@@ -396,6 +409,7 @@ class ConfigurationWindow(tk.Toplevel):
             else:
                 self.currently_selected_connection = connection_name
                 self.all_config_state_change("normal")
+                self.on_client_id_autogen()
 
     def all_config_state_change(self, state):
         self.profile_name_input.configure(state=state)
@@ -403,6 +417,7 @@ class ConfigurationWindow(tk.Toplevel):
         self.broker_port_name_input.configure(state=state)
         self.client_id_input.configure(state=state)
         self.client_id_generate_button.configure(state=state)
+        self.client_id_autogen_checkbox.configure(state=state)
         self.username_input.configure(state=state)
         self.password_input.configure(state=state)
         self.timeout_input.configure(state=state)

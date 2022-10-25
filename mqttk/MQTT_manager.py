@@ -3,6 +3,7 @@ import ssl
 from paho.mqtt.client import Client
 from paho.mqtt.client import MQTTv311
 from mqttk.constants import PROTOCOL_LOOKUP, SSL_LIST, ERROR_CODES
+from uuid import uuid4
 
 
 class MqttManager:
@@ -13,7 +14,13 @@ class MqttManager:
         self.on_disconnect_callback = on_disconnect_callback
         self.log = logger
 
-        self.client = Client(connection_configuration["client_id"],
+        autogen = connection_configuration.get("client_id_autogen", 0)
+        if autogen == 1:
+            self.client_id = str(uuid4()).replace("-", "")
+        else:
+            self.client_id = connection_configuration["client_id"]
+
+        self.client = Client(self.client_id,
                              clean_session=True,
                              userdata=None,
                              protocol=PROTOCOL_LOOKUP.get(connection_configuration["mqtt_version"], MQTTv311),
@@ -62,7 +69,7 @@ class MqttManager:
 
     def on_connect(self, _, __, ___, rc):
         if rc == 0:
-            self.log.info("Paho MQTT Client successfully connected")
+            self.log.info("Paho MQTT Client successfully connected, client ID: {}".format(self.client_id))
             self.client.loop_start()
             self.on_connect_callback()
         else:
