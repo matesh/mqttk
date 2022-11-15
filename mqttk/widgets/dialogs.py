@@ -273,7 +273,7 @@ class ConnectionConfigImportExport(tk.Toplevel):
             return
 
         try:
-            with open(file_path_name, "r") as configfile:
+            with open(file_path_name, "r", encoding="utf-8") as configfile:
                 config_dict = json.loads(configfile.read())
         except Exception as e:
             self.log.error("Failed to load connection config file", e, traceback.format_exc())
@@ -330,8 +330,8 @@ class ConnectionConfigImportExport(tk.Toplevel):
             export_dict["connections"][connection_to_export].pop("last_subscribe_used", None)
 
             try:
-                with open(self.file_input.get(), "w") as export_file:
-                    export_file.write(json.dumps(export_dict, indent=2))
+                with open(self.file_input.get(), "w", encoding="utf-8") as export_file:
+                    export_file.write(json.dumps(export_dict, indent=2, ensure_ascii=False))
             except Exception as e:
                 self.log.error("Failed to export connection config", e, traceback.format_exc())
                 messagebox.showerror("Error", "Error exporting communication config. SSee log for details")
@@ -501,7 +501,7 @@ class SubscribePublishImportExport(tk.Toplevel):
             return
 
         try:
-            with open(file_path_name, "r") as configfile:
+            with open(file_path_name, "r", encoding="utf-8") as configfile:
                 history_dict = json.loads(configfile.read())
         except Exception as e:
             self.log.error("Failed to load topic and message history file", e, traceback.format_exc())
@@ -559,8 +559,8 @@ class SubscribePublishImportExport(tk.Toplevel):
                 export_dict["stored_publishes"] = connection_config.get("stored_publishes", {})
 
             try:
-                with open(self.file_input.get(), "w") as export_file:
-                    export_file.write(json.dumps(export_dict, indent=2))
+                with open(self.file_input.get(), "w", encoding="utf-8") as export_file:
+                    export_file.write(json.dumps(export_dict, indent=2, ensure_ascii=False))
             except Exception as e:
                 self.log.error("Failed to export publish and subscription history", e, traceback.format_exc())
                 messagebox.showerror("Error exporting publish and subscription history", "See log for details")

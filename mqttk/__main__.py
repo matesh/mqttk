@@ -22,7 +22,6 @@ import traceback
 from datetime import datetime
 import sys
 import time
-from io import StringIO
 import csv
 from functools import partial
 try:
@@ -393,12 +392,12 @@ class App:
                 messages = []
                 for message in self.subscribe_frame.get_messages(bool(int(self.base64_only.get()))):
                     messages.append(message)
-                data = json.dumps(messages, indent=2)
-                with open(output_location, "w") as outputfile:
+                data = json.dumps(messages, indent=2, ensure_ascii=False)
+                with open(output_location, "w", encoding="utf-8") as outputfile:
                     outputfile.write(data)
 
             if format == "CSV":
-                with open(output_location, "w") as outputfile:
+                with open(output_location, "w", encoding="utf-8") as outputfile:
                     output_writer = csv.writer(outputfile, quoting=csv.QUOTE_MINIMAL, delimiter=',', quotechar='"')
                     header = "timestamp,date,time,subscription pattern,topic,QoS,retained,payload"
                     output_writer.writerow(header)

@@ -363,7 +363,7 @@ class SubscribeTab(ttk.Frame):
                                                                                    linesep+linesep,
                                                                                    traceback.format_exc())
             else:
-                new_message = json.dumps(new_message_structure, indent=2)
+                new_message = json.dumps(new_message_structure, indent=2, ensure_ascii=False)
             self.message_payload_box.insert(1.0, new_message)
 
         elif decoder == "Hex formatter":
