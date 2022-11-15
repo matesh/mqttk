@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-import os.path
+import os
 import tkinter as tk
 import tkinter.ttk as ttk
 import time
@@ -25,7 +25,7 @@ import traceback
 from functools import partial
 from datetime import datetime
 
-from mqttk.constants import CONNECT, DECODER_OPTIONS, COLOURS
+from mqttk.constants import CONNECT, COLOURS
 
 
 class TopicBrowser(ttk.Frame):
@@ -181,7 +181,7 @@ class TopicBrowser(ttk.Frame):
                     try:
                         self.topic_treeview.insert("", "end", topic_split[0], text=topic_split[0])
                     except Exception:
-                        print(msg.topic, topic_split[0], self.topic_treeview.get_children(""))
+                        # print(msg.topic, topic_split[0], self.topic_treeview.get_children(""))
                         raise
                 for i in range(1, len(topic_split)-1):
                     parent_topic = "/".join(topic_split[0:i])
@@ -233,22 +233,29 @@ class TopicBrowser(ttk.Frame):
         self.stat_label["text"] = "{} individual topics mapped".format(self.individual_topics)
 
     def copy_topic(self, *args, **kwargs):
-        self.root.clipboard_clear()
-        self.root.clipboard_append(self.topic_treeview.selection()[0])
+        try:
+            topic = self.topic_treeview.selection()[0]
+        except Exception:
+            pass
+        else:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(topic)
 
     def copy_payload(self, *args, **kwargs):
-        selection = self.topic_treeview.selection()[0]
-        values = self.topic_treeview.item(selection).get("values", [])
-        self.root.clipboard_clear()
         try:
-            self.root.clipboard_append(values[3])
-        except IndexError:
-            self.root.clipboard_append("")
+            selection = self.topic_treeview.selection()[0]
+            values = self.topic_treeview.item(selection).get("values", [])
+            payload = values[3]
+        except Exception:
+            pass
+        else:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(payload)
 
     def popup(self, event, *args, **kwargs):
         try:
             self.popup_menu.tk_popup(event.x_root, event.y_root, 0)
         except Exception as e:
-            print("Exception on popup")
+            pass
         finally:
             self.popup_menu.grab_release()

@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter.colorchooser import askcolor
+import base64
 import json
 from os import linesep
 import traceback
@@ -28,6 +29,8 @@ import time
 from datetime import datetime
 import zlib
 from bz2 import decompress
+from multiprocessing import Lock
+from copy import deepcopy
 
 from mqttk.widgets.scroll_frame import ScrollFrame
 from mqttk.widgets.scrolled_text import CustomScrolledText
@@ -126,7 +129,7 @@ class SubscribeTab(ttk.Frame):
         self.color_carousel = -1
         self.current_connection = None
         self.last_connection = None
-
+        self.exporting = False
         # Holds messages and relevant stuff
         # {
         #     "id": {
@@ -327,6 +330,7 @@ class SubscribeTab(ttk.Frame):
         else:
             # message_id = int(message_label[-5:])
             message_id = message_list_id[0]
+
         message_data = self.get_message_details(message_id)
         self.message_topic_label["state"] = "normal"
         self.message_topic_label.delete(1.0, tk.END)
@@ -359,7 +363,7 @@ class SubscribeTab(ttk.Frame):
                                                                                    linesep+linesep,
                                                                                    traceback.format_exc())
             else:
-                new_message = json.dumps(new_message_structure, indent=2)
+                new_message = json.dumps(new_message_structure, indent=2, ensure_ascii=False)
             self.message_payload_box.insert(1.0, new_message)
 
         elif decoder == "Hex formatter":
@@ -401,9 +405,10 @@ class SubscribeTab(ttk.Frame):
             self.mute_patterns.remove(topic)
 
     def on_colour_change(self, topic, colour):
-        for message_id, message_data in self.messages.items():
-            if message_data["subscription_pattern"] == topic:
-                self.incoming_messages_list.itemconfig(message_id, fg=colour)
+        with self.message_list_lock:
+            for message_id, message_data in self.messages.items():
+                if message_data["subscription_pattern"] == topic:
+                    self.incoming_messages_list.itemconfig(message_id, fg=colour)
         self.config_handler.add_subscription_history(self.current_connection, topic, colour)
 
     def add_subscription(self):
@@ -466,6 +471,8 @@ class SubscribeTab(ttk.Frame):
         self.subscription_frames = {}
 
     def on_mqtt_message(self, _, __, msg, subscription_pattern):
+        if self.exporting:
+            return
         if subscription_pattern in self.mute_patterns:
             return
         self.add_new_message(mqtt_message_object=msg,
@@ -486,3 +493,30 @@ class SubscribeTab(ttk.Frame):
         self.incoming_messages_list.delete(0, "end")
         self.messages = {}
         self.on_message_select()
+
+    def message_list_length(self):
+        return len(self.messages)
+
+    def get_selected_message_payload(self):
+        try:
+            message_list_id = self.incoming_messages_list.curselection()
+            message_id = message_list_id[0]
+            message_data = self.get_message_details(message_id)["payload"]
+        except Exception as e:
+            return None
+        return message_data
+
+    def get_messages(self, base64_only):
+        self.exporting = True
+        for message in self.messages.values():
+            message_to_export = deepcopy(message)
+            if base64_only:
+                message_to_export["payload"] = base64.b64encode(message_to_export["payload"]).decode("utf-8")
+                yield message_to_export
+                continue
+            try:
+                message_to_export["payload"] = message_to_export["payload"].decode("utf-8")
+            except Exception:
+                message_to_export["payload"] = base64.b64encode(message_to_export["payload"]).decode("utf-8")
+            yield message_to_export
+        self.exporting = False

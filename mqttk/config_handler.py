@@ -174,21 +174,21 @@ class ConfigHandler:
             self.first_start = True
             if not os.path.isdir(config_dir):
                 os.makedirs(config_dir)
-            with open(config_file, "w") as configfile:
-                configfile.write(json.dumps(self.configuration_dict, indent=2))
+            with open(config_file, "w", encoding="utf-8") as configfile:
+                configfile.write(json.dumps(self.configuration_dict, indent=2, ensure_ascii=False))
 
         else:
             if action == LOAD:
-                with open(config_file, "r") as configfile:
+                with open(config_file, "r", encoding="utf-8") as configfile:
                     configuration = configfile.read()
                 try:
                     self.configuration_dict = json.loads(configuration)
                 except Exception as e:
                     self.log.error("Failed to load config", e)
             else:
-                with open(config_file, "w") as config_file:
+                with open(config_file, "w", encoding="utf-8") as config_file:
                     try:
-                        config_string = json.dumps(self.configuration_dict, indent=2)
+                        config_string = json.dumps(self.configuration_dict, indent=2, ensure_ascii=False)
                     except Exception as e:
                         self.log.error("Failed to save configuration", e)
                     else:
@@ -353,7 +353,6 @@ class ConfigHandler:
         return self.configuration_dict["last_used_directory"]
 
     def save_last_used_directory(self, directory):
-        print(directory, type(directory))
         head, tail = os.path.split(directory)
         self.configuration_dict["last_used_directory"] = head
         self.config_file_manager(SAVE)
@@ -361,8 +360,15 @@ class ConfigHandler:
     def add_log_message(self, message):
         if self.log_file is not None:
             if not os.path.isfile(self.log_file):
-                with open(self.log_file, 'w') as logfile:
+                with open(self.log_file, 'w', encoding="utf-8") as logfile:
                     logfile.write("New log file started {}{}".format(datetime.now().strftime("%Y/%m/%d, %H:%M:%S.%f"),
                                                                      os.linesep))
-            with open(self.log_file, 'a') as logfile:
+            with open(self.log_file, 'a', encoding="utf-8") as logfile:
                 logfile.write(message)
+
+    def save_export_encode_selection(self, value):
+        self.configuration_dict["export_encoding"] = value
+        self.config_file_manager(SAVE)
+
+    def get_export_encode_selection(self):
+        return self.configuration_dict.get("export_encoding", 1)
