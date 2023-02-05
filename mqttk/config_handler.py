@@ -220,6 +220,12 @@ class ConfigHandler:
         self.configuration_dict["connections"][connection_name]["connection_parameters"] = connection_config
         self.config_file_manager(SAVE)
 
+    def save_connection_dict(self, connection_name, connection_config):
+        if "connections" not in self.configuration_dict:
+            self.configuration_dict["connections"] = {}
+        self.configuration_dict["connections"][connection_name] = connection_config
+        self.config_file_manager(SAVE)
+
     def add_subscription_history(self, connection, topic, colour):
         self.configuration_dict["connections"][connection]["subscriptions"][topic] = {
                 "colour": colour

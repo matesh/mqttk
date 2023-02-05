@@ -538,7 +538,7 @@ class SubscribePublishImportExport(tk.Toplevel):
                     for topic in self.imported_history["publish_topics"]:
                         if topic not in config_to_update["publish_topics"]:
                             config_to_update["publish_topics"].append(topic)
-                self.config_handler.save_connection_config(connection_to_import_to, config_to_update)
+                self.config_handler.save_connection_dict(connection_to_import_to, config_to_update)
             except Exception as e:
                 self.log.error("Failed to import subscribe/publish history", e, traceback.format_exc())
                 messagebox.showerror("Error", "Error importing subscribe/publish history. See log for details")
