@@ -87,8 +87,12 @@ class MqttManager:
         self.on_disconnect_callback()
 
     def disconnect(self):
-        self.log.info("Paho MQTT client manager instructed to disconnect")
-        self.client.disconnect()
+        if self.client.is_connected():
+            self.log.info("Paho MQTT client manager instructed to disconnect")
+            self.client.disconnect()
+        else:
+            self.client.disconnect()
+            self.on_disconnect_callback()
 
     def add_subscription(self, topic_pattern, on_message_callback):
         self.log.info("MQTT client manager adding subscription", topic_pattern)

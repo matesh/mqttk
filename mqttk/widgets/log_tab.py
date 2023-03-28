@@ -40,7 +40,7 @@ class LogTab(ttk.Frame):
         self.log_options.pack(fill="x")
 
         self.log_output = CustomScrolledText(self, font="Courier 14", exportselection=False, state='disabled',
-                                             background="white", foreground="black")
+                                             background="white", foreground="black", highlightthickness=0)
         self.log_output.pack(fill='both', expand=1, padx=3, pady=3)
         self.selected = False
 

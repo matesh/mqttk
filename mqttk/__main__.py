@@ -281,6 +281,7 @@ class App:
             self.header_frame.connection_indicator_toggle(DISCONNECT)
         except Exception as e:
             self.log.exception("Failed to toggle user interface element!", e)
+        self.mqtt_manager = None
 
     def on_client_connect(self):
         self.subscribe_frame.interface_toggle(CONNECT, self.mqtt_manager, self.header_frame.connection_selector.get())

@@ -162,7 +162,7 @@ class PublishTab(ttk.Frame):
         self.payload_editor = CustomScrolledText(self.publish_interface,
                                                  font="Courier 13",
                                                  background="white",
-                                                 foreground="black")
+                                                 foreground="black", highlightthickness=0)
         self.payload_editor.pack(fill="both", expand=1, side=tk.BOTTOM)
         self.publish_paned_window.add(self.publish_interface)
 

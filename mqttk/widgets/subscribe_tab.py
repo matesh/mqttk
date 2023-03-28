@@ -286,7 +286,7 @@ class SubscribeTab(ttk.Frame):
         self.message_payload_box = CustomScrolledText(self.message_content_frame,
                                                       exportselection=False,
                                                       background="white",
-                                                      foreground="black")
+                                                      foreground="black", highlightthickness=0)
         self.message_payload_box.pack(fill="both", expand=True)
         self.message_payload_box.configure(state="disabled")
         # Message decoder
@@ -405,10 +405,9 @@ class SubscribeTab(ttk.Frame):
             self.mute_patterns.remove(topic)
 
     def on_colour_change(self, topic, colour):
-        with self.message_list_lock:
-            for message_id, message_data in self.messages.items():
-                if message_data["subscription_pattern"] == topic:
-                    self.incoming_messages_list.itemconfig(message_id, fg=colour)
+        for message_id in list(self.messages.keys()):
+            if self.messages[message_id]["subscription_pattern"] == topic:
+                self.incoming_messages_list.itemconfig(message_id, fg=colour)
         self.config_handler.add_subscription_history(self.current_connection, topic, colour)
 
     def add_subscription(self):
