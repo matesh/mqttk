@@ -286,7 +286,7 @@ class SubscribeTab(ttk.Frame):
         self.message_payload_box = CustomScrolledText(self.message_content_frame,
                                                       exportselection=False,
                                                       background="white",
-                                                      foreground="black")
+                                                      foreground="black", highlightthickness=0)
         self.message_payload_box.pack(fill="both", expand=True)
         self.message_payload_box.configure(state="disabled")
         # Message decoder

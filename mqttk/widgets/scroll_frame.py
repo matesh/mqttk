@@ -31,9 +31,9 @@ class ScrollFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff")
+        self.canvas = tk.Canvas(self, borderwidth=0, background="#ffffff", highlightthickness=0)
         self.viewPort = tk.Frame(self.canvas,
-                                 background="#ffffff")
+                                 background="#ffffff", highlightthickness=0)
         self.vsb = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.vsb.set)
         self.vsb.pack(side="right", fill="y")
