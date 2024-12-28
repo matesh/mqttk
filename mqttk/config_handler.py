@@ -392,3 +392,16 @@ class ConfigHandler:
 
     def get_export_encode_selection(self):
         return self.configuration_dict.get("export_encoding", 1)
+
+    def get_resubscribe(self, connection):
+        return self.configuration_dict.get("connections", {}).get(connection, {}).get("connection_parameters", {}).get("resubscribe", 0)
+
+    def get_resubscribe_topics(self, connection):
+        return self.configuration_dict.get("connections", {}).get(connection, {}).get("resubscribe_topics", [])
+
+    def save_resubscribe_topics(self, connection, topics):
+        try:
+            self.configuration_dict["connections"][connection]["resubscribe_topics"] = topics
+            self.config_file_manager(SAVE)
+        except Exception as e:
+            self.log.error("Failed to save resubscribe topics:", e)

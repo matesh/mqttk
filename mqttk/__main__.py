@@ -122,7 +122,6 @@ class App:
         self.log.config_handler = self.config_handler
 
         self.mqtt_manager = None
-        self.current_connection_configuration = None
         self.base64_only = tk.IntVar()
         self.base64_only.set(self.config_handler.get_export_encode_selection())
 

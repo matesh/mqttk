@@ -410,8 +410,9 @@ class SubscribeTab(ttk.Frame):
                 self.incoming_messages_list.itemconfig(message_id, fg=colour)
         self.config_handler.add_subscription_history(self.current_connection, topic, colour)
 
-    def add_subscription(self):
-        topic = self.subscribe_selector.get()
+    def add_subscription(self, topic=None):
+        if topic is None:
+            topic = self.subscribe_selector.get()
         if topic != "" and topic not in self.subscription_frames:
             self.add_subscription_frame(topic, self.on_unsubscribe)
             try:
@@ -462,11 +463,19 @@ class SubscribeTab(ttk.Frame):
         self.subscribe_selector.configure(
             values=self.config_handler.get_subscription_history_list(self.current_connection))
         self.subscribe_selector.set(self.config_handler.get_last_subscribe_used(self.current_connection))
+        if self.config_handler.get_resubscribe(self.current_connection) == 1:
+            topics = self.config_handler.get_resubscribe_topics(self.current_connection)
+            for topic in topics:
+                self.add_subscription(topic)
 
     def cleanup_subscriptions(self):
+        current_subscriptions = []
         for topic in list(self.subscription_frames.keys()):
+            current_subscriptions.append(topic)
             self.subscription_frames[topic].pack_forget()
             self.subscription_frames[topic].destroy()
+        if self.config_handler.get_resubscribe(self.current_connection) == 1:
+            self.config_handler.save_resubscribe_topics(self.current_connection, current_subscriptions)
         self.subscription_frames = {}
 
     def on_mqtt_message(self, _, __, msg, subscription_pattern):
