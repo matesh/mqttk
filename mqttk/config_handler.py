@@ -267,6 +267,20 @@ class ConfigHandler:
         self.configuration_dict["autoscroll"] = bool(value)
         self.config_file_manager(SAVE)
 
+    def get_decompress(self):
+        return bool(self.configuration_dict.get("decompress", False))
+
+    def save_decompress(self, value):
+        self.configuration_dict["decompress"] = bool(value)
+        self.config_file_manager(SAVE)
+
+    def get_decoder(self):
+        return self.configuration_dict.get("decoder", "Plain data")
+
+    def save_decoder(self, value):
+        self.configuration_dict["decoder"] = value
+        self.config_file_manager(SAVE)
+
     def delete_publish_history_item(self, connection, name):
         try:
             self.configuration_dict["connections"][connection]["stored_publishes"].pop(name, None)

@@ -237,6 +237,8 @@ class App:
         self.subscribe_frame = SubscribeTab(self.tabs, self.config_handler, self.log, self.style)
         self.tabs.add(self.subscribe_frame, text="Subscribe")
         self.subscribe_frame.autoscroll_state.set(int(self.config_handler.get_autoscroll()))
+        self.subscribe_frame.attempt_to_decompress.set(int(self.config_handler.get_decompress()))
+        self.subscribe_frame.message_decoder_selector.set(self.config_handler.get_decoder())
 
         # ====================================== Publish tab =========================================================
 
@@ -309,9 +311,15 @@ class App:
             self.header_frame.interface_toggle(DISCONNECT)
             self.publish_frame.interface_toggle(DISCONNECT)
 
+    def check_disconnect(self):
+        if self.mqtt_manager is not None and self.mqtt_manager.disconnect_requested:
+            self.mqtt_manager.on_disconnect(0, 0, 0)
+
     def on_disconnect_button(self):
+        self.header_frame.disconnect_button.configure(state="disabled")
         if self.mqtt_manager is not None:
             self.mqtt_manager.disconnect()
+            root.after(2000, self.check_disconnect)
 
     def on_config_update(self):
         connection_profile_list = sorted(self.config_handler.get_connection_profiles())
@@ -339,6 +347,8 @@ class App:
         self.on_disconnect_button()
         self.config_handler.save_window_geometry(self.root.geometry())
         self.config_handler.save_autoscroll(self.subscribe_frame.autoscroll_state.get())
+        self.config_handler.save_decompress(self.subscribe_frame.attempt_to_decompress.get())
+        self.config_handler.save_decoder(self.subscribe_frame.message_decoder_selector.get())
         root.after(100, root.destroy())
         # root.destroy()
 
@@ -453,4 +463,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
