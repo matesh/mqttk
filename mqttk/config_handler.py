@@ -220,6 +220,12 @@ class ConfigHandler:
         self.configuration_dict["connections"][connection_name]["connection_parameters"] = connection_config
         self.config_file_manager(SAVE)
 
+    def save_connection_dict(self, connection_name, connection_config):
+        if "connections" not in self.configuration_dict:
+            self.configuration_dict["connections"] = {}
+        self.configuration_dict["connections"][connection_name] = connection_config
+        self.config_file_manager(SAVE)
+
     def add_subscription_history(self, connection, topic, colour):
         self.configuration_dict["connections"][connection]["subscriptions"][topic] = {
                 "colour": colour
@@ -259,6 +265,20 @@ class ConfigHandler:
 
     def save_autoscroll(self, value):
         self.configuration_dict["autoscroll"] = bool(value)
+        self.config_file_manager(SAVE)
+
+    def get_decompress(self):
+        return bool(self.configuration_dict.get("decompress", False))
+
+    def save_decompress(self, value):
+        self.configuration_dict["decompress"] = bool(value)
+        self.config_file_manager(SAVE)
+
+    def get_decoder(self):
+        return self.configuration_dict.get("decoder", "Plain data")
+
+    def save_decoder(self, value):
+        self.configuration_dict["decoder"] = value
         self.config_file_manager(SAVE)
 
     def delete_publish_history_item(self, connection, name):
@@ -372,3 +392,16 @@ class ConfigHandler:
 
     def get_export_encode_selection(self):
         return self.configuration_dict.get("export_encoding", 1)
+
+    def get_resubscribe(self, connection):
+        return self.configuration_dict.get("connections", {}).get(connection, {}).get("connection_parameters", {}).get("resubscribe", 0)
+
+    def get_resubscribe_topics(self, connection):
+        return self.configuration_dict.get("connections", {}).get(connection, {}).get("resubscribe_topics", [])
+
+    def save_resubscribe_topics(self, connection, topics):
+        try:
+            self.configuration_dict["connections"][connection]["resubscribe_topics"] = topics
+            self.config_file_manager(SAVE)
+        except Exception as e:
+            self.log.error("Failed to save resubscribe topics:", e)

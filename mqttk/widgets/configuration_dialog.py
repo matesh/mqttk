@@ -247,6 +247,21 @@ class ConfigurationWindow(tk.Toplevel):
         self.ssl_state_input.current(0)
         self.ssl_state_change(None)
 
+        # Client ID
+        self.resubscribe_frame = ttk.Frame(self.connection_configuration_frame)
+        self.resubscribe_frame.pack(fill="x", pady=4)
+        self.divider_label = ttk.Label(self.resubscribe_frame, width=15, anchor="e",
+                                       text="Preferences")
+        self.divider_label.pack(side=tk.LEFT, padx=2, pady=4)
+        self.resubscribe_state = tk.IntVar()
+        self.resubscribe_checkbox = ttk.Checkbutton(self.resubscribe_frame,
+                                                    text="Automatically re-suscribe to the last used topics after connection",
+                                                    variable=self.resubscribe_state,
+                                                    offvalue=0,
+                                                    onvalue=1,
+                                                    command=self.on_client_id_autogen)
+        self.resubscribe_checkbox.pack(side=tk.LEFT, padx=2, pady=2)
+
         self.button_frame = ttk.Frame(self.connection_configuration_frame)
         self.button_frame.pack(side='bottom', fill='x', anchor='s', expand=1)
         self.ok_button = ttk.Button(self.button_frame, text="OK", command=self.ok)
@@ -310,7 +325,8 @@ class ConfigurationWindow(tk.Toplevel):
             "ssl": self.ssl_state_input.get(),
             "ca_file": self.ca_file_input.get(),
             "cl_cert": self.cl_cert_file_input.get(),
-            "cl_key": self.cl_key_file_input.get()
+            "cl_key": self.cl_key_file_input.get(),
+            "resubscribe": self.resubscribe_state.get(),
         }
         self.currently_selected_connection_dict = config_dict
         self.config_handler.save_connection_config(self.profile_name_input.get(), config_dict)
@@ -403,6 +419,7 @@ class ConfigurationWindow(tk.Toplevel):
                 self.cl_key_file_input.delete(0, tk.END)
                 self.cl_key_file_input.insert(0, self.currently_selected_connection_dict.get("cl_key", ""))
                 self.ssl_state_change(None)
+                self.resubscribe_state.set(self.currently_selected_connection_dict.get("resubscribe", 0))
             except Exception as e:
                 self.all_config_state_change("disabled")
                 self.log.exception("Failed to load connection!", e, traceback.print_exc())

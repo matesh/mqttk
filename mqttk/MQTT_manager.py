@@ -1,7 +1,6 @@
 import ssl
 
-from paho.mqtt.client import Client
-from paho.mqtt.client import MQTTv311
+import paho.mqtt.client as mqtt
 from mqttk.constants import PROTOCOL_LOOKUP, SSL_LIST, ERROR_CODES
 from uuid import uuid4
 
@@ -13,6 +12,7 @@ class MqttManager:
         self.on_connect_callback = on_connect_callback
         self.on_disconnect_callback = on_disconnect_callback
         self.log = logger
+        self.disconnect_requested = False
 
         autogen = connection_configuration.get("client_id_autogen", 0)
         if autogen == 1:
@@ -20,11 +20,19 @@ class MqttManager:
         else:
             self.client_id = connection_configuration["client_id"]
 
-        self.client = Client(self.client_id,
-                             clean_session=True,
-                             userdata=None,
-                             protocol=PROTOCOL_LOOKUP.get(connection_configuration["mqtt_version"], MQTTv311),
-                             transport="tcp")
+        try:
+            self.client = mqtt.Client(self.client_id,
+                                      clean_session=True,
+                                      userdata=None,
+                                      protocol=PROTOCOL_LOOKUP.get(connection_configuration["mqtt_version"], mqtt.MQTTv311),
+                                      transport="tcp")
+        except ValueError:
+            self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1,
+                                      self.client_id,
+                                      clean_session=True,
+                                      userdata=None,
+                                      protocol=PROTOCOL_LOOKUP.get(connection_configuration["mqtt_version"], mqtt.MQTTv311),
+                                      transport="tcp")
 
         self.client.on_log = self.log.on_paho_log
 
@@ -87,8 +95,16 @@ class MqttManager:
         self.on_disconnect_callback()
 
     def disconnect(self):
-        self.log.info("Paho MQTT client manager instructed to disconnect")
-        self.client.disconnect()
+        if self.client.is_connected():
+            self.log.info("Paho MQTT client manager instructed to disconnect")
+            self.client.disconnect()
+        else:
+            try:
+                self.client.disconnect()
+            except Exception:
+                pass
+            self.on_disconnect(0, 0, 0)
+        self.disconnect_requested = True
 
     def add_subscription(self, topic_pattern, on_message_callback):
         self.log.info("MQTT client manager adding subscription", topic_pattern)
