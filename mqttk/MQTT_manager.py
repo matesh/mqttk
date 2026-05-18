@@ -59,7 +59,10 @@ class MqttManager:
                                     ciphers=None,
                                     keyfile_password=None)
             elif ssl_config.startswith("Self-signed certificate"):
-                self.client.tls_set(ca_certs=connection_configuration.get("ca_file", ""),
+                ca_certfile = connection_configuration.get("ca_file", "")
+                if ca_certfile == "":
+                    ca_certfile = None
+                self.client.tls_set(ca_certs=ca_certfile,
                                     certfile=connection_configuration.get("cl_cert", ""),
                                     keyfile=connection_configuration.get("cl_key", ""),
                                     cert_reqs=ssl.CERT_REQUIRED,
