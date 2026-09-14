@@ -13,6 +13,7 @@ class MqttManager:
         self.on_disconnect_callback = on_disconnect_callback
         self.log = logger
         self.disconnect_requested = False
+        self.is_mqtt_5 = True if connection_configuration["mqtt_version"] == "5.0" else None
 
         autogen = connection_configuration.get("client_id_autogen", 0)
         if autogen == 1:
@@ -22,14 +23,14 @@ class MqttManager:
 
         try:
             self.client = mqtt.Client(self.client_id,
-                                      clean_session=True,
+                                      clean_session=True if not self.is_mqtt_5 else None,
                                       userdata=None,
                                       protocol=PROTOCOL_LOOKUP.get(connection_configuration["mqtt_version"], mqtt.MQTTv311),
                                       transport="tcp")
         except ValueError:
             self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1,
                                       self.client_id,
-                                      clean_session=True,
+                                      clean_session=True if not self.is_mqtt_5 else None,
                                       userdata=None,
                                       protocol=PROTOCOL_LOOKUP.get(connection_configuration["mqtt_version"], mqtt.MQTTv311),
                                       transport="tcp")
@@ -75,13 +76,19 @@ class MqttManager:
 
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
-        self.client.connect(host=connection_configuration.get("broker_addr", ""),
-                            port=int(connection_configuration.get("broker_port", "")),
-                            keepalive=int(connection_configuration.get("keepalive", 60)))
+        if self.is_mqtt_5:
+            self.client.connect(host=connection_configuration.get("broker_addr", ""),
+                                port=int(connection_configuration.get("broker_port", "")),
+                                keepalive=int(connection_configuration.get("keepalive", 60)),
+                                clean_start=True)
+        else:
+            self.client.connect(host=connection_configuration.get("broker_addr", ""),
+                                port=int(connection_configuration.get("broker_port", "")),
+                                keepalive=int(connection_configuration.get("keepalive", 60)))
         self.client.loop_start()
         self.log.info("Paho MQTT client manager initialised")
 
-    def on_connect(self, _, __, ___, rc):
+    def on_connect(self, _, __, ___, rc, *args, **kwargs):
         if rc == 0:
             self.log.info("Paho MQTT Client successfully connected, client ID: {}".format(self.client_id))
             self.client.loop_start()
@@ -90,7 +97,7 @@ class MqttManager:
             self.log.error("Bad connection, returned code: {}".format(rc))
             self.on_disconnect_callback(notify="Failed to connect: {}".format(ERROR_CODES.get(rc, "Unknown error {}".format(rc))))
 
-    def on_disconnect(self, _, __, rc):
+    def on_disconnect(self, _, __, rc, *args, **kwargs):
         self.log.info("Paho MQTT client disconnected")
         self.client.loop_stop()
         if rc != 0:
