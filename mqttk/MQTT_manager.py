@@ -42,11 +42,14 @@ class MqttManager:
 
         ssl_config = connection_configuration.get("ssl", None)
         if ssl_config is not None and ssl_config in SSL_LIST and ssl_config != "Disabled":
+            cert_reqs = ssl.CERT_REQUIRED
+            if connection_configuration.get("verify_mode", 0) == 1:
+                cert_reqs = ssl.CERT_NONE
             if ssl_config.startswith("CA signed"):
                 self.client.tls_set(ca_certs=None,
                                     certfile=None,
                                     keyfile=None,
-                                    cert_reqs=ssl.CERT_REQUIRED,
+                                    cert_reqs=cert_reqs,
                                     tls_version=ssl.PROTOCOL_TLS,
                                     ciphers=None,
                                     keyfile_password=None)
@@ -54,7 +57,7 @@ class MqttManager:
                 self.client.tls_set(ca_certs=connection_configuration.get("ca_file", ""),
                                     certfile=None,
                                     keyfile=None,
-                                    cert_reqs=ssl.CERT_REQUIRED,
+                                    cert_reqs=cert_reqs,
                                     tls_version=ssl.PROTOCOL_TLS,
                                     ciphers=None,
                                     keyfile_password=None)
@@ -65,7 +68,7 @@ class MqttManager:
                 self.client.tls_set(ca_certs=ca_certfile,
                                     certfile=connection_configuration.get("cl_cert", ""),
                                     keyfile=connection_configuration.get("cl_key", ""),
-                                    cert_reqs=ssl.CERT_REQUIRED,
+                                    cert_reqs=cert_reqs,
                                     tls_version=ssl.PROTOCOL_TLS,
                                     ciphers=None,
                                     keyfile_password=None)

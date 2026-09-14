@@ -247,7 +247,19 @@ class ConfigurationWindow(tk.Toplevel):
         self.ssl_state_input.current(0)
         self.ssl_state_change(None)
 
-        # Client ID
+        self.cert_none = ttk.Frame(self.connection_configuration_frame)
+        self.cert_none.pack(fill="x", pady=4)
+        self.cert_none_label = ttk.Label(self.cert_none, width=15, anchor="e",
+                                         text="Certificate validation")
+        self.cert_none_label.pack(side=tk.LEFT, padx=2, pady=4)
+        self.verify_mode_state = tk.IntVar()
+        self.resubscribe_checkbox = ttk.Checkbutton(self.cert_none,
+                                                    text="No certificate validation",
+                                                    variable=self.verify_mode_state,
+                                                    offvalue=0,
+                                                    onvalue=1)
+
+        self.resubscribe_checkbox.pack(side=tk.LEFT, padx=2, pady=2)
         self.resubscribe_frame = ttk.Frame(self.connection_configuration_frame)
         self.resubscribe_frame.pack(fill="x", pady=4)
         self.divider_label = ttk.Label(self.resubscribe_frame, width=15, anchor="e",
@@ -258,8 +270,7 @@ class ConfigurationWindow(tk.Toplevel):
                                                     text="Automatically re-suscribe to the last used topics after connection",
                                                     variable=self.resubscribe_state,
                                                     offvalue=0,
-                                                    onvalue=1,
-                                                    command=self.on_client_id_autogen)
+                                                    onvalue=1)
         self.resubscribe_checkbox.pack(side=tk.LEFT, padx=2, pady=2)
 
         self.button_frame = ttk.Frame(self.connection_configuration_frame)
@@ -327,6 +338,7 @@ class ConfigurationWindow(tk.Toplevel):
             "cl_cert": self.cl_cert_file_input.get(),
             "cl_key": self.cl_key_file_input.get(),
             "resubscribe": self.resubscribe_state.get(),
+            "verify_mode": self.verify_mode_state.get()
         }
         self.currently_selected_connection_dict = config_dict
         self.config_handler.save_connection_config(self.profile_name_input.get(), config_dict)
@@ -420,6 +432,7 @@ class ConfigurationWindow(tk.Toplevel):
                 self.cl_key_file_input.insert(0, self.currently_selected_connection_dict.get("cl_key", ""))
                 self.ssl_state_change(None)
                 self.resubscribe_state.set(self.currently_selected_connection_dict.get("resubscribe", 0))
+                self.verify_mode_state.set(self.currently_selected_connection_dict.get("verify_mode", 0))
             except Exception as e:
                 self.all_config_state_change("disabled")
                 self.log.exception("Failed to load connection!", e, traceback.print_exc())
