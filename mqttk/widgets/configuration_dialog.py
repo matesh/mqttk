@@ -25,6 +25,7 @@ from mqttk.constants import SSL_LIST, MQTT_VERSION_LIST
 import uuid
 from functools import partial
 from mqttk.helpers import validate_name, validate_int, get_clear_combobox_selection_function, clear_combobox_selection
+from mqttk.widgets.tooltip import Tooltip
 
 
 class ConnectionFrame(ttk.Frame):
@@ -200,6 +201,9 @@ class ConfigurationWindow(tk.Toplevel):
         self.ssl_state_input.bind("<<ComboboxSelected>>", get_clear_combobox_selection_function(self.ssl_state_input))
         self.ssl_state_input.pack(side=tk.LEFT, padx=2)
 
+        self.ssl_state_tooltip = Tooltip(self.ssl_state_input,
+                                         text="Only affects which of the three file input dialogs are enabled")
+
         # ca file
         self.ca_file_frame = ttk.Frame(self.connection_configuration_frame)
         self.ca_file_frame.pack(fill="x")
@@ -253,13 +257,15 @@ class ConfigurationWindow(tk.Toplevel):
                                          text="Certificate validation")
         self.cert_none_label.pack(side=tk.LEFT, padx=2, pady=4)
         self.verify_mode_state = tk.IntVar()
-        self.resubscribe_checkbox = ttk.Checkbutton(self.cert_none,
+        self.verify_mode_checkbox = ttk.Checkbutton(self.cert_none,
                                                     text="No certificate validation",
                                                     variable=self.verify_mode_state,
                                                     offvalue=0,
                                                     onvalue=1)
-
-        self.resubscribe_checkbox.pack(side=tk.LEFT, padx=2, pady=2)
+        self.verify_mode_checkbox.pack(side=tk.LEFT, padx=2, pady=2)
+        self.verify_checkbox_tooltip = Tooltip(self.verify_mode_checkbox,
+                                               text="Sets TLS VerifyMode from CERT_REQUIRED to CERT_NONE")
+        
         self.resubscribe_frame = ttk.Frame(self.connection_configuration_frame)
         self.resubscribe_frame.pack(fill="x", pady=4)
         self.divider_label = ttk.Label(self.resubscribe_frame, width=15, anchor="e",

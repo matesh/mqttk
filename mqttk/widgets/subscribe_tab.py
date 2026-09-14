@@ -37,6 +37,7 @@ from mqttk.widgets.scrolled_text import CustomScrolledText
 from mqttk.constants import CONNECT, DECODER_OPTIONS, COLOURS
 from mqttk.hex_printer import hex_viewer
 from mqttk.helpers import get_clear_combobox_selection_function, clear_combobox_selection
+from mqttk.widgets.tooltip import Tooltip
 
 ZLIB_TAG0 = chr(0x78)
 ZLIB_TAG1 = (chr(0x01), chr(0x5E), chr(0x9C), chr(0xDA))
@@ -178,6 +179,10 @@ class SubscribeTab(ttk.Frame):
                                                    onvalue=1)
         self.autoscroll_checkbox.pack(side=tk.RIGHT, padx=3)
 
+        self.autoscroll_tooltip = Tooltip(self.autoscroll_checkbox,
+                                          text=f"Automatically scrolls the message list to the bottom upon the arrival "
+                                               f"of a new message and automatically selects the latest message")
+
         # Subscribe bottom part frame
         self.subscribe_tab_bottom_frame = ttk.Frame(self)
         self.subscribe_tab_bottom_frame.pack(fill="both", anchor="w", expand=True, padx=3, pady=3)
@@ -269,6 +274,11 @@ class SubscribeTab(ttk.Frame):
                                                    onvalue=1,
                                                    command=self.on_message_select)
         self.decompress_checkbox.pack(side=tk.RIGHT, padx=3)
+        
+        self.decompress_checkbox_tooltip = Tooltip(self.decompress_checkbox,
+                                                   text=f"Tries to decompress the message payload before feeding the "
+                                                        f"contents into the decoder. zlib and bz2 compression are "
+                                                        f"supported.")
 
         # Decoder selector
         self.message_decoder_selector = ttk.Combobox(self.message_date_and_qos_frame,
