@@ -20,7 +20,14 @@ class MqttManager:
             self.client_id = str(uuid4()).replace("-", "")
         else:
             self.client_id = connection_configuration["client_id"]
-
+    
+        #TODO
+        # 0. paho-mqtt 2.1.0 as dependency
+        # 1. API V2 compatibility
+        # 2. New reason code evaluation method for on_connect and whatnot
+        # 3. On failed connect and proper callback to UI with reason for the popup or text label
+        # 4. Use new reason code in subscribe for failed subs
+        
         try:
             self.client = mqtt.Client(self.client_id,
                                       clean_session=True if not self.is_mqtt_5 else None,

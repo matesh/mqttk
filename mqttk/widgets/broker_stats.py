@@ -1,3 +1,6 @@
+#TODO
+# 0. Subscribe fail popup dialog or message instead of the log entry
+
 import tkinter as tk
 import tkinter.ttk as ttk
 from mqttk.constants import CONNECT

@@ -17,6 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+
+#TODO
+# 0. Popup dialog when failed to connect with more info with the new reason codes
+# 1. Popup dialog when successfully connected with the properties
+# 2. Use new on_subscribe reason code to indicate failed subscribe with a popup dialog
+# 3. Add new tab to display message properties of MQTT5 messages, disabled in MQTT < 5.0
+# 4. Consider displaying the message id and info as well (whatever that is)
+
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter.colorchooser import askcolor

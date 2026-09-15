@@ -16,6 +16,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+
+#TODO
+# 0. Subscribe fail popup dialog or message instead of the log entry
+
 import os
 import tkinter as tk
 import tkinter.ttk as ttk

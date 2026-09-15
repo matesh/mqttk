@@ -17,6 +17,11 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+
+#TODO
+# 0. Use API v2 MQTTMessageInfo returned by publish to get mid, is_published, etc. Indicate successful or failed publish
+# 1. Ability to add properties to the messages
+
 import tkinter as tk
 import tkinter.ttk as ttk
 from mqttk.widgets.scrolled_text import CustomScrolledText
